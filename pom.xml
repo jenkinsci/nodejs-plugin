@@ -9,7 +9,7 @@
 
     <groupId>org.jvnet.hudson.plugins</groupId>
     <artifactId>nodejs</artifactId>
-    <version>0.2-SNAPSHOT</version>
+    <version>0.1</version>
     <name>NodeJS Plugin</name>
     <description>Executes NodeJS script as a build step.</description>
     <url>http://wiki.hudson-ci.org/display/HUDSON/NodeJS+Plugin</url>
@@ -104,4 +104,10 @@
             </plugin>
         </plugins>
     </reporting>
+
+  <scm>
+    <connection>scm:svn:https://guest@svn.dev.java.net/svn/hudson/tags/nodejs-0.1</connection>
+    <developerConnection>scm:svn:https://svn.dev.java.net/svn/hudson/tags/nodejs-0.1</developerConnection>
+    <url>https://hudson.dev.java.net/source/browse/hudson/hudson/plugins/nodejs/tags/nodejs-0.1</url>
+  </scm>
 </project>
