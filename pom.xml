@@ -9,7 +9,7 @@
 
     <groupId>org.jvnet.hudson.plugins</groupId>
     <artifactId>nodejs</artifactId>
-    <version>0.2-SNAPSHOT</version>
+    <version>0.1-SNAPSHOT</version>
     <name>NodeJS Plugin</name>
     <description>Executes NodeJS script as a build step.</description>
     <url>http://wiki.hudson-ci.org/display/HUDSON/NodeJS+Plugin</url>
