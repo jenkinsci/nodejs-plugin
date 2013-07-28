@@ -24,13 +24,29 @@
 package hudson.plugins.nodejs.tools;
 
 import hudson.Extension;
+import hudson.FilePath;
+import hudson.Functions;
+import hudson.model.Node;
+import hudson.model.TaskListener;
+import hudson.os.PosixAPI;
+import hudson.remoting.Callable;
+import hudson.remoting.VirtualChannel;
 import hudson.tools.DownloadFromUrlInstaller;
 import hudson.tools.ToolInstallation;
+import hudson.tools.ZipExtractionInstaller;
+import hudson.util.jna.GNUCLibrary;
+import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement;
 import org.kohsuke.stapler.DataBoundConstructor;
 
+import java.io.File;
+import java.io.FileFilter;
 import java.io.IOException;
+import java.net.URL;
 import java.util.List;
+import java.util.Locale;
 import java.util.logging.Logger;
+
+import static hudson.plugins.nodejs.tools.NodeJSInstaller.Preference.*;
 
 /**
  * Install NodeJS from nodejs.org
@@ -48,9 +64,211 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
         this.npmPackages = npmPackages;
     }
 
+    // Overriden performInstallation() in order to provide a custom
+    // url (installable.url should be platform+cpu dependant)
+    // + pullUp directory impl should differ from DownloadFromUrlInstaller
+    // implementation
+    @Override
+    public FilePath performInstallation(ToolInstallation tool, Node node, TaskListener log) throws IOException, InterruptedException {
+        FilePath expected = preferredLocation(tool, node);
+
+        Installable inst = getInstallable();
+        if(inst==null) {
+            log.getLogger().println("Invalid tool ID "+id);
+            return expected;
+        }
+
+        if(isUpToDate(expected,inst))
+            return expected;
+
+        InstallerPathResolver installerPathResolver = InstallerPathResolver.Factory.findResolverFor(inst);
+        String relativeDownloadPath = createDownloadUrl(installerPathResolver, inst, node, log);
+        String downloadUrl = inst.url + relativeDownloadPath;
+        if(expected.installIfNecessaryFrom(new URL(downloadUrl), log, "Unpacking " + downloadUrl + " to " + expected + " on " + node.getDisplayName())) {
+            expected.child(".timestamp").delete(); // we don't use the timestamp
+            String archiveIntermediateDirectoryName = installerPathResolver.extractArchiveIntermediateDirectoryName(relativeDownloadPath);
+            this.pullUpDirectory(expected, archiveIntermediateDirectoryName);
+
+            // leave a record for the next up-to-date check
+            expected.child(".installedFrom").write(downloadUrl,"UTF-8");
+            expected.act(new ChmodRecAPlusX());
+        }
+
+        return expected;
+    }
+
+    private void pullUpDirectory(final FilePath rootNodeHome, final String archiveIntermediateDirectoryName) throws IOException, InterruptedException {
+        // Deleting every sub files/directory other than archiveIntermediateDirectoryName
+        List<FilePath> subfiles = rootNodeHome.list();
+        for(FilePath subfile : subfiles){
+            if(!archiveIntermediateDirectoryName.equals(subfile.getName())){
+                subfile.deleteRecursive();
+            }
+        }
+
+        // Moving up files in archiveIntermediateDirectoryName
+        FilePath archiveIntermediateDirectoryNameFP = rootNodeHome.child(archiveIntermediateDirectoryName);
+        archiveIntermediateDirectoryNameFP.moveAllChildrenTo(rootNodeHome);
+    }
+
+    private String createDownloadUrl(InstallerPathResolver installerPathResolver, Installable installable, Node node, TaskListener log) throws InterruptedException, IOException {
+        try {
+            Platform platform = Platform.of(node);
+            CPU cpu = CPU.of(node);
+            return installerPathResolver.resolvePathFor(installable.id, platform, cpu);
+        } catch (DetectionFailedException e) {
+            throw new IOException(e);
+        }
+    }
+
+    /**
+     * Weird : copy/pasted from ZipExtractionInstaller since this is a package-protected class
+     *
+     * Sets execute permission on all files, since unzip etc. might not do this.
+     * Hackish, is there a better way?
+     */
+    static class ChmodRecAPlusX implements FilePath.FileCallable<Void> {
+        private static final long serialVersionUID = 1L;
+        public Void invoke(File d, VirtualChannel channel) throws IOException {
+            if(!Functions.isWindows())
+                process(d);
+            return null;
+        }
+        @IgnoreJRERequirement
+        private void process(File f) {
+            if (f.isFile()) {
+                if(Functions.isMustangOrAbove())
+                    f.setExecutable(true, false);
+                else {
+                    try {
+                        GNUCLibrary.LIBC.chmod(f.getAbsolutePath(),0755);
+                    } catch (LinkageError e) {
+                        // if JNA is unavailable, fall back.
+                        // we still prefer to try JNA first as PosixAPI supports even smaller platforms.
+                        PosixAPI.get().chmod(f.getAbsolutePath(),0755);
+                    }
+                }
+            } else {
+                File[] kids = f.listFiles();
+                if (kids != null) {
+                    for (File kid : kids) {
+                        process(kid);
+                    }
+                }
+            }
+        }
+    }
 
     public String getNpmPackages() {
         return npmPackages;
+    }
+
+    public enum Preference {
+        PRIMARY, SECONDARY, UNACCEPTABLE
+    }
+
+    /**
+     * Supported platform.
+     */
+    public enum Platform {
+        LINUX("node"), WINDOWS("node.exe"), MAC("node");
+
+        /**
+         * Choose the file name suitable for the downloaded Node bundle.
+         */
+        public final String bundleFileName;
+
+        Platform(String bundleFileName) {
+            this.bundleFileName = bundleFileName;
+        }
+
+        public boolean is(String line) {
+            return line.contains(name());
+        }
+
+        /**
+         * Determines the platform of the given node.
+         */
+        public static Platform of(Node n) throws IOException,InterruptedException,DetectionFailedException {
+            return n.getChannel().call(new GetCurrentPlatform());
+        }
+
+        public static Platform current() throws DetectionFailedException {
+            String arch = System.getProperty("os.name").toLowerCase(Locale.ENGLISH);
+            if(arch.contains("linux"))  return LINUX;
+            if(arch.contains("windows"))   return WINDOWS;
+            if(arch.contains("mac"))   return MAC;
+            throw new DetectionFailedException("Unknown CPU name: "+arch);
+        }
+
+        static class GetCurrentPlatform implements Callable<Platform,DetectionFailedException> {
+            private static final long serialVersionUID = 1L;
+            public Platform call() throws DetectionFailedException {
+                return current();
+            }
+        }
+
+    }
+
+    /**
+     * CPU type.
+     */
+    public enum CPU {
+        i386, amd64;
+
+        /**
+         * In JDK5u3, I see platform like "Linux AMD64", while JDK6u3 refers to "Linux x64", so
+         * just use "64" for locating bits.
+         */
+        public Preference accept(String line) {
+            switch (this) {
+            // 64bit Solaris, Linux, and Windows can all run 32bit executable, so fall back to 32bit if 64bit bundle is not found
+            case amd64:
+                if(line.contains("SPARC") || line.contains("IA64"))  return UNACCEPTABLE;
+                if(line.contains("64"))     return PRIMARY;
+                return SECONDARY;
+            case i386:
+                if(line.contains("64") || line.contains("SPARC") || line.contains("IA64"))     return UNACCEPTABLE;
+                return PRIMARY;
+            }
+            return UNACCEPTABLE;
+        }
+
+        /**
+         * Determines the CPU of the given node.
+         */
+        public static CPU of(Node n) throws IOException,InterruptedException, DetectionFailedException {
+            return n.getChannel().call(new GetCurrentCPU());
+        }
+
+        /**
+         * Determines the CPU of the current JVM.
+         *
+         * http://lopica.sourceforge.net/os.html was useful in writing this code.
+         */
+        public static CPU current() throws DetectionFailedException {
+            String arch = System.getProperty("os.arch").toLowerCase(Locale.ENGLISH);
+            if(arch.contains("amd64") || arch.contains("86_64"))    return amd64;
+            if(arch.contains("86"))    return i386;
+            throw new DetectionFailedException("Unknown CPU architecture: "+arch);
+        }
+
+        static class GetCurrentCPU implements Callable<CPU,DetectionFailedException> {
+            private static final long serialVersionUID = 1L;
+            public CPU call() throws DetectionFailedException {
+                return current();
+            }
+        }
+
+    }
+
+    /**
+     * Indicates the failure to detect the OS or CPU.
+     */
+    private static final class DetectionFailedException extends Exception {
+        private DetectionFailedException(String message) {
+            super(message);
+        }
     }
 
     @Extension

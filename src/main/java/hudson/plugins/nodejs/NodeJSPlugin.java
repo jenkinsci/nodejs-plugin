@@ -33,6 +33,15 @@ public class NodeJSPlugin extends Plugin {
         return installations;
     }
 
+    public NodeJSInstallation findInstallationByName(String name) {
+        for(NodeJSInstallation nodeJSInstallation : getInstallations()){
+            if(name.equals(nodeJSInstallation.getName())){
+                return nodeJSInstallation;
+            }
+        }
+        throw new IllegalArgumentException("NodeJS Installation not found : "+name);
+    }
+
     public void setInstallations(NodeJSInstallation[] installations) {
         this.installations = installations;
         try {

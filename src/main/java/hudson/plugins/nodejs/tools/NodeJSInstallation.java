@@ -1,12 +1,11 @@
 package hudson.plugins.nodejs.tools;
 
-import hudson.EnvVars;
-import hudson.Extension;
+import hudson.*;
 import hudson.model.EnvironmentSpecific;
-import hudson.model.Hudson;
 import hudson.model.Node;
 import hudson.model.TaskListener;
 import hudson.plugins.nodejs.NodeJSPlugin;
+import hudson.remoting.Callable;
 import hudson.slaves.NodeSpecific;
 import hudson.tools.ToolDescriptor;
 import hudson.tools.ToolInstallation;
@@ -14,6 +13,7 @@ import hudson.tools.ToolInstaller;
 import hudson.tools.ToolProperty;
 import org.kohsuke.stapler.DataBoundConstructor;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.Collections;
@@ -24,6 +24,9 @@ import java.util.List;
  */
 public class NodeJSInstallation extends ToolInstallation
         implements EnvironmentSpecific<NodeJSInstallation>, NodeSpecific<NodeJSInstallation>, Serializable {
+
+    private static final String WINDOWS_NODEJS_COMMAND = "node.exe";
+    private static final String UNIX_NODEJS_COMMAND = "node";
 
     private final String nodeJSHome;
 
@@ -59,6 +62,24 @@ public class NodeJSInstallation extends ToolInstallation
         return new NodeJSInstallation(getName(), translateFor(node, log), getProperties().toList());
     }
 
+    public String getExecutable(Launcher launcher) throws InterruptedException, IOException {
+        return launcher.getChannel().call(new Callable<String, IOException>() {
+            public String call() throws IOException {
+                File exe = getExeFile();
+                if (exe.exists()) {
+                    return exe.getPath();
+                }
+                return null;
+            }
+        });
+    }
+
+    private File getExeFile() {
+        String execName = (Functions.isWindows()) ? WINDOWS_NODEJS_COMMAND : UNIX_NODEJS_COMMAND;
+        String nodeJSHome = Util.replaceMacro(this.nodeJSHome, EnvVars.masterEnvVars);
+        return new File(nodeJSHome, "bin/" + execName);
+    }
+
     @Extension
     public static class DescriptorImpl extends ToolDescriptor<NodeJSInstallation> {
 
@@ -68,11 +89,6 @@ public class NodeJSInstallation extends ToolInstallation
         @Override
         public String getDisplayName() {
             return Messages.installer_displayName();
-        }
-
-        @Override
-        public List<? extends ToolInstaller> getDefaultInstallers() {
-            return Collections.singletonList(new NodeJSInstaller(null, ""));
         }
 
         // Persistence is done by NodeJSPlugin
