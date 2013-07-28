@@ -33,4 +33,8 @@ public class NodeJSVersion implements Comparable<NodeJSVersion> {
     public boolean isLowerThan(String version){
         return isLowerThan(new NodeJSVersion(version));
     }
+
+    public static int compare(String first, String second){
+        return new NodeJSVersion(first).compareTo(new NodeJSVersion(second));
+    }
 }

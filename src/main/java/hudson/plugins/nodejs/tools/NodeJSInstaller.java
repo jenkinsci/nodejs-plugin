@@ -23,6 +23,8 @@
  */
 package hudson.plugins.nodejs.tools;
 
+import com.google.common.base.Predicate;
+import com.google.common.collect.Collections2;
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.Functions;
@@ -33,17 +35,15 @@ import hudson.remoting.Callable;
 import hudson.remoting.VirtualChannel;
 import hudson.tools.DownloadFromUrlInstaller;
 import hudson.tools.ToolInstallation;
-import hudson.tools.ZipExtractionInstaller;
 import hudson.util.jna.GNUCLibrary;
 import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement;
 import org.kohsuke.stapler.DataBoundConstructor;
 
+import javax.annotation.Nullable;
 import java.io.File;
-import java.io.FileFilter;
 import java.io.IOException;
 import java.net.URL;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 import java.util.logging.Logger;
 
 import static hudson.plugins.nodejs.tools.NodeJSInstaller.Preference.*;
@@ -279,7 +279,20 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
 
         @Override
         public List<? extends Installable> getInstallables() throws IOException {
-            return super.getInstallables();
+            // Filtering non blacklisted installables + sorting installables by version number
+            Collection<? extends Installable> filteredInstallables = Collections2.filter(super.getInstallables(),
+                    new Predicate<Installable>() {
+                        public boolean apply(@Nullable Installable input) {
+                            return !InstallerPathResolver.Factory.isVersionBlacklisted(input.id);
+                        }
+                    });
+            TreeSet<Installable> sortedInstallables = new TreeSet<Installable>(new Comparator<Installable>(){
+                public int compare(Installable o1, Installable o2) {
+                    return NodeJSVersion.compare(o1.id, o2.id)*-1;
+                }
+            });
+            sortedInstallables.addAll(filteredInstallables);
+            return new ArrayList<Installable>(sortedInstallables);
         }
 
         @Override
