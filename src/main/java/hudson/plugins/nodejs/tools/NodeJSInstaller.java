@@ -35,6 +35,7 @@ import hudson.remoting.Callable;
 import hudson.remoting.VirtualChannel;
 import hudson.tools.DownloadFromUrlInstaller;
 import hudson.tools.ToolInstallation;
+import hudson.util.ArgumentListBuilder;
 import hudson.util.jna.GNUCLibrary;
 import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -92,6 +93,22 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
             // leave a record for the next up-to-date check
             expected.child(".installedFrom").write(downloadUrl,"UTF-8");
             expected.act(new ChmodRecAPlusX());
+        }
+
+        // Installing npm packages if needed
+        if(this.npmPackages != null && !"".equals(this.npmPackages)){
+            ArgumentListBuilder npmScriptArgs = new ArgumentListBuilder();
+
+            FilePath npmExe = expected.child("bin/npm");
+            npmScriptArgs.add(npmExe);
+            npmScriptArgs.add("install");
+            npmScriptArgs.add("-g");
+            for(String packageName : this.npmPackages.split("\\s")){
+                npmScriptArgs.add(packageName);
+            }
+
+            hudson.Launcher launcher = node.createLauncher(log);
+            launcher.launch().cmds(npmScriptArgs).stdout(log).join();
         }
 
         return expected;
