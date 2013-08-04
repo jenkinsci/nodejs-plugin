@@ -32,6 +32,7 @@ import hudson.Util;
 import hudson.model.Node;
 import hudson.model.TaskListener;
 import hudson.os.PosixAPI;
+import hudson.plugins.tools.Installables;
 import hudson.remoting.Callable;
 import hudson.remoting.VirtualChannel;
 import hudson.tools.DownloadFromUrlInstaller;
@@ -116,6 +117,9 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
             log.getLogger().println("Invalid tool ID "+id);
             return expected;
         }
+
+        // Cloning the installable since we're going to update its url (not cloning it wouldn't be threadsafe)
+        inst = Installables.clone(inst);
 
         InstallerPathResolver installerPathResolver = InstallerPathResolver.Factory.findResolverFor(inst);
         String relativeDownloadPath = createDownloadUrl(installerPathResolver, inst, node, log);
