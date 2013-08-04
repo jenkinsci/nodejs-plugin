@@ -125,17 +125,17 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
         String relativeDownloadPath = createDownloadUrl(installerPathResolver, inst, node, log);
         inst.url += relativeDownloadPath;
 
-        if(isUpToDate(expected,inst))
-            return expected;
+        boolean skipNodeJSInstallation = isUpToDate(expected, inst);
+        if(!skipNodeJSInstallation) {
+            if(expected.installIfNecessaryFrom(new URL(inst.url), log, "Unpacking " + inst.url + " to " + expected + " on " + node.getDisplayName())) {
+                expected.child(".timestamp").delete(); // we don't use the timestamp
+                String archiveIntermediateDirectoryName = installerPathResolver.extractArchiveIntermediateDirectoryName(relativeDownloadPath);
+                this.pullUpDirectory(expected, archiveIntermediateDirectoryName);
 
-        if(expected.installIfNecessaryFrom(new URL(inst.url), log, "Unpacking " + inst.url + " to " + expected + " on " + node.getDisplayName())) {
-            expected.child(".timestamp").delete(); // we don't use the timestamp
-            String archiveIntermediateDirectoryName = installerPathResolver.extractArchiveIntermediateDirectoryName(relativeDownloadPath);
-            this.pullUpDirectory(expected, archiveIntermediateDirectoryName);
-
-            // leave a record for the next up-to-date check
-            expected.child(".installedFrom").write(inst.url,"UTF-8");
-            expected.act(new ChmodRecAPlusX());
+                // leave a record for the next up-to-date check
+                expected.child(".installedFrom").write(inst.url,"UTF-8");
+                expected.act(new ChmodRecAPlusX());
+            }
         }
 
         // Installing npm packages if needed
