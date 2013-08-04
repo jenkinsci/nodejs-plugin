@@ -47,6 +47,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
 import static hudson.plugins.nodejs.tools.NodeJSInstaller.Preference.*;
@@ -59,12 +60,15 @@ import static hudson.plugins.nodejs.tools.NodeJSInstaller.Preference.*;
  */
 public class NodeJSInstaller extends DownloadFromUrlInstaller {
 
+    public static final String NPM_PACKAGES_RECORD_FILENAME = ".npmPackages";
     private final String npmPackages;
+    private final Long npmPackagesRefreshHours;
 
     @DataBoundConstructor
-    public NodeJSInstaller(String id, String npmPackages)    {
+    public NodeJSInstaller(String id, String npmPackages, long npmPackagesRefreshHours)    {
         super(id);
         this.npmPackages = npmPackages;
+        this.npmPackagesRefreshHours = npmPackagesRefreshHours;
     }
 
     public static FilePath binFolderOf(NodeJSInstallation intallation, Node node) {
@@ -140,21 +144,37 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
 
         // Installing npm packages if needed
         if(this.npmPackages != null && !"".equals(this.npmPackages)){
-            ArgumentListBuilder npmScriptArgs = new ArgumentListBuilder();
+            boolean skipNpmPackageInstallation = areNpmPackagesUpToDate(expected, this.npmPackages, this.npmPackagesRefreshHours);
+            if(!skipNpmPackageInstallation){
+                expected.child(NPM_PACKAGES_RECORD_FILENAME).delete();
+                ArgumentListBuilder npmScriptArgs = new ArgumentListBuilder();
 
-            FilePath npmExe = expected.child("bin/npm");
-            npmScriptArgs.add(npmExe);
-            npmScriptArgs.add("install");
-            npmScriptArgs.add("-g");
-            for(String packageName : this.npmPackages.split("\\s")){
-                npmScriptArgs.add(packageName);
+                FilePath npmExe = expected.child("bin/npm");
+                npmScriptArgs.add(npmExe);
+                npmScriptArgs.add("install");
+                npmScriptArgs.add("-g");
+                for(String packageName : this.npmPackages.split("\\s")){
+                    npmScriptArgs.add(packageName);
+                }
+
+                hudson.Launcher launcher = node.createLauncher(log);
+
+                int returnCode = launcher.launch().cmds(npmScriptArgs).stdout(log).join();
+
+                if(returnCode == 0){
+                    // leave a record for the next up-to-date check
+                    expected.child(NPM_PACKAGES_RECORD_FILENAME).write(this.npmPackages,"UTF-8");
+                    expected.child(NPM_PACKAGES_RECORD_FILENAME).act(new ChmodRecAPlusX());
+                }
             }
-
-            hudson.Launcher launcher = node.createLauncher(log);
-            launcher.launch().cmds(npmScriptArgs).stdout(log).join();
         }
 
         return expected;
+    }
+
+    private static boolean areNpmPackagesUpToDate(FilePath expected, String npmPackages, long npmPackagesRefreshHours) throws IOException, InterruptedException {
+        FilePath marker = expected.child(NPM_PACKAGES_RECORD_FILENAME);
+        return marker.exists() && marker.readToString().equals(npmPackages) && System.currentTimeMillis() < marker.lastModified()+ TimeUnit.HOURS.toMillis(npmPackagesRefreshHours);
     }
 
     private void pullUpDirectory(final FilePath rootNodeHome, final String archiveIntermediateDirectoryName) throws IOException, InterruptedException {
@@ -221,6 +241,10 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
 
     public String getNpmPackages() {
         return npmPackages;
+    }
+
+    public Long getNpmPackagesRefreshHours() {
+        return npmPackagesRefreshHours;
     }
 
     public enum Preference {

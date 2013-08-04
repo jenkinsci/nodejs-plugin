@@ -62,7 +62,16 @@ THE SOFTWARE.
       </j:otherwise>
     </j:choose>
   </f:entry>
-  <f:entry title="${%Global npm packages to install}" field="npmPackages">
-      <f:textbox name="npmPackages" />
-  </f:entry>
+    <f:entry title="${%Global npm packages to install}" field="npmPackages">
+        <f:textbox name="npmPackages" />
+        <f:description>
+            ${%Specify list of packages to install globally -- see npm install -g. Note that you can fix the package's version by using the syntax `packageName@version`}
+        </f:description>
+    </f:entry>
+    <f:entry title="${%Global npm packages refresh hours}" field="npmPackagesRefreshHours">
+        <f:textbox name="npmPackagesRefreshHours" default="72" />
+        <f:description>
+            ${%Duration, in hours, before 2 npm cache update. Note that 0 will always update npm cache}
+        </f:description>
+    </f:entry>
 </j:jelly>
