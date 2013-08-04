@@ -28,6 +28,7 @@ import com.google.common.collect.Collections2;
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.Functions;
+import hudson.Util;
 import hudson.model.Node;
 import hudson.model.TaskListener;
 import hudson.os.PosixAPI;
@@ -64,6 +65,43 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
         super(id);
         this.npmPackages = npmPackages;
     }
+
+    public static FilePath binFolderOf(NodeJSInstallation intallation, Node node) {
+        FilePath expected = _preferredLocation(intallation, node);
+        return expected.child("bin/");
+    }
+
+    /**
+     * COPY PASTER ToolInstaller.preferredLocation() in order to make it static...
+     * Weird
+     *
+     * Convenience method to find a location to install a tool.
+     * @param tool the tool being installed
+     * @param node the computer on which to install the tool
+     * @return {@link ToolInstallation#getHome} if specified, else a path within the local
+     *         Jenkins work area named according to {@link ToolInstallation#getName}
+     * @since 1.310
+     */
+    protected static FilePath _preferredLocation(ToolInstallation tool, Node node) {
+        if (node == null) {
+            throw new IllegalArgumentException("must pass non-null node");
+        }
+        String home = Util.fixEmptyAndTrim(tool.getHome());
+        if (home == null) {
+            home = sanitize(tool.getDescriptor().getId()) + File.separatorChar + sanitize(tool.getName());
+        }
+        FilePath root = node.getRootPath();
+        if (root == null) {
+            throw new IllegalArgumentException("Node " + node.getDisplayName() + " seems to be offline");
+        }
+        return root.child("tools").child(home);
+    }
+
+    private static String sanitize(String s) {
+        return s != null ? s.replaceAll("[^A-Za-z0-9_.-]+", "_") : null;
+    }
+
+
 
     // Overriden performInstallation() in order to provide a custom
     // url (installable.url should be platform+cpu dependant)
