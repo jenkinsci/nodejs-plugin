@@ -79,19 +79,20 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
             return expected;
         }
 
+        InstallerPathResolver installerPathResolver = InstallerPathResolver.Factory.findResolverFor(inst);
+        String relativeDownloadPath = createDownloadUrl(installerPathResolver, inst, node, log);
+        inst.url += relativeDownloadPath;
+
         if(isUpToDate(expected,inst))
             return expected;
 
-        InstallerPathResolver installerPathResolver = InstallerPathResolver.Factory.findResolverFor(inst);
-        String relativeDownloadPath = createDownloadUrl(installerPathResolver, inst, node, log);
-        String downloadUrl = inst.url + relativeDownloadPath;
-        if(expected.installIfNecessaryFrom(new URL(downloadUrl), log, "Unpacking " + downloadUrl + " to " + expected + " on " + node.getDisplayName())) {
+        if(expected.installIfNecessaryFrom(new URL(inst.url), log, "Unpacking " + inst.url + " to " + expected + " on " + node.getDisplayName())) {
             expected.child(".timestamp").delete(); // we don't use the timestamp
             String archiveIntermediateDirectoryName = installerPathResolver.extractArchiveIntermediateDirectoryName(relativeDownloadPath);
             this.pullUpDirectory(expected, archiveIntermediateDirectoryName);
 
             // leave a record for the next up-to-date check
-            expected.child(".installedFrom").write(downloadUrl,"UTF-8");
+            expected.child(".installedFrom").write(inst.url,"UTF-8");
             expected.act(new ChmodRecAPlusX());
         }
 
