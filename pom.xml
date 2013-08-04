@@ -21,6 +21,12 @@
             <email>blah@cliffano.com</email>
             <timezone>+10</timezone>
         </developer>
+        <developer>
+            <id>fcamblor</id>
+            <name>Frédéric Camblor</name>
+            <email>fcamblor@gmail.com</email>
+            <timezone>+2</timezone>
+        </developer>
     </developers>
     <licenses>
         <license>
