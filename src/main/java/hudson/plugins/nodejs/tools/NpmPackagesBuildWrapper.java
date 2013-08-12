@@ -47,7 +47,16 @@ public class NpmPackagesBuildWrapper extends BuildWrapper {
         return new DecoratedLauncher(launcher){
             @Override
             public Proc launch(ProcStarter starter) throws IOException {
-                EnvVars vars = toEnvVars(starter.envs());
+                // Avoiding potential NPE when calling starter.envs()
+                // Yes, this is weird...
+                String[] starterEnvs;
+                try {
+                   starterEnvs = starter.envs();
+                } catch (NullPointerException ex) {
+                    starterEnvs = new String[0];
+                }
+
+                EnvVars vars = toEnvVars(starterEnvs);
                 NodeJSInstallation nodeJSInstallation = NodeJSPlugin.instance().findInstallationByName(nodeJSInstallationName);
                 try {
                     nodeJSInstallation = nodeJSInstallation.forNode(build.getBuiltOn(), listener);
