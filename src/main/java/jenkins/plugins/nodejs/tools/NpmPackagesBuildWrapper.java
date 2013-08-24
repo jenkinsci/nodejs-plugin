@@ -1,4 +1,4 @@
-package hudson.plugins.nodejs.tools;
+package jenkins.plugins.nodejs.tools;
 
 import com.google.common.base.Throwables;
 import hudson.*;
@@ -6,7 +6,7 @@ import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.BuildListener;
 import hudson.model.Run;
-import hudson.plugins.nodejs.NodeJSPlugin;
+import jenkins.plugins.nodejs.NodeJSPlugin;
 import hudson.tasks.BuildWrapper;
 import hudson.tasks.BuildWrapperDescriptor;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -105,7 +105,7 @@ public class NpmPackagesBuildWrapper extends BuildWrapper {
         }
 
         public String getDisplayName() {
-            return Messages.NpmPackagesBuildWrapper_displayName();
+            return jenkins.plugins.nodejs.tools.Messages.NpmPackagesBuildWrapper_displayName();
         }
     }
 }

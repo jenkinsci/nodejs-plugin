@@ -21,7 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package hudson.plugins.nodejs.tools;
+package jenkins.plugins.nodejs.tools;
 
 import com.google.common.base.Predicate;
 import com.google.common.collect.Collections2;
@@ -32,7 +32,7 @@ import hudson.Util;
 import hudson.model.Node;
 import hudson.model.TaskListener;
 import hudson.os.PosixAPI;
-import hudson.plugins.tools.Installables;
+import jenkins.plugins.tools.Installables;
 import hudson.remoting.Callable;
 import hudson.remoting.VirtualChannel;
 import hudson.tools.DownloadFromUrlInstaller;
@@ -50,7 +50,7 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
-import static hudson.plugins.nodejs.tools.NodeJSInstaller.Preference.*;
+import static jenkins.plugins.nodejs.tools.NodeJSInstaller.Preference.*;
 
 /**
  * Install NodeJS from nodejs.org
@@ -377,6 +377,12 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
             });
             sortedInstallables.addAll(filteredInstallables);
             return new ArrayList<Installable>(sortedInstallables);
+        }
+
+        @Override
+        public String getId() {
+            // For backward compatibility
+            return "hudson.plugins.nodejs.tools.NodeJSInstaller";
         }
 
         @Override

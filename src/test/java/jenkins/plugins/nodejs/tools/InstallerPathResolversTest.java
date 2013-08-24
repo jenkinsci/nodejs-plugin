@@ -1,4 +1,4 @@
-package hudson.plugins.nodejs.tools;
+package jenkins.plugins.nodejs.tools;
 
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
@@ -41,7 +41,7 @@ public class InstallerPathResolversTest {
     public static Collection<Object[]> data() throws IOException {
         Collection<Object[]> testPossibleParams = new ArrayList<Object[]>();
 
-        String installablesJSONStr = Resources.toString(Resources.getResource("updates/hudson.plugins.nodejs.tools.NodeJSInstaller.json"), Charsets.UTF_8);
+        String installablesJSONStr = Resources.toString(Resources.getResource("updates/jenkins.plugins.nodejs.tools.NodeJSInstaller.json"), Charsets.UTF_8);
         JSONArray installables = JSONObject.fromObject(installablesJSONStr).getJSONArray("list");
         for(int i=0; i<installables.size(); i++){
             DownloadFromUrlInstaller.Installable installable = (DownloadFromUrlInstaller.Installable)installables.getJSONObject(i).toBean(DownloadFromUrlInstaller.Installable.class);

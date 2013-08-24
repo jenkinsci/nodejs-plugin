@@ -1,9 +1,9 @@
-package hudson.plugins.nodejs;
+package jenkins.plugins.nodejs;
 
 import hudson.*;
 import hudson.model.*;
 import hudson.model.Messages;
-import hudson.plugins.nodejs.tools.NodeJSInstallation;
+import jenkins.plugins.nodejs.tools.NodeJSInstallation;
 import hudson.tasks.*;
 import hudson.util.ArgumentListBuilder;
 import net.sf.json.JSONObject;

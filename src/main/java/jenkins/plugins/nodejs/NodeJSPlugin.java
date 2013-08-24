@@ -1,8 +1,8 @@
-package hudson.plugins.nodejs;
+package jenkins.plugins.nodejs;
 
 import hudson.Plugin;
 import hudson.model.Hudson;
-import hudson.plugins.nodejs.tools.NodeJSInstallation;
+import jenkins.plugins.nodejs.tools.NodeJSInstallation;
 
 import java.io.IOException;
 

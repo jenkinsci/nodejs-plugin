@@ -1,7 +1,7 @@
-package hudson.plugins.nodejs.tools.pathresolvers;
+package jenkins.plugins.nodejs.tools.pathresolvers;
 
-import hudson.plugins.nodejs.tools.InstallerPathResolver;
-import hudson.plugins.nodejs.tools.NodeJSInstaller;
+import jenkins.plugins.nodejs.tools.InstallerPathResolver;
+import jenkins.plugins.nodejs.tools.NodeJSInstaller;
 
 /**
  * @author fcamblor

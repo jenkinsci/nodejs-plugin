@@ -1,6 +1,6 @@
-package hudson.plugins.nodejs.tools;
+package jenkins.plugins.nodejs.tools;
 
-import hudson.plugins.nodejs.tools.pathresolvers.LatestInstallerPathResolver;
+import jenkins.plugins.nodejs.tools.pathresolvers.LatestInstallerPathResolver;
 import hudson.tools.DownloadFromUrlInstaller;
 
 /**

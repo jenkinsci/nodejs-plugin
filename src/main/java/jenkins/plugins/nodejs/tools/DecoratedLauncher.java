@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package hudson.plugins.nodejs.tools;
+package jenkins.plugins.nodejs.tools;
 
 import hudson.FilePath;
 import hudson.Launcher;

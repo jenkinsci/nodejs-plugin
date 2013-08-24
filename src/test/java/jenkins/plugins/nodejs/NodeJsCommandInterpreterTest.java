@@ -1,11 +1,9 @@
-package hudson.plugins.nodejs;
+package jenkins.plugins.nodejs;
 
 import hudson.FilePath;
 import hudson.model.Descriptor;
-import hudson.plugins.nodejs.NodeJsCommandInterpreter;
-import hudson.plugins.nodejs.tools.NodeJSInstallation;
+import jenkins.plugins.nodejs.tools.NodeJSInstallation;
 import hudson.tasks.Builder;
-import junit.framework.TestCase;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;

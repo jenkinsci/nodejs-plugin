@@ -1,22 +1,20 @@
-package hudson.plugins.nodejs.tools;
+package jenkins.plugins.nodejs.tools;
 
 import hudson.*;
 import hudson.model.EnvironmentSpecific;
 import hudson.model.Node;
 import hudson.model.TaskListener;
-import hudson.plugins.nodejs.NodeJSPlugin;
+import jenkins.plugins.nodejs.NodeJSPlugin;
 import hudson.remoting.Callable;
 import hudson.slaves.NodeSpecific;
 import hudson.tools.ToolDescriptor;
 import hudson.tools.ToolInstallation;
-import hudson.tools.ToolInstaller;
 import hudson.tools.ToolProperty;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -88,7 +86,7 @@ public class NodeJSInstallation extends ToolInstallation
 
         @Override
         public String getDisplayName() {
-            return Messages.installer_displayName();
+            return jenkins.plugins.nodejs.tools.Messages.installer_displayName();
         }
 
         // Persistence is done by NodeJSPlugin

@@ -1,4 +1,4 @@
-package hudson.plugins.nodejs.tools;
+package jenkins.plugins.nodejs.tools;
 
 /**
  * @author fcamblor

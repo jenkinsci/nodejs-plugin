@@ -1,4 +1,4 @@
-package hudson.plugins.tools;
+package jenkins.plugins.tools;
 
 import hudson.tools.DownloadFromUrlInstaller;
 
