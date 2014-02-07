@@ -5,6 +5,7 @@ import hudson.*;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.BuildListener;
+import hudson.model.Computer;
 import hudson.model.Run;
 import jenkins.plugins.nodejs.NodeJSPlugin;
 import hudson.tasks.BuildWrapper;
@@ -56,18 +57,31 @@ public class NpmPackagesBuildWrapper extends BuildWrapper {
                     starterEnvs = new String[0];
                 }
 
+                String pathSeparator = File.pathSeparator;
+
                 EnvVars vars = toEnvVars(starterEnvs);
-                NodeJSInstallation nodeJSInstallation = NodeJSPlugin.instance().findInstallationByName(nodeJSInstallationName);
+
+                NodeJSInstallation nodeJSInstallation = 
+                    NodeJSPlugin.instance().findInstallationByName(nodeJSInstallationName);
+
                 try {
                     nodeJSInstallation = nodeJSInstallation.forNode(build.getBuiltOn(), listener);
+                    nodeJSInstallation = nodeJSInstallation.forEnvironment(vars);
+
+                    Computer slave = Computer.currentComputer();
+                    String slavePathSeparator = (String)slave.getSystemProperties().get("path.separator");
+
+                    if (slavePathSeparator != null) {
+                        pathSeparator = slavePathSeparator;
+                    }
                 } catch (InterruptedException e) {
                     Throwables.propagate(e);
                 }
-                nodeJSInstallation = nodeJSInstallation.forEnvironment(vars);
 
                 // HACK: Avoids issue with invalid separators in EnvVars::override in case of different master/slave
+                
                 String overriddenPaths = NodeJSInstaller.binFolderOf(nodeJSInstallation, build.getBuiltOn())
-                        + File.pathSeparator
+                        + pathSeparator
                         + vars.get("PATH");
                 vars.override("PATH", overriddenPaths);
 
