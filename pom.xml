@@ -8,7 +8,7 @@
 
     <groupId>org.jenkins-ci.plugins</groupId>
     <artifactId>nodejs</artifactId>
-    <version>0.2.1</version>
+    <version>0.3-SNAPSHOT</version>
     <name>NodeJS Plugin</name>
     <description>Executes NodeJS script as a build step.</description>
     <url>http://wiki.jenkins-ci.org/display/JENKINS/NodeJS+Plugin</url>
