@@ -25,6 +25,7 @@ package jenkins.plugins.nodejs.tools;
 
 import com.google.common.base.Predicate;
 import com.google.common.collect.Collections2;
+
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.Functions;
@@ -39,10 +40,12 @@ import hudson.tools.DownloadFromUrlInstaller;
 import hudson.tools.ToolInstallation;
 import hudson.util.ArgumentListBuilder;
 import hudson.util.jna.GNUCLibrary;
+
 import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import javax.annotation.Nullable;
+
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
@@ -73,7 +76,11 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
 
     public static FilePath binFolderOf(NodeJSInstallation intallation, Node node) {
         FilePath expected = _preferredLocation(intallation, node);
-        return expected.child("bin/");
+        try {
+			return Platform.of(node) == Platform.WINDOWS ? expected : expected.child("bin/");
+		} catch (Exception e) {
+			return expected.child("bin/");
+		}
     }
 
     /**
