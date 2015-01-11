@@ -64,10 +64,12 @@ public class GruntJsTaskExecutor extends Builder {
 			throw new NullPointerException("no workspace from node " + node + " which is computer " + node.toComputer() + " and has channel " + node.getChannel());
 		}
 
-		//workingPath = ws.getName().concat(workingPath)
-		workingPath = "/Users/hanetz/Work/WebyClip/workspace/Webyclip/widget";
-		gruntFilePath = "/Users/hanetz/Work/WebyClip/workspace/Webyclip/widget/Gruntfile.js";
-		gruntTask = "dev";
+		workingPath = ws.getRemote().concat(workingPath);
+		if (gruntFilePath.equals("")) {
+			gruntFilePath = "Gruntfile.js";
+		} else {
+			gruntFilePath = ws.getRemote().concat(gruntFilePath);
+		}
 
 
 		int r;
@@ -117,7 +119,7 @@ public class GruntJsTaskExecutor extends Builder {
 
 	/**
 	 * Provides builder details for the job configuration page.
-	 * @author cliffano
+	 * @author cliffano, ohanetz
 	 */
 	public static final class NodeJsDescriptor extends Descriptor<Builder> {
 
