@@ -1,0 +1,18 @@
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+    <f:entry title="${%NodeJS Installation}" field="nodejs_installationName">
+        <select class="setting-input" name="nodejs_installationName">
+            <j:forEach var="inst" items="${descriptor.installations}">
+                <f:option selected="${inst.name==it.nodeJSInstallationName}">${inst.name}</f:option>
+            </j:forEach>
+        </select>
+    </f:entry>
+    <f:entry title="Working Path" field="workingPath" description="The grunt working path (relative to ${WORKSPACE})">
+    	<f:textbox />
+    </f:entry>
+    <f:entry title="Grunt File Path" field="gruntFilePath" description="The grunt task configuration file (Gruntfile.js) path (relative to ${WORKSPACE}). Leave blank to use ${instance.workingPath}/Gruntfile.js">
+    	<f:textbox />
+    </f:entry>
+    <f:entry title="Grunt Task(s)" field="gruntTask" description="The grunt task(s) to execute. Multiple tasks are separated by space">
+    	<f:textbox />
+    </f:entry>
+</j:jelly>
