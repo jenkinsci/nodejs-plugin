@@ -7,12 +7,12 @@
         </select>
     </f:entry>
     <f:entry title="Working Path" field="workingPath" description="The grunt working path (relative to workspace root)">
-    	<f:textbox />
+    	<f:textbox name="workingPath" value="${it.workingPath}"/>
     </f:entry>
     <f:entry title="Grunt File Path" field="gruntFilePath" description="The grunt task configuration file (Gruntfile.js) path (relative to workspace root). Leave blank to use WORKING_PATH/Gruntfile.js">
-    	<f:textbox />
+    	<f:textbox name="gruntFilePath" value="${it.gruntFilePath}"/>
     </f:entry>
     <f:entry title="Grunt Task(s)" field="gruntTask" description="The grunt task(s) to execute. Multiple tasks are separated by space">
-    	<f:textbox />
+    	<f:textbox name="gruntTask" value="${it.gruntTask}"/>
     </f:entry>
 </j:jelly>

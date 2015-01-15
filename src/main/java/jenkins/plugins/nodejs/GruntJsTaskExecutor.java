@@ -107,6 +107,41 @@ public class GruntJsTaskExecutor extends Builder {
 		return r==0;
 
 	}
+	
+	
+	
+
+	public String getWorkingPath() {
+		return workingPath;
+	}
+
+	public void setWorkingPath(String workingPath) {
+		this.workingPath = workingPath;
+	}
+
+	public String getGruntFilePath() {
+		return gruntFilePath;
+	}
+
+	public void setGruntFilePath(String gruntFilePath) {
+		this.gruntFilePath = gruntFilePath;
+	}
+
+	public String getGruntTask() {
+		return gruntTask;
+	}
+
+	public void setGruntTask(String gruntTask) {
+		this.gruntTask = gruntTask;
+	}
+
+	public String getNodeJSInstallationName() {
+		return nodeJSInstallationName;
+	}
+
+	public void setNodeJSInstallationName(String nodeJSInstallationName) {
+		this.nodeJSInstallationName = nodeJSInstallationName;
+	}
 
 
 	/**
