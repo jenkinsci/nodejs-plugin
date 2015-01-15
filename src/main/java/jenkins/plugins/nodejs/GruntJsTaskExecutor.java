@@ -70,6 +70,7 @@ public class GruntJsTaskExecutor extends Builder {
 		} else {
 			gruntFilePath = ws.getRemote().concat(gruntFilePath);
 		}
+		String[] gruntTasks = gruntTask.split(" ");
 
 
 		int r;
@@ -93,7 +94,9 @@ public class GruntJsTaskExecutor extends Builder {
 			args.add("-v");
 			args.add("--gruntfile");
 			args.add(gruntFilePath);
-			args.add(gruntTask);
+			for (String gTask : gruntTasks) {
+				args.add(gTask);
+			}
 
 			r = launcher.launch().cmds(args).envs(envVars).stdout(listener).pwd(workingPath).join();
 		} catch (IOException e) {
