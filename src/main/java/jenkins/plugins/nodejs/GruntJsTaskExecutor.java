@@ -64,11 +64,12 @@ public class GruntJsTaskExecutor extends Builder {
 			throw new NullPointerException("no workspace from node " + node + " which is computer " + node.toComputer() + " and has channel " + node.getChannel());
 		}
 
-		workingPath = ws.getRemote().concat(workingPath);
+		String fullWorkingPath = ws.getRemote().concat(workingPath);
+		String fullGruntFilePath = null;
 		if (gruntFilePath.equals("")) {
-			gruntFilePath = "Gruntfile.js";
+			fullGruntFilePath = "Gruntfile.js";
 		} else {
-			gruntFilePath = ws.getRemote().concat(gruntFilePath);
+			fullGruntFilePath = ws.getRemote().concat(gruntFilePath);
 		}
 		String[] gruntTasks = gruntTask.split(" ");
 
@@ -93,12 +94,12 @@ public class GruntJsTaskExecutor extends Builder {
 
 			args.add("-v");
 			args.add("--gruntfile");
-			args.add(gruntFilePath);
+			args.add(fullGruntFilePath);
 			for (String gTask : gruntTasks) {
 				args.add(gTask);
 			}
 
-			r = launcher.launch().cmds(args).envs(envVars).stdout(listener).pwd(workingPath).join();
+			r = launcher.launch().cmds(args).envs(envVars).stdout(listener).pwd(fullWorkingPath).join();
 		} catch (IOException e) {
 			Util.displayIOException(e,listener);
 			e.printStackTrace(listener.fatalError(hudson.tasks.Messages.CommandInterpreter_CommandFailed()));
