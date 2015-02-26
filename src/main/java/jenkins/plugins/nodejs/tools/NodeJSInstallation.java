@@ -75,7 +75,7 @@ public class NodeJSInstallation extends ToolInstallation
     private File getExeFile() {
         String execName = (Functions.isWindows()) ? WINDOWS_NODEJS_COMMAND : UNIX_NODEJS_COMMAND;
         String nodeJSHome = Util.replaceMacro(this.nodeJSHome, EnvVars.masterEnvVars);
-        return new File(nodeJSHome, "bin/" + execName);
+        return new File(nodeJSHome, (Functions.isWindows() ? "":"bin/") + execName);
     }
 
     @Extension
