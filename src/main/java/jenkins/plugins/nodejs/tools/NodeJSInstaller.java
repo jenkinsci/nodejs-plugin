@@ -25,6 +25,7 @@ package jenkins.plugins.nodejs.tools;
 
 import com.google.common.base.Predicate;
 import com.google.common.collect.Collections2;
+
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.Functions;
@@ -39,10 +40,12 @@ import hudson.tools.DownloadFromUrlInstaller;
 import hudson.tools.ToolInstallation;
 import hudson.util.ArgumentListBuilder;
 import hudson.util.jna.GNUCLibrary;
+
 import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import javax.annotation.Nullable;
+
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
@@ -159,7 +162,17 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
 
                 hudson.Launcher launcher = node.createLauncher(log);
 
-                int returnCode = launcher.launch().cmds(npmScriptArgs).stdout(log).join();
+                String overriddenPaths;
+				try {
+					overriddenPaths = PathBuilder.buildPathEnvOverwrite(Platform.of(node) ,expected.child("bin"));
+				} catch (DetectionFailedException e) {
+		            throw new IOException(e);
+		        }
+
+                Map<String, String> env = new HashMap<String, String>();
+                env.put("PATH", overriddenPaths);
+
+                int returnCode = launcher.launch().cmds(npmScriptArgs).envs(env).stdout(log).join();
 
                 if(returnCode == 0){
                     // leave a record for the next up-to-date check

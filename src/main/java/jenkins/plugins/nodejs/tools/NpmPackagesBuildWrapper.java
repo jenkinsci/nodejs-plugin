@@ -57,7 +57,6 @@ public class NpmPackagesBuildWrapper extends BuildWrapper {
                     starterEnvs = new String[0];
                 }
 
-                String pathSeparator = File.pathSeparator;
 
                 EnvVars vars = toEnvVars(starterEnvs);
 
@@ -67,19 +66,13 @@ public class NpmPackagesBuildWrapper extends BuildWrapper {
                 try {
                     nodeJSInstallation = nodeJSInstallation.forNode(build.getBuiltOn(), listener);
                     nodeJSInstallation = nodeJSInstallation.forEnvironment(vars);
-
-                    Computer slave = Computer.currentComputer();
-                    String slavePathSeparator = (String)slave.getSystemProperties().get("path.separator");
-
-                    if (slavePathSeparator != null) {
-                        pathSeparator = slavePathSeparator;
-                    }
                 } catch (InterruptedException e) {
                     Throwables.propagate(e);
                 }
 
                 // HACK: Avoids issue with invalid separators in EnvVars::override in case of different master/slave
                 
+                String pathSeparator = PathBuilder.getPathSeperator();
                 String overriddenPaths = NodeJSInstaller.binFolderOf(nodeJSInstallation, build.getBuiltOn())
                         + pathSeparator
                         + vars.get("PATH");
