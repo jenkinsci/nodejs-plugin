@@ -166,7 +166,17 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
 
                 hudson.Launcher launcher = node.createLauncher(log);
 
-                int returnCode = launcher.launch().cmds(npmScriptArgs).stdout(log).join();
+                String overriddenPaths;
+				try {
+					overriddenPaths = PathBuilder.buildPathEnvOverwrite(Platform.of(node) ,expected.child("bin"));
+				} catch (DetectionFailedException e) {
+		            throw new IOException(e);
+		        }
+
+                Map<String, String> env = new HashMap<String, String>();
+                env.put("PATH", overriddenPaths);
+
+                int returnCode = launcher.launch().cmds(npmScriptArgs).envs(env).stdout(log).join();
 
                 if(returnCode == 0){
                     // leave a record for the next up-to-date check
