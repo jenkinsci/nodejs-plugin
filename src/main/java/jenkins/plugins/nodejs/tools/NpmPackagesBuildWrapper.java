@@ -64,19 +64,13 @@ public class NpmPackagesBuildWrapper extends BuildWrapper {
                     NodeJSPlugin.instance().findInstallationByName(nodeJSInstallationName);
 
                 try {
-                    nodeJSInstallation = nodeJSInstallation.forNode(build.getBuiltOn(), listener);
-                    nodeJSInstallation = nodeJSInstallation.forEnvironment(vars);
+                    nodeJSInstallation = nodeJSInstallation.forNode(build.getBuiltOn(), listener)
+                                                           .forEnvironment(vars);
                 } catch (InterruptedException e) {
                     Throwables.propagate(e);
                 }
 
-                // HACK: Avoids issue with invalid separators in EnvVars::override in case of different master/slave
-                
-                String pathSeparator = PathBuilder.getPathSeperator();
-                String overriddenPaths = NodeJSInstaller.binFolderOf(nodeJSInstallation, build.getBuiltOn())
-                        + pathSeparator
-                        + vars.get("PATH");
-                vars.override("PATH", overriddenPaths);
+                vars.override("PATH+PATH", NodeJSInstaller.binFolderOf(nodeJSInstallation, build.getBuiltOn()).getRemote());
 
                 return super.launch(starter.envs(Util.mapToEnv(vars)));
             }

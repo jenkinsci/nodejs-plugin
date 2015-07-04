@@ -26,10 +26,7 @@ package jenkins.plugins.nodejs.tools;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Collections2;
 
-import hudson.Extension;
-import hudson.FilePath;
-import hudson.Functions;
-import hudson.Util;
+import hudson.*;
 import hudson.model.Node;
 import hudson.model.TaskListener;
 import hudson.os.PosixAPI;
@@ -74,14 +71,16 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
         this.npmPackagesRefreshHours = npmPackagesRefreshHours;
     }
 
-    public static FilePath binFolderOf(NodeJSInstallation intallation, Node node) {
-        FilePath expected = _preferredLocation(intallation, node);
+    public static FilePath binFolderOf(NodeJSInstallation installation, Node node) {
+        FilePath expected = _preferredLocation(installation, node);
         try {
 			return Platform.of(node) == Platform.WINDOWS ? expected : expected.child("bin/");
 		} catch (Exception e) {
 			return expected.child("bin/");
 		}
     }
+
+
 
     /**
      * COPY PASTER ToolInstaller.preferredLocation() in order to make it static...
@@ -166,15 +165,8 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
 
                 hudson.Launcher launcher = node.createLauncher(log);
 
-                String overriddenPaths;
-				try {
-					overriddenPaths = PathBuilder.buildPathEnvOverwrite(Platform.of(node) ,expected.child("bin"));
-				} catch (DetectionFailedException e) {
-		            throw new IOException(e);
-		        }
-
-                Map<String, String> env = new HashMap<String, String>();
-                env.put("PATH", overriddenPaths);
+                Map<String,String> env = EnvVars.getRemote(node.getChannel());
+                env.put("PATH+PATH", expected.child("bin").getRemote());
 
                 int returnCode = launcher.launch().cmds(npmScriptArgs).envs(env).stdout(log).join();
 
