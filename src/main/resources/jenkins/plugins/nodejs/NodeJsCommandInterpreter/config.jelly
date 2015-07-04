@@ -2,7 +2,7 @@
     <f:entry title="${%NodeJS Installation}" field="nodejs_installationName">
         <select class="setting-input" name="nodejs_installationName">
             <j:forEach var="inst" items="${descriptor.installations}">
-                <f:option selected="${inst.name==it.nodeJSInstallationName}">${inst.name}</f:option>
+                <f:option selected="${inst.name==instance.nodeJSInstallationName}">${inst.name}</f:option>
             </j:forEach>
         </select>
     </f:entry>
