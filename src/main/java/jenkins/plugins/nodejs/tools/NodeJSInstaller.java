@@ -65,53 +65,11 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
     private final Long npmPackagesRefreshHours;
 
     @DataBoundConstructor
-    public NodeJSInstaller(String id, String npmPackages, long npmPackagesRefreshHours)    {
+    public NodeJSInstaller(String id, String npmPackages, long npmPackagesRefreshHours) {
         super(id);
         this.npmPackages = npmPackages;
         this.npmPackagesRefreshHours = npmPackagesRefreshHours;
     }
-
-    public static FilePath binFolderOf(NodeJSInstallation installation, Node node) {
-        FilePath expected = _preferredLocation(installation, node);
-        try {
-			return Platform.of(node) == Platform.WINDOWS ? expected : expected.child("bin/");
-		} catch (Exception e) {
-			return expected.child("bin/");
-		}
-    }
-
-
-
-    /**
-     * COPY PASTER ToolInstaller.preferredLocation() in order to make it static...
-     * Weird
-     *
-     * Convenience method to find a location to install a tool.
-     * @param tool the tool being installed
-     * @param node the computer on which to install the tool
-     * @return {@link ToolInstallation#getHome} if specified, else a path within the local
-     *         Jenkins work area named according to {@link ToolInstallation#getName}
-     * @since 1.310
-     */
-    protected static FilePath _preferredLocation(ToolInstallation tool, Node node) {
-        if (node == null) {
-            throw new IllegalArgumentException("must pass non-null node");
-        }
-        String home = Util.fixEmptyAndTrim(tool.getHome());
-        if (home == null) {
-            home = sanitize(tool.getDescriptor().getId()) + File.separatorChar + sanitize(tool.getName());
-        }
-        FilePath root = node.getRootPath();
-        if (root == null) {
-            throw new IllegalArgumentException("Node " + node.getDisplayName() + " seems to be offline");
-        }
-        return root.child("tools").child(home);
-    }
-
-    private static String sanitize(String s) {
-        return s != null ? s.replaceAll("[^A-Za-z0-9_.-]+", "_") : null;
-    }
-
 
 
     // Overriden performInstallation() in order to provide a custom

@@ -5,14 +5,12 @@ import hudson.*;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.BuildListener;
-import hudson.model.Computer;
 import hudson.model.Run;
 import jenkins.plugins.nodejs.NodeJSPlugin;
 import hudson.tasks.BuildWrapper;
 import hudson.tasks.BuildWrapperDescriptor;
 import org.kohsuke.stapler.DataBoundConstructor;
 
-import java.io.File;
 import java.io.IOException;
 
 /**
@@ -70,7 +68,7 @@ public class NpmPackagesBuildWrapper extends BuildWrapper {
                     Throwables.propagate(e);
                 }
 
-                vars.override("PATH+PATH", NodeJSInstaller.binFolderOf(nodeJSInstallation, build.getBuiltOn()).getRemote());
+                vars.override("PATH+PATH", nodeJSInstallation.binFolder());
 
                 return super.launch(starter.envs(Util.mapToEnv(vars)));
             }
