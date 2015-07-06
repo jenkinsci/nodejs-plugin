@@ -5,14 +5,12 @@ import hudson.*;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.BuildListener;
-import hudson.model.Computer;
 import hudson.model.Run;
 import jenkins.plugins.nodejs.NodeJSPlugin;
 import hudson.tasks.BuildWrapper;
 import hudson.tasks.BuildWrapperDescriptor;
 import org.kohsuke.stapler.DataBoundConstructor;
 
-import java.io.File;
 import java.io.IOException;
 
 /**
@@ -57,7 +55,6 @@ public class NpmPackagesBuildWrapper extends BuildWrapper {
                     starterEnvs = new String[0];
                 }
 
-                String pathSeparator = File.pathSeparator;
 
                 EnvVars vars = toEnvVars(starterEnvs);
 
@@ -65,25 +62,13 @@ public class NpmPackagesBuildWrapper extends BuildWrapper {
                     NodeJSPlugin.instance().findInstallationByName(nodeJSInstallationName);
 
                 try {
-                    nodeJSInstallation = nodeJSInstallation.forNode(build.getBuiltOn(), listener);
-                    nodeJSInstallation = nodeJSInstallation.forEnvironment(vars);
-
-                    Computer slave = Computer.currentComputer();
-                    String slavePathSeparator = (String)slave.getSystemProperties().get("path.separator");
-
-                    if (slavePathSeparator != null) {
-                        pathSeparator = slavePathSeparator;
-                    }
+                    nodeJSInstallation = nodeJSInstallation.forNode(build.getBuiltOn(), listener)
+                                                           .forEnvironment(vars);
                 } catch (InterruptedException e) {
                     Throwables.propagate(e);
                 }
 
-                // HACK: Avoids issue with invalid separators in EnvVars::override in case of different master/slave
-                
-                String overriddenPaths = NodeJSInstaller.binFolderOf(nodeJSInstallation, build.getBuiltOn())
-                        + pathSeparator
-                        + vars.get("PATH");
-                vars.override("PATH", overriddenPaths);
+                vars.override("PATH+PATH", nodeJSInstallation.binFolder());
 
                 return super.launch(starter.envs(Util.mapToEnv(vars)));
             }

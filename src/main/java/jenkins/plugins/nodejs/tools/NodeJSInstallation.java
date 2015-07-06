@@ -78,6 +78,14 @@ public class NodeJSInstallation extends ToolInstallation
         return new File(nodeJSHome, "bin/" + execName);
     }
 
+    public String binFolder() {
+        String nodeJSHome =  Util.replaceMacro(getHome(), EnvVars.masterEnvVars);
+        if( Functions.isWindows() ) {
+            return nodeJSHome;
+        }
+        return nodeJSHome+"/bin/";
+    }
+
     @Extension
     public static class DescriptorImpl extends ToolDescriptor<NodeJSInstallation> {
 
