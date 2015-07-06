@@ -26,10 +26,7 @@ package jenkins.plugins.nodejs.tools;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Collections2;
 
-import hudson.Extension;
-import hudson.FilePath;
-import hudson.Functions;
-import hudson.Util;
+import hudson.*;
 import hudson.model.Node;
 import hudson.model.TaskListener;
 import hudson.os.PosixAPI;
@@ -68,47 +65,11 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
     private final Long npmPackagesRefreshHours;
 
     @DataBoundConstructor
-    public NodeJSInstaller(String id, String npmPackages, long npmPackagesRefreshHours)    {
+    public NodeJSInstaller(String id, String npmPackages, long npmPackagesRefreshHours) {
         super(id);
         this.npmPackages = npmPackages;
         this.npmPackagesRefreshHours = npmPackagesRefreshHours;
     }
-
-    public static FilePath binFolderOf(NodeJSInstallation intallation, Node node) {
-        FilePath expected = _preferredLocation(intallation, node);
-        return expected.child("bin/");
-    }
-
-    /**
-     * COPY PASTER ToolInstaller.preferredLocation() in order to make it static...
-     * Weird
-     *
-     * Convenience method to find a location to install a tool.
-     * @param tool the tool being installed
-     * @param node the computer on which to install the tool
-     * @return {@link ToolInstallation#getHome} if specified, else a path within the local
-     *         Jenkins work area named according to {@link ToolInstallation#getName}
-     * @since 1.310
-     */
-    protected static FilePath _preferredLocation(ToolInstallation tool, Node node) {
-        if (node == null) {
-            throw new IllegalArgumentException("must pass non-null node");
-        }
-        String home = Util.fixEmptyAndTrim(tool.getHome());
-        if (home == null) {
-            home = sanitize(tool.getDescriptor().getId()) + File.separatorChar + sanitize(tool.getName());
-        }
-        FilePath root = node.getRootPath();
-        if (root == null) {
-            throw new IllegalArgumentException("Node " + node.getDisplayName() + " seems to be offline");
-        }
-        return root.child("tools").child(home);
-    }
-
-    private static String sanitize(String s) {
-        return s != null ? s.replaceAll("[^A-Za-z0-9_.-]+", "_") : null;
-    }
-
 
 
     // Overriden performInstallation() in order to provide a custom
@@ -162,15 +123,8 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
 
                 hudson.Launcher launcher = node.createLauncher(log);
 
-                String overriddenPaths;
-				try {
-					overriddenPaths = PathBuilder.buildPathEnvOverwrite(Platform.of(node) ,expected.child("bin"));
-				} catch (DetectionFailedException e) {
-		            throw new IOException(e);
-		        }
-
-                Map<String, String> env = new HashMap<String, String>();
-                env.put("PATH", overriddenPaths);
+                Map<String,String> env = EnvVars.getRemote(node.getChannel());
+                env.put("PATH+PATH", expected.child("bin").getRemote());
 
                 int returnCode = launcher.launch().cmds(npmScriptArgs).envs(env).stdout(log).join();
 
