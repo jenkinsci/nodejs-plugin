@@ -31,7 +31,7 @@ public class NpmPackagesBuildWrapper extends SimpleBuildWrapper {
     @Override
     public void setUp(Context context, Run<?, ?> build, FilePath workspace, Launcher launcher, TaskListener listener, EnvVars env) throws IOException, InterruptedException {
 
-        final Computer computer = Computer.currentComputer();
+        final Computer computer = workspace.toComputer();
 
         NodeJSInstallation nodeJSInstallation =
             NodeJSPlugin.instance().findInstallationByName(nodeJSInstallationName);
