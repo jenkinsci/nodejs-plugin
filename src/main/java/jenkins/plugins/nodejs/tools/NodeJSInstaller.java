@@ -33,6 +33,7 @@ import hudson.Util;
 import hudson.model.Node;
 import hudson.model.TaskListener;
 import hudson.os.PosixAPI;
+import jenkins.MasterToSlaveFileCallable;
 import jenkins.plugins.tools.Installables;
 import hudson.remoting.Callable;
 import hudson.remoting.VirtualChannel;
@@ -41,6 +42,7 @@ import hudson.tools.ToolInstallation;
 import hudson.util.ArgumentListBuilder;
 import hudson.util.jna.GNUCLibrary;
 
+import jenkins.security.MasterToSlaveCallable;
 import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement;
 import org.kohsuke.stapler.DataBoundConstructor;
 
@@ -72,15 +74,6 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
         super(id);
         this.npmPackages = npmPackages;
         this.npmPackagesRefreshHours = npmPackagesRefreshHours;
-    }
-
-    public static FilePath binFolderOf(NodeJSInstallation intallation, Node node) {
-        FilePath expected = _preferredLocation(intallation, node);
-        try {
-			return Platform.of(node) == Platform.WINDOWS ? expected : expected.child("bin/");
-		} catch (Exception e) {
-			return expected.child("bin/");
-		}
     }
 
     /**
@@ -214,7 +207,7 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
      * Sets execute permission on all files, since unzip etc. might not do this.
      * Hackish, is there a better way?
      */
-    static class ChmodRecAPlusX implements FilePath.FileCallable<Void> {
+    static class ChmodRecAPlusX extends MasterToSlaveFileCallable<Void> {
         private static final long serialVersionUID = 1L;
         public Void invoke(File d, VirtualChannel channel) throws IOException {
             if(!Functions.isWindows())
@@ -292,7 +285,7 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
             throw new DetectionFailedException("Unknown CPU name: "+arch);
         }
 
-        static class GetCurrentPlatform implements Callable<Platform,DetectionFailedException> {
+        static class GetCurrentPlatform extends MasterToSlaveCallable<Platform,DetectionFailedException> {
             private static final long serialVersionUID = 1L;
             public Platform call() throws DetectionFailedException {
                 return current();
@@ -344,7 +337,7 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
             throw new DetectionFailedException("Unknown CPU architecture: "+arch);
         }
 
-        static class GetCurrentCPU implements Callable<CPU,DetectionFailedException> {
+        static class GetCurrentCPU extends MasterToSlaveCallable<CPU,DetectionFailedException> {
             private static final long serialVersionUID = 1L;
             public CPU call() throws DetectionFailedException {
                 return current();
