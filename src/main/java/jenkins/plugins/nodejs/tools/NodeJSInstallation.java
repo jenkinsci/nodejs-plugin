@@ -15,6 +15,7 @@ import hudson.tools.ToolProperty;
 import jenkins.security.MasterToSlaveCallable;
 import org.kohsuke.stapler.DataBoundConstructor;
 
+import javax.annotation.Nonnull;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
@@ -53,6 +54,10 @@ public class NodeJSInstallation extends ToolInstallation
             return nodeJSHome;
         }
         return super.getHome();
+    }
+
+    public NodeJSInstallation translate(@Nonnull Node node, EnvVars envs, TaskListener listener) throws IOException, InterruptedException {
+        return (NodeJSInstallation) super.translate(node, envs, listener);
     }
 
     public NodeJSInstallation forEnvironment(EnvVars environment) {

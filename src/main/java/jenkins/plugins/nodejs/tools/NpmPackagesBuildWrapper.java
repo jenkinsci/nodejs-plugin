@@ -36,11 +36,9 @@ public class NpmPackagesBuildWrapper extends SimpleBuildWrapper {
         NodeJSInstallation nodeJSInstallation =
             NodeJSPlugin.instance().findInstallationByName(nodeJSInstallationName);
 
-        nodeJSInstallation = nodeJSInstallation.forNode(computer.getNode(), listener);
-        nodeJSInstallation = nodeJSInstallation.forEnvironment(env);
-        String binFolder = nodeJSInstallation.getBinFolder();
+        nodeJSInstallation = nodeJSInstallation.translate(computer.getNode(), env, listener);
 
-        context.env("PATH+NODEJS", binFolder);
+        context.env("PATH+NODEJS", nodeJSInstallation.getBinFolder());
     }
 
 
