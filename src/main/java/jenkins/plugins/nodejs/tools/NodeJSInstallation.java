@@ -92,9 +92,10 @@ public class NodeJSInstallation extends ToolInstallation
         return new File(getBinFolder(), execName);
     }
 
-    String getBinFolder() {
+    protected String getBinFolder() {
         return unix ? getHome()+"/bin" : getHome();
     }
+
 
     @Extension
     public static class DescriptorImpl extends ToolDescriptor<NodeJSInstallation> {
