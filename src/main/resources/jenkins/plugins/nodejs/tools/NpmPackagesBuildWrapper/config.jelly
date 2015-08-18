@@ -2,12 +2,8 @@
          xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
 
   <f:entry title="${%Installation}" field="nodeJSInstallationName">
-      <select class="setting-input" name="nodeJSInstallationName">
-          <j:forEach var="inst" items="${descriptor.installations}">
-              <f:option selected="${inst.name==instance.nodeJSInstallationName}">${inst.name}</f:option>
-          </j:forEach>
-      </select>
-      <f:description>${%Specify needed nodejs installation where npm installed packages will be provided to the PATH}</f:description>
+    <f:select/>
+    <f:description>${%Specify needed nodejs installation where npm installed packages will be provided to the PATH}</f:description>
   </f:entry>
 
 </j:jelly>

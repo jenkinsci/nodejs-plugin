@@ -5,6 +5,7 @@ import hudson.model.AbstractProject;
 import hudson.model.Computer;
 import hudson.model.Run;
 import hudson.model.TaskListener;
+import hudson.util.ListBoxModel;
 import jenkins.plugins.nodejs.NodeJSPlugin;
 import hudson.tasks.BuildWrapperDescriptor;
 import jenkins.tasks.SimpleBuildWrapper;
@@ -59,6 +60,14 @@ public class NpmPackagesBuildWrapper extends SimpleBuildWrapper {
 
         public String getDisplayName() {
             return jenkins.plugins.nodejs.tools.Messages.NpmPackagesBuildWrapper_displayName();
+        }
+
+        public ListBoxModel doFillNodeJSInstallationNameItems() {
+            final ListBoxModel options = new ListBoxModel();
+            for (NodeJSInstallation installation : getInstallations()) {
+                options.add(installation.getName(), installation.getName());
+            }
+            return options;
         }
     }
 }
