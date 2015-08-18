@@ -31,11 +31,17 @@ public class NodeJSInstallation extends ToolInstallation
     private static final String UNIX_NODEJS_COMMAND = "node";
 
     private final String nodeJSHome;
+    private boolean unix;
 
     @DataBoundConstructor
     public NodeJSInstallation(String name, String home, List<? extends ToolProperty<?>> properties) {
         super(name, launderHome(home), properties);
         this.nodeJSHome = super.getHome();
+    }
+
+    public NodeJSInstallation(String name, String home, List<? extends ToolProperty<?>> properties, boolean unix) {
+        this(name, home, properties);
+        this.unix = unix;
     }
 
     private static String launderHome(String home) {
@@ -61,40 +67,32 @@ public class NodeJSInstallation extends ToolInstallation
     }
 
     public NodeJSInstallation forEnvironment(EnvVars environment) {
-        return new NodeJSInstallation(getName(), environment.expand(nodeJSHome), getProperties().toList());
+        return new NodeJSInstallation(getName(), environment.expand(nodeJSHome), getProperties().toList(), unix);
     }
 
     public NodeJSInstallation forNode(Node node, TaskListener log) throws IOException, InterruptedException {
-        return new NodeJSInstallation(getName(), translateFor(node, log), getProperties().toList());
+        Computer computer = node.toComputer();
+        // TODO post 1.624 use Computer#isUnix
+        if (computer instanceof SlaveComputer)
+            unix = ((SlaveComputer) computer).isUnix();
+        else
+            unix = !Functions.isWindows();
+
+        return new NodeJSInstallation(getName(), translateFor(node, log), getProperties().toList(), unix);
     }
 
-    public String getExecutable(Launcher launcher) throws InterruptedException, IOException {
-        return launcher.getChannel().call(new MasterToSlaveCallable<String, IOException>() {
-            private static final long serialVersionUID = 1L;
+    public String getExecutable(final Launcher launcher) throws InterruptedException, IOException {
 
-            public String call() throws IOException {
-                File exe = getExeFile();
-                if (exe.exists()) {
-                    return exe.getPath();
-                }
-                return null;
-            }
-        });
+        final File exe = getExeFile();
+        return launcher.getChannel().call(new CheckNodeExecutable(exe));
     }
 
     private File getExeFile() {
-        String execName = (Functions.isWindows()) ? WINDOWS_NODEJS_COMMAND : UNIX_NODEJS_COMMAND;
-        String nodeJSHome = Util.replaceMacro(this.nodeJSHome, EnvVars.masterEnvVars);
-        return new File(nodeJSHome, "bin/" + execName);
+        String execName = unix ? UNIX_NODEJS_COMMAND : WINDOWS_NODEJS_COMMAND;
+        return new File(getBinFolder(), execName);
     }
 
     String getBinFolder() {
-        final Computer computer = Computer.currentComputer();
-
-        // TODO post 1.624 use Computer#isUnix
-        boolean unix = !Functions.isWindows();
-        if (computer instanceof SlaveComputer)
-            unix = ((SlaveComputer) computer).isUnix();
         return unix ? getHome()+"/bin" : getHome();
     }
 
@@ -121,5 +119,21 @@ public class NodeJSInstallation extends ToolInstallation
             NodeJSPlugin.instance().setInstallations(installations);
         }
 
+    }
+
+    private static class CheckNodeExecutable extends MasterToSlaveCallable<String, IOException> {
+        private static final long serialVersionUID = 1L;
+        private final File exe;
+
+        public CheckNodeExecutable(File exe) {
+            this.exe = exe;
+        }
+
+        public String call() throws IOException {
+            if (exe.exists()) {
+                return exe.getPath();
+            }
+            return null;
+        }
     }
 }
