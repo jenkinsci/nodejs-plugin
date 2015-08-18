@@ -159,7 +159,9 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
 
                 hudson.Launcher launcher = node.createLauncher(log);
 
-                int returnCode = launcher.launch().cmds(npmScriptArgs).stdout(log).join();
+                int returnCode = launcher.launch()
+                        .envs("PATH+NODEJS="+expected.child("bin").getRemote())
+                        .cmds(npmScriptArgs).stdout(log).join();
 
                 if(returnCode == 0){
                     // leave a record for the next up-to-date check
