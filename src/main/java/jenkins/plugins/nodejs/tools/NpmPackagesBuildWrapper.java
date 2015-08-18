@@ -3,6 +3,7 @@ package jenkins.plugins.nodejs.tools;
 import hudson.*;
 import hudson.model.AbstractProject;
 import hudson.model.Computer;
+import hudson.model.Node;
 import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.util.ListBoxModel;
@@ -33,11 +34,15 @@ public class NpmPackagesBuildWrapper extends SimpleBuildWrapper {
     public void setUp(Context context, Run<?, ?> build, FilePath workspace, Launcher launcher, TaskListener listener, EnvVars env) throws IOException, InterruptedException {
 
         final Computer computer = workspace.toComputer();
+        if (computer == null) throw new IllegalStateException("Build computer is null");
 
         NodeJSInstallation nodeJSInstallation =
             NodeJSPlugin.instance().findInstallationByName(nodeJSInstallationName);
 
-        nodeJSInstallation = nodeJSInstallation.translate(computer.getNode(), env, listener);
+        final Node node = computer.getNode();
+        if (node == null) throw new IllegalStateException("Build node is null");
+
+        nodeJSInstallation = nodeJSInstallation.translate(node, env, listener);
 
         context.env("PATH+NODEJS", nodeJSInstallation.getBinFolder());
     }
