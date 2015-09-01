@@ -7,7 +7,6 @@ import hudson.model.Node;
 import hudson.model.TaskListener;
 import hudson.slaves.SlaveComputer;
 import jenkins.plugins.nodejs.NodeJSPlugin;
-import hudson.remoting.Callable;
 import hudson.slaves.NodeSpecific;
 import hudson.tools.ToolDescriptor;
 import hudson.tools.ToolInstallation;
