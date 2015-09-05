@@ -24,7 +24,7 @@ import static org.hamcrest.Matchers.is;
 @RunWith(Parameterized.class)
 public class InstallerPathResolversTest {
 
-    private static final NodeJSInstaller.Platform[] TESTABLE_PLATFORMS = new NodeJSInstaller.Platform[]{ NodeJSInstaller.Platform.LINUX, NodeJSInstaller.Platform.MAC };
+    private static final NodeJSInstaller.Platform[] TESTABLE_PLATFORMS = new NodeJSInstaller.Platform[]{ NodeJSInstaller.Platform.LINUX, NodeJSInstaller.Platform.MAC, NodeJSInstaller.Platform.WINDOWS }; 
     private static final NodeJSInstaller.CPU[] TESTABLE_CPUS = NodeJSInstaller.CPU.values();
 
     private DownloadFromUrlInstaller.Installable installable;
