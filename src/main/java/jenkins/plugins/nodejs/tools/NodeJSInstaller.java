@@ -155,7 +155,6 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
                 String archiveIntermediateDirectoryName = (platform == NodeJSInstaller.Platform.WINDOWS) ? 
                             "nodejs" : installerPathResolver.extractArchiveIntermediateDirectoryName(relativeDownloadPath);
                 this.pullUpDirectory(expected, archiveIntermediateDirectoryName);
-                
                 // leave a record for the next up-to-date check
                 expected.child(".installedFrom").write(inst.url,"UTF-8");
                 expected.act(new ChmodRecAPlusX());
@@ -169,7 +168,7 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
                 expected.child(NPM_PACKAGES_RECORD_FILENAME).delete();
                 ArgumentListBuilder npmScriptArgs = new ArgumentListBuilder();
 
-                FilePath npmExe = expected.child(platform ==  Platform.WINDOWS ? "npm.cmd" : "bin/npm");
+                FilePath npmExe = expected.child(platform == Platform.WINDOWS ? "npm.cmd" : "bin/npm");
                 if (platform ==  Platform.WINDOWS)
                 {
                     npmScriptArgs.add("cmd");
