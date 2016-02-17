@@ -62,6 +62,12 @@ THE SOFTWARE.
       </j:otherwise>
     </j:choose>
   </f:entry>
+  <f:entry title="${%Global npm configs}" field="npmConfigs">
+	    <f:textarea name="npmConfigs" />
+	    <f:description>
+	        ${%Specify list config keys to set globally -- see npm config set `key` `value` --global. Note that you can set local registry or proxy configs. Write a `key` `value` per line.}
+	    </f:description>
+	</f:entry>
     <f:entry title="${%Global npm packages to install}" field="npmPackages">
         <f:textbox name="npmPackages" />
         <f:description>
