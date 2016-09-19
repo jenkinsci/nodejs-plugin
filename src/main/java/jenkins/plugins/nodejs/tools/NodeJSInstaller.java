@@ -32,16 +32,14 @@ import hudson.Functions;
 import hudson.Util;
 import hudson.model.Node;
 import hudson.model.TaskListener;
-import hudson.os.PosixAPI;
 import jenkins.MasterToSlaveFileCallable;
 import jenkins.plugins.tools.Installables;
 import hudson.remoting.VirtualChannel;
 import hudson.tools.DownloadFromUrlInstaller;
 import hudson.tools.ToolInstallation;
 import hudson.util.ArgumentListBuilder;
-import hudson.util.jna.GNUCLibrary;
-
 import jenkins.security.MasterToSlaveCallable;
+
 import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement;
 import org.kohsuke.stapler.DataBoundConstructor;
 
@@ -52,7 +50,6 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Logger;
 
 import static jenkins.plugins.nodejs.tools.NodeJSInstaller.Preference.*;
 
@@ -243,17 +240,7 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
         @IgnoreJRERequirement
         private void process(File f) {
             if (f.isFile()) {
-                if(Functions.isMustangOrAbove())
-                    f.setExecutable(true, false);
-                else {
-                    try {
-                        GNUCLibrary.LIBC.chmod(f.getAbsolutePath(),0755);
-                    } catch (LinkageError e) {
-                        // if JNA is unavailable, fall back.
-                        // we still prefer to try JNA first as PosixAPI supports even smaller platforms.
-                        PosixAPI.get().chmod(f.getAbsolutePath(),0755);
-                    }
-                }
+                f.setExecutable(true, false);
             } else {
                 File[] kids = f.listFiles();
                 if (kids != null) {
@@ -375,6 +362,7 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
     /**
      * Indicates the failure to detect the OS or CPU.
      */
+    @SuppressWarnings("serial")
     private static final class DetectionFailedException extends Exception {
         private DetectionFailedException(String message) {
             super(message);
@@ -417,5 +405,4 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
         }
     }
 
-    private static final Logger LOGGER = Logger.getLogger(NodeJSInstaller.class.getName());
 }
