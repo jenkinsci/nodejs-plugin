@@ -32,17 +32,14 @@ import hudson.Functions;
 import hudson.Util;
 import hudson.model.Node;
 import hudson.model.TaskListener;
-import hudson.os.PosixAPI;
 import jenkins.MasterToSlaveFileCallable;
 import jenkins.plugins.tools.Installables;
-import hudson.remoting.Callable;
 import hudson.remoting.VirtualChannel;
 import hudson.tools.DownloadFromUrlInstaller;
 import hudson.tools.ToolInstallation;
 import hudson.util.ArgumentListBuilder;
-import hudson.util.jna.GNUCLibrary;
-
 import jenkins.security.MasterToSlaveCallable;
+
 import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement;
 import org.kohsuke.stapler.DataBoundConstructor;
 
@@ -53,7 +50,6 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Logger;
 
 import static jenkins.plugins.nodejs.tools.NodeJSInstaller.Preference.*;
 
@@ -66,6 +62,8 @@ import static jenkins.plugins.nodejs.tools.NodeJSInstaller.Preference.*;
 public class NodeJSInstaller extends DownloadFromUrlInstaller {
 
     public static final String NPM_PACKAGES_RECORD_FILENAME = ".npmPackages";
+    private static final String UTF_8 = "UTF-8";
+
     private final String npmPackages;
     private final Long npmPackagesRefreshHours;
 
@@ -137,10 +135,12 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
                 this.pullUpDirectory(expected, archiveIntermediateDirectoryName);
 
                 // leave a record for the next up-to-date check
-                expected.child(".installedFrom").write(inst.url,"UTF-8");
+                expected.child(".installedFrom").write(inst.url, UTF_8);
                 expected.act(new ChmodRecAPlusX());
             }
         }
+
+        fixPrefixVariable(expected);
 
         // Installing npm packages if needed
         if(this.npmPackages != null && !"".equals(this.npmPackages)){
@@ -165,13 +165,34 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
 
                 if(returnCode == 0){
                     // leave a record for the next up-to-date check
-                    expected.child(NPM_PACKAGES_RECORD_FILENAME).write(this.npmPackages,"UTF-8");
+                    expected.child(NPM_PACKAGES_RECORD_FILENAME).write(this.npmPackages, UTF_8);
                     expected.child(NPM_PACKAGES_RECORD_FILENAME).act(new ChmodRecAPlusX());
                 }
             }
         }
 
         return expected;
+    }
+
+    /*
+     * Configure prefix variable that cause problem when install global packages if not configured by user
+     */
+    private void fixPrefixVariable(FilePath expected) throws IOException, InterruptedException {
+        // configure the NodeJS 6.x prefix variable path
+        if (Version.parseVersion(id).getMajor() >= 6) {
+	        FilePath npmConfig = expected.child("lib").child("node_modules").child("npm").child("npmrc");
+	        if (!npmConfig.exists()) {
+	        	npmConfig.getParent().mkdirs();
+	        	npmConfig.touch(new Date().getTime());
+	        }
+
+	        NpmConfig npmrc = NpmConfig.load(new File(npmConfig.getRemote()));
+	        // set prefix variable only if not set by user
+	        if (!npmrc.containsKey("prefix")) {
+	        	npmrc.set("prefix", expected.getRemote());
+	        	npmrc.save();
+	        }
+        }
     }
 
     private static boolean areNpmPackagesUpToDate(FilePath expected, String npmPackages, long npmPackagesRefreshHours) throws IOException, InterruptedException {
@@ -219,17 +240,7 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
         @IgnoreJRERequirement
         private void process(File f) {
             if (f.isFile()) {
-                if(Functions.isMustangOrAbove())
-                    f.setExecutable(true, false);
-                else {
-                    try {
-                        GNUCLibrary.LIBC.chmod(f.getAbsolutePath(),0755);
-                    } catch (LinkageError e) {
-                        // if JNA is unavailable, fall back.
-                        // we still prefer to try JNA first as PosixAPI supports even smaller platforms.
-                        PosixAPI.get().chmod(f.getAbsolutePath(),0755);
-                    }
-                }
+                f.setExecutable(true, false);
             } else {
                 File[] kids = f.listFiles();
                 if (kids != null) {
@@ -351,6 +362,7 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
     /**
      * Indicates the failure to detect the OS or CPU.
      */
+    @SuppressWarnings("serial")
     private static final class DetectionFailedException extends Exception {
         private DetectionFailedException(String message) {
             super(message);
@@ -393,5 +405,4 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
         }
     }
 
-    private static final Logger LOGGER = Logger.getLogger(NodeJSInstaller.class.getName());
 }
