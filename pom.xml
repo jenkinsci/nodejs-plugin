@@ -40,13 +40,17 @@
         </license>
     </licenses>
 
+    <properties>
+        <findbugs.failOnError>false</findbugs.failOnError>
+    </properties>
+
     <dependencies>
     </dependencies>
-    
+
     <repositories>
         <repository>
             <id>repo.jenkins-ci.org</id>
-            <url>http://repo.jenkins-ci.org/public/</url>                   
+            <url>http://repo.jenkins-ci.org/public/</url>
             <releases>  
                 <enabled>true</enabled>
             </releases>
