@@ -29,6 +29,9 @@ import com.google.common.collect.Collections2;
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.Functions;
+import hudson.Launcher;
+import hudson.Launcher.ProcStarter;
+import hudson.ProxyConfiguration;
 import hudson.Util;
 import hudson.model.Node;
 import hudson.model.TaskListener;
@@ -41,6 +44,7 @@ import hudson.tools.DownloadFromUrlInstaller;
 import hudson.tools.ToolInstallation;
 import hudson.util.ArgumentListBuilder;
 import hudson.util.jna.GNUCLibrary;
+import hudson.util.IOException2;
 
 import jenkins.security.MasterToSlaveCallable;
 import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement;
@@ -51,6 +55,7 @@ import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.net.URLConnection;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
@@ -106,8 +111,6 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
         return s != null ? s.replaceAll("[^A-Za-z0-9_.-]+", "_") : null;
     }
 
-
-
     // Overriden performInstallation() in order to provide a custom
     // url (installable.url should be platform+cpu dependant)
     // + pullUp directory impl should differ from DownloadFromUrlInstaller
@@ -129,19 +132,35 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
         String relativeDownloadPath = createDownloadUrl(installerPathResolver, inst, node, log);
         inst.url += relativeDownloadPath;
 
+        Platform platform = null;
+        try {
+            platform = Platform.of(node);
+        } catch (DetectionFailedException e) {
+            throw new IOException(e);
+        }
+
         boolean skipNodeJSInstallation = isUpToDate(expected, inst);
         if(!skipNodeJSInstallation) {
-            if(expected.installIfNecessaryFrom(new URL(inst.url), log, "Unpacking " + inst.url + " to " + expected + " on " + node.getDisplayName())) {
+            boolean result = false;
+            
+            if (platform == NodeJSInstaller.Platform.WINDOWS)
+            {
+                result = installIfNecessaryMSI(expected, new URL(inst.url), log, "Installing " + inst.url + " to " + expected + " on " + node.getDisplayName());
+            } else {
+                result = expected.installIfNecessaryFrom(new URL(inst.url), log, "Unpacking " + inst.url + " to " + expected + " on " + node.getDisplayName());
+            }
+            if(result) {
                 expected.child(".timestamp").delete(); // we don't use the timestamp
-                String archiveIntermediateDirectoryName = installerPathResolver.extractArchiveIntermediateDirectoryName(relativeDownloadPath);
+                
+                String archiveIntermediateDirectoryName = (platform == NodeJSInstaller.Platform.WINDOWS) ? 
+                            "nodejs" : installerPathResolver.extractArchiveIntermediateDirectoryName(relativeDownloadPath);
                 this.pullUpDirectory(expected, archiveIntermediateDirectoryName);
-
                 // leave a record for the next up-to-date check
                 expected.child(".installedFrom").write(inst.url,"UTF-8");
                 expected.act(new ChmodRecAPlusX());
             }
         }
-
+        
         // Installing npm packages if needed
         if(this.npmPackages != null && !"".equals(this.npmPackages)){
             boolean skipNpmPackageInstallation = areNpmPackagesUpToDate(expected, this.npmPackages, this.npmPackagesRefreshHours);
@@ -149,7 +168,12 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
                 expected.child(NPM_PACKAGES_RECORD_FILENAME).delete();
                 ArgumentListBuilder npmScriptArgs = new ArgumentListBuilder();
 
-                FilePath npmExe = expected.child("bin/npm");
+                FilePath npmExe = expected.child(platform == Platform.WINDOWS ? "npm.cmd" : "bin/npm");
+                if (platform ==  Platform.WINDOWS)
+                {
+                    npmScriptArgs.add("cmd");
+                    npmScriptArgs.add("/c");
+                }
                 npmScriptArgs.add(npmExe);
                 npmScriptArgs.add("install");
                 npmScriptArgs.add("-g");
@@ -200,6 +224,73 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
             return installerPathResolver.resolvePathFor(installable.id, platform, cpu);
         } catch (DetectionFailedException e) {
             throw new IOException(e);
+        }
+    }
+    
+    private boolean installIfNecessaryMSI(FilePath expected, URL archive, TaskListener listener, String message) throws IOException, InterruptedException {
+    
+         listener.getLogger().println("expected: "+expected.getRemote());
+        
+        try {
+            URLConnection con;
+            try {
+                con = ProxyConfiguration.open(archive);
+                con.connect();
+            } catch (IOException x) {
+                if (expected.exists()) {
+                    // Cannot connect now, so assume whatever was last unpacked is still OK.
+                    if (listener != null) {
+                        listener.getLogger().println("Skipping installation of " + archive + " to " + expected.getRemote() + ": " + x);
+                    }
+                    return false;
+                } else {
+                    throw x;
+                }
+            }
+            long sourceTimestamp = con.getLastModified();
+            FilePath timestamp = expected.child(".timestamp");
+            
+            if (expected.exists()) {
+                if (timestamp.exists() && sourceTimestamp == timestamp.lastModified()) {
+                    return false;   // already up to date
+                }
+                expected.deleteContents();
+            } else {
+                expected.mkdirs();
+            }
+
+            if (listener != null) {
+                listener.getLogger().println(message);
+            }
+           
+            FilePath temp = expected.createTempDir("_temp", "");
+            FilePath msi = temp.child("nodejs.msi");
+
+            msi.copyFrom(archive);
+            try {
+                Launcher launch = temp.createLauncher(listener);
+                ProcStarter starter = launch.launch().cmds(new File("cmd"), "/c", "for %A in (.) do msiexec TARGETDIR=%~sA /a "+temp.getName()+"\\nodejs.msi /qn /l* log.txt");
+                starter=starter.pwd(expected);
+                
+                int exitCode=starter.join();
+                if (exitCode != 0) {
+                    throw new IOException2("msiexec failed. exit code: "+exitCode, null);
+                }
+                
+                if (listener != null) {
+                    listener.getLogger().println("msi install complete");
+                }
+                
+                FilePath installed = temp.child("nodejs");
+                installed.copyRecursiveTo(expected);
+                temp.deleteRecursive();
+            } catch (IOException e) {
+                throw new IOException2("Failed to install "+ archive, e);
+            }
+            timestamp.touch(sourceTimestamp);
+            return true;
+        } catch (IOException e) {
+            throw new IOException2("Failed to install " + archive + " to " + expected.getRemote(), e);
         }
     }
 
