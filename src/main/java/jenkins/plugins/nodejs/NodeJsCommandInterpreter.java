@@ -2,16 +2,15 @@ package jenkins.plugins.nodejs;
 
 import hudson.*;
 import hudson.model.*;
-import hudson.model.Messages;
+import jenkins.plugins.nodejs.tools.Messages;
 import jenkins.plugins.nodejs.tools.NodeJSInstallation;
 import hudson.tasks.*;
 import hudson.util.ArgumentListBuilder;
-import net.sf.json.JSONObject;
 
 import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.StaplerRequest;
 
 import javax.annotation.Nonnull;
+
 import java.io.IOException;
 import java.util.Map;
 
@@ -42,7 +41,7 @@ public class NodeJsCommandInterpreter extends Builder {
         return perform(build,launcher,(TaskListener)listener);
     }
 
-    public boolean perform(AbstractBuild<?,?> build, Launcher launcher, TaskListener listener) throws InterruptedException {
+    public boolean perform(AbstractBuild<?,?> build, Launcher launcher, TaskListener listener) throws InterruptedException { // NOSONAR
         FilePath ws = build.getWorkspace();
         if (ws == null) {
             Node node = build.getBuiltOn();
@@ -103,8 +102,11 @@ public class NodeJsCommandInterpreter extends Builder {
 
     /**
      * Creates a script file in a temporary name in the specified directory.
+     * 
+     * @throws InterruptedException If the job
+     * @throws IOException If the temporary script file could not be deleted
      */
-    public FilePath createScriptFile(@Nonnull FilePath dir) throws IOException, InterruptedException {
+    public FilePath createScriptFile(@Nonnull FilePath dir) throws IOException, InterruptedException { // NOSONAR
         return dir.createTextTempFile("hudson", ".js", this.command, false);
     }
 
@@ -112,64 +114,47 @@ public class NodeJsCommandInterpreter extends Builder {
         return command;
     }
 
-    /**
-     * @return the descriptor
-     */
-    @Override
-    public Descriptor<Builder> getDescriptor() {
-        return DESCRIPTOR;
-    }
-
     public String getNodeJSInstallationName() {
         return nodeJSInstallationName;
     }
 
-    @Extension
-    public static final NodeJsDescriptor DESCRIPTOR = new NodeJsDescriptor();
-
     /**
      * Provides builder details for the job configuration page.
      * @author cliffano
+     * @author nfalco79
      */
+    @Extension
     public static final class NodeJsDescriptor extends Descriptor<Builder> {
 
         /**
-         * Constructs a {@link NodeJsDescriptor}.
+         * Default public constructor.
          */
-        private NodeJsDescriptor() {
-            super(NodeJsCommandInterpreter.class);
+        public NodeJsDescriptor() {
+            // public constructor called by reflection
         }
 
         /**
-         * Retrieve the NodeJS script from the job configuration page, pass it
-         * to a new command interpreter.
-         * @param request
-         *            the Stapler request
-         * @param json
-         *            the JSON object
-         * @return new instance of {@link NodeJsCommandInterpreter}
+         * Customise the name of this job step.
+         * 
+         * @return the builder name
          */
         @Override
-        public Builder newInstance(final StaplerRequest request,
-                final JSONObject json) {
-            return new NodeJsCommandInterpreter(json.getString("nodejs_command"), json.getString("nodejs_installationName"));
-        }
-
-        /**
-         * @return the builder instruction
-         */
         public String getDisplayName() {
-            return "Execute NodeJS script";
+            return Messages.NodeJsCommandInterpreter_displayName();
         }
 
         /**
-         * @return available node js installations
+         * Returns all available NodeJS defined installations.
+         * 
+         * @return all NodeJS installations
          */
         public NodeJSInstallation[] getInstallations() {
             return NodeJSPlugin.instance().getInstallations();
         }
 
         /**
+         * Return the help file.
+         * 
          * @return the help file URL path
          */
         @Override

@@ -2,8 +2,11 @@ package jenkins.plugins.nodejs;
 
 import hudson.FilePath;
 import hudson.model.Descriptor;
+import jenkins.plugins.nodejs.tools.Messages;
 import jenkins.plugins.nodejs.tools.NodeJSInstallation;
 import hudson.tasks.Builder;
+import hudson.tools.ToolProperty;
+
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -12,10 +15,7 @@ import org.junit.rules.TemporaryFolder;
 import java.io.IOException;
 import java.util.Collections;
 
-import static de.regnis.q.sequence.core.QSequenceAssert.assertTrue;
-import static junit.framework.Assert.assertNotNull;
-import static junit.framework.Assert.assertNull;
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 public class NodeJsCommandInterpreterTest {
 
@@ -30,9 +30,9 @@ public class NodeJsCommandInterpreterTest {
 
     @Before
     public void setUp() {
-        installation = new NodeJSInstallation("11.0.0", "", Collections.EMPTY_LIST);
+        installation = new NodeJSInstallation("11.0.0", "", Collections.<ToolProperty<?>>emptyList());
         interpreter = new NodeJsCommandInterpreter(COMMAND, installation.getName());
-        descriptor = interpreter.getDescriptor();
+        descriptor = new NodeJsCommandInterpreter.NodeJsDescriptor();
     }
 
     @Test
@@ -63,7 +63,7 @@ public class NodeJsCommandInterpreterTest {
 
     @Test
     public void testDescriptorGetDisplayNameShouldGiveExpectedValue() {
-        assertEquals("Execute NodeJS script", descriptor.getDisplayName());
+        assertEquals(Messages.NodeJsCommandInterpreter_displayName(), descriptor.getDisplayName());
     }
 
     @Test
