@@ -25,33 +25,24 @@ package jenkins.plugins.nodejs.tools;
 
 import com.google.common.base.Predicate;
 import com.google.common.collect.Collections2;
-
 import hudson.Extension;
 import hudson.FilePath;
-import hudson.Functions;
-import hudson.Util;
 import hudson.model.Node;
 import hudson.model.TaskListener;
-import hudson.os.PosixAPI;
-import jenkins.MasterToSlaveFileCallable;
-import jenkins.plugins.tools.Installables;
-import hudson.remoting.Callable;
-import hudson.remoting.VirtualChannel;
 import hudson.tools.DownloadFromUrlInstaller;
 import hudson.tools.ToolInstallation;
 import hudson.util.ArgumentListBuilder;
-import hudson.util.jna.GNUCLibrary;
-
 import jenkins.security.MasterToSlaveCallable;
-import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import javax.annotation.Nullable;
-
-import java.io.File;
 import java.io.IOException;
-import java.net.URL;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Locale;
+import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
@@ -76,80 +67,39 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
         this.npmPackagesRefreshHours = npmPackagesRefreshHours;
     }
 
-    /**
-     * COPY PASTER ToolInstaller.preferredLocation() in order to make it static...
-     * Weird
-     *
-     * Convenience method to find a location to install a tool.
-     * @param tool the tool being installed
-     * @param node the computer on which to install the tool
-     * @return {@link ToolInstallation#getHome} if specified, else a path within the local
-     *         Jenkins work area named according to {@link ToolInstallation#getName}
-     * @since 1.310
-     */
-    protected static FilePath _preferredLocation(ToolInstallation tool, Node node) {
-        if (node == null) {
-            throw new IllegalArgumentException("must pass non-null node");
-        }
-        String home = Util.fixEmptyAndTrim(tool.getHome());
-        if (home == null) {
-            home = sanitize(tool.getDescriptor().getId()) + File.separatorChar + sanitize(tool.getName());
-        }
-        FilePath root = node.getRootPath();
-        if (root == null) {
-            throw new IllegalArgumentException("Node " + node.getDisplayName() + " seems to be offline");
-        }
-        return root.child("tools").child(home);
-    }
-
-    private static String sanitize(String s) {
+     private static String sanitize(String s) {
         return s != null ? s.replaceAll("[^A-Za-z0-9_.-]+", "_") : null;
     }
 
 
+    @Override
+    public Installable getInstallable() throws IOException {
+        Installable inst = super.getInstallable();
+        return new DownloadFromUrlInstaller.NodeSpecificInstallable(inst) {
 
-    // Overriden performInstallation() in order to provide a custom
-    // url (installable.url should be platform+cpu dependant)
-    // + pullUp directory impl should differ from DownloadFromUrlInstaller
-    // implementation
+            @Override
+            public NodeSpecificInstallable forNode(Node node, TaskListener log) throws IOException, InterruptedException {
+                InstallerPathResolver installerPathResolver = InstallerPathResolver.Factory.findResolverFor(this);
+                String relativeDownloadPath = createDownloadUrl(installerPathResolver, this, node, log);
+                this.url += relativeDownloadPath;
+                return this;
+            }
+        };
+    }
+
     @Override
     public FilePath performInstallation(ToolInstallation tool, Node node, TaskListener log) throws IOException, InterruptedException {
-        FilePath expected = preferredLocation(tool, node);
 
-        Installable inst = getInstallable();
-        if(inst==null) {
-            log.getLogger().println("Invalid tool ID "+id);
-            return expected;
-        }
-
-        // Cloning the installable since we're going to update its url (not cloning it wouldn't be threadsafe)
-        inst = Installables.clone(inst);
-
-        InstallerPathResolver installerPathResolver = InstallerPathResolver.Factory.findResolverFor(inst);
-        String relativeDownloadPath = createDownloadUrl(installerPathResolver, inst, node, log);
-        inst.url += relativeDownloadPath;
-
-        boolean skipNodeJSInstallation = isUpToDate(expected, inst);
-        if(!skipNodeJSInstallation) {
-            if(expected.installIfNecessaryFrom(new URL(inst.url), log, "Unpacking " + inst.url + " to " + expected + " on " + node.getDisplayName())) {
-                expected.child(".timestamp").delete(); // we don't use the timestamp
-                String archiveIntermediateDirectoryName = installerPathResolver.extractArchiveIntermediateDirectoryName(relativeDownloadPath);
-                this.pullUpDirectory(expected, archiveIntermediateDirectoryName);
-
-                // leave a record for the next up-to-date check
-                expected.child(".installedFrom").write(inst.url,"UTF-8");
-                expected.act(new ChmodRecAPlusX());
-            }
-        }
+        FilePath home = super.performInstallation(tool, node, log);
 
         // Installing npm packages if needed
         if(this.npmPackages != null && !"".equals(this.npmPackages)){
-            boolean skipNpmPackageInstallation = areNpmPackagesUpToDate(expected, this.npmPackages, this.npmPackagesRefreshHours);
+            boolean skipNpmPackageInstallation = areNpmPackagesUpToDate(home, this.npmPackages, this.npmPackagesRefreshHours);
             if(!skipNpmPackageInstallation){
-                expected.child(NPM_PACKAGES_RECORD_FILENAME).delete();
+                home.child(NPM_PACKAGES_RECORD_FILENAME).delete();
                 ArgumentListBuilder npmScriptArgs = new ArgumentListBuilder();
 
-                FilePath npmExe = expected.child("bin/npm");
+                FilePath npmExe = home.child("bin/npm");
                 npmScriptArgs.add(npmExe);
                 npmScriptArgs.add("install");
                 npmScriptArgs.add("-g");
@@ -160,37 +110,25 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
                 hudson.Launcher launcher = node.createLauncher(log);
 
                 int returnCode = launcher.launch()
-                        .envs("PATH+NODEJS="+expected.child("bin").getRemote())
+                        .envs("PATH+NODEJS="+home.child("bin").getRemote())
                         .cmds(npmScriptArgs).stdout(log).join();
 
                 if(returnCode == 0){
                     // leave a record for the next up-to-date check
-                    expected.child(NPM_PACKAGES_RECORD_FILENAME).write(this.npmPackages,"UTF-8");
-                    expected.child(NPM_PACKAGES_RECORD_FILENAME).act(new ChmodRecAPlusX());
+                    home.child(NPM_PACKAGES_RECORD_FILENAME).write(this.npmPackages,"UTF-8");
                 }
             }
         }
 
-        return expected;
+        return home;
     }
+
+
+
 
     private static boolean areNpmPackagesUpToDate(FilePath expected, String npmPackages, long npmPackagesRefreshHours) throws IOException, InterruptedException {
         FilePath marker = expected.child(NPM_PACKAGES_RECORD_FILENAME);
         return marker.exists() && marker.readToString().equals(npmPackages) && System.currentTimeMillis() < marker.lastModified()+ TimeUnit.HOURS.toMillis(npmPackagesRefreshHours);
-    }
-
-    private void pullUpDirectory(final FilePath rootNodeHome, final String archiveIntermediateDirectoryName) throws IOException, InterruptedException {
-        // Deleting every sub files/directory other than archiveIntermediateDirectoryName
-        List<FilePath> subfiles = rootNodeHome.list();
-        for(FilePath subfile : subfiles){
-            if(!archiveIntermediateDirectoryName.equals(subfile.getName())){
-                subfile.deleteRecursive();
-            }
-        }
-
-        // Moving up files in archiveIntermediateDirectoryName
-        FilePath archiveIntermediateDirectoryNameFP = rootNodeHome.child(archiveIntermediateDirectoryName);
-        archiveIntermediateDirectoryNameFP.moveAllChildrenTo(rootNodeHome);
     }
 
     private String createDownloadUrl(InstallerPathResolver installerPathResolver, Installable installable, Node node, TaskListener log) throws InterruptedException, IOException {
@@ -200,44 +138,6 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
             return installerPathResolver.resolvePathFor(installable.id, platform, cpu);
         } catch (DetectionFailedException e) {
             throw new IOException(e);
-        }
-    }
-
-    /**
-     * Weird : copy/pasted from ZipExtractionInstaller since this is a package-protected class
-     *
-     * Sets execute permission on all files, since unzip etc. might not do this.
-     * Hackish, is there a better way?
-     */
-    static class ChmodRecAPlusX extends MasterToSlaveFileCallable<Void> {
-        private static final long serialVersionUID = 1L;
-        public Void invoke(File d, VirtualChannel channel) throws IOException {
-            if(!Functions.isWindows())
-                process(d);
-            return null;
-        }
-        @IgnoreJRERequirement
-        private void process(File f) {
-            if (f.isFile()) {
-                if(Functions.isMustangOrAbove())
-                    f.setExecutable(true, false);
-                else {
-                    try {
-                        GNUCLibrary.LIBC.chmod(f.getAbsolutePath(),0755);
-                    } catch (LinkageError e) {
-                        // if JNA is unavailable, fall back.
-                        // we still prefer to try JNA first as PosixAPI supports even smaller platforms.
-                        PosixAPI.get().chmod(f.getAbsolutePath(),0755);
-                    }
-                }
-            } else {
-                File[] kids = f.listFiles();
-                if (kids != null) {
-                    for (File kid : kids) {
-                        process(kid);
-                    }
-                }
-            }
         }
     }
 
