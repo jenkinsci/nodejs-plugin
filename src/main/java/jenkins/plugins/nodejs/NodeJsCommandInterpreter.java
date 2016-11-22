@@ -120,6 +120,10 @@ public class NodeJsCommandInterpreter extends Builder {
         return DESCRIPTOR;
     }
 
+    public String getNodeJSInstallationName() {
+        return nodeJSInstallationName;
+    }
+
     @Extension
     public static final NodeJsDescriptor DESCRIPTOR = new NodeJsDescriptor();
 
