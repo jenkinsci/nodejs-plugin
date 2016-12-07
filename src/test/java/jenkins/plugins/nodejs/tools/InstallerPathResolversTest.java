@@ -5,6 +5,8 @@ import com.google.common.io.Resources;
 import hudson.tools.DownloadFromUrlInstaller;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
+
+import static org.junit.Assert.*;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -15,23 +17,20 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
-
 /**
  * @author fcamblor
  */
 @RunWith(Parameterized.class)
 public class InstallerPathResolversTest {
 
-    private static final NodeJSInstaller.Platform[] TESTABLE_PLATFORMS = new NodeJSInstaller.Platform[]{ NodeJSInstaller.Platform.LINUX, NodeJSInstaller.Platform.MAC, NodeJSInstaller.Platform.WINDOWS }; 
-    private static final NodeJSInstaller.CPU[] TESTABLE_CPUS = NodeJSInstaller.CPU.values();
+    private static final Platform[] TESTABLE_PLATFORMS = new Platform[]{ Platform.LINUX, Platform.OSX, Platform.WINDOWS }; 
+    private static final CPU[] TESTABLE_CPUS = CPU.values();
 
     private DownloadFromUrlInstaller.Installable installable;
-    private final NodeJSInstaller.Platform platform;
-    private final NodeJSInstaller.CPU cpu;
+    private final Platform platform;
+    private final CPU cpu;
 
-    public InstallerPathResolversTest(DownloadFromUrlInstaller.Installable installable, NodeJSInstaller.Platform platform, NodeJSInstaller.CPU cpu, String testName) {
+    public InstallerPathResolversTest(DownloadFromUrlInstaller.Installable installable, Platform platform, CPU cpu, String testName) {
         this.installable = installable;
         this.platform = platform;
         this.cpu = cpu;
@@ -51,8 +50,8 @@ public class InstallerPathResolversTest {
                 continue;
             }
 
-            for(NodeJSInstaller.Platform platform :TESTABLE_PLATFORMS){
-                for(NodeJSInstaller.CPU cpu :TESTABLE_CPUS){
+            for(Platform platform :TESTABLE_PLATFORMS){
+                for(CPU cpu :TESTABLE_CPUS){
                     testPossibleParams.add(new Object[]{ installable, platform, cpu, String.format("version=%s,cpu=%s,platform=%s",installable.id,cpu.name(),platform.name()) });
                 }
             }
@@ -64,19 +63,24 @@ public class InstallerPathResolversTest {
     @Test
     public void shouldNodeJSInstallerResolvedPathExist() throws IOException {
         InstallerPathResolver installerPathResolver = InstallerPathResolver.Factory.findResolverFor(this.installable);
-        String path = installerPathResolver.resolvePathFor(installable.id, this.platform, this.cpu);
-        URL url = new URL(installable.url+path);
-        HttpURLConnection urlConnection = (HttpURLConnection)url.openConnection();
+        String path;
         try {
-            urlConnection.setRequestMethod("GET");
-            urlConnection.setConnectTimeout(2000);
-            urlConnection.connect();
-            int code = urlConnection.getResponseCode();
-            assertThat(code >= 200 && code < 300, is(true));
-        } finally {
-            if(urlConnection != null){
-                urlConnection.disconnect();
-            }
+        	path = installerPathResolver.resolvePathFor(installable.id, this.platform, this.cpu);
+	        URL url = new URL(installable.url+path);
+	        HttpURLConnection urlConnection = (HttpURLConnection)url.openConnection();
+	        try {
+	            urlConnection.setRequestMethod("GET");
+	            urlConnection.setConnectTimeout(2000);
+	            urlConnection.connect();
+	            int code = urlConnection.getResponseCode();
+	            assertTrue(code >= 200 && code < 300);
+	        } finally {
+	            if(urlConnection != null){
+	                urlConnection.disconnect();
+	            }
+	        }
+        } catch (IllegalArgumentException e) {
+        	// some combo platform and cpu are not supported by nodejs
         }
     }
 }
