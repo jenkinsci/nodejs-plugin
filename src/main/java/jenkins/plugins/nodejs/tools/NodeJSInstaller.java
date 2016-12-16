@@ -67,14 +67,16 @@ import com.google.common.collect.Collections2;
 public class NodeJSInstaller extends DownloadFromUrlInstaller {
 
     public static final String NPM_PACKAGES_RECORD_FILENAME = ".npmPackages";
+    private final String npmConfigs;
     private final String npmPackages;
     private final Long npmPackagesRefreshHours;
     private Platform platform;
     private CPU cpu;
 
     @DataBoundConstructor
-    public NodeJSInstaller(String id, String npmPackages, long npmPackagesRefreshHours)    {
+    public NodeJSInstaller(String id, String npmConfigs, String npmPackages, long npmPackagesRefreshHours)    {
         super(id);
+        this.npmConfigs = npmConfigs;
         this.npmPackages = npmPackages;
         this.npmPackagesRefreshHours = npmPackagesRefreshHours;
     }
@@ -121,6 +123,30 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
                 }
             }
         }
+        
+        //Setting global configs
+       if(this.npmConfigs != null && !"".equals(this.npmConfigs)){
+          
+         for(String configKeyValue : this.npmConfigs.split("\\n")){
+           String[] keyValue = configKeyValue.split("\\s");
+           if(keyValue.length > 1 && !"".equals(keyValue[0])){
+         		ArgumentListBuilder npmScriptArgs = new ArgumentListBuilder();
+ 	        	FilePath npmExe = expected.child("bin/npm");
+ 	            npmScriptArgs.add(npmExe);
+ 	            npmScriptArgs.add("config");
+ 	            npmScriptArgs.add("set");
+ 	            npmScriptArgs.add("-g");
+                npmScriptArgs.add(keyValue[0]);
+                npmScriptArgs.add(keyValue[1]);
+                
+                hudson.Launcher launcher = node.createLauncher(log);
+
+                int returnCode = launcher.launch()
+                        .envs("PATH+NODEJS="+expected.child("bin").getRemote())
+                        .cmds(npmScriptArgs).stdout(log).join();
+           }
+         }
+       }
 
         // Installing npm packages if needed
         if (this.npmPackages != null && !"".equals(this.npmPackages)) {
@@ -254,6 +280,10 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
         }
     }
 
+    public String getNpmConfigs() {
+        return npmConfigs;
+    }
+    
     public String getNpmPackages() {
         return npmPackages;
     }
