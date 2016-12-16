@@ -28,6 +28,8 @@ public class NodeJsCommandInterpreter extends Builder {
      * Constructs a {@link NodeJsCommandInterpreter} with specified command.
      * @param command
      *            the NodeJS script
+     * @param nodeJSInstallationName
+     *            the NodeJS label configured in Jenkins
      */
     @DataBoundConstructor
     public NodeJsCommandInterpreter(final String command, final String nodeJSInstallationName) {
@@ -66,8 +68,9 @@ public class NodeJsCommandInterpreter extends Builder {
                 // on Windows environment variables are converted to all upper case,
                 // but no such conversions are done on Unix, so to make this cross-platform,
                 // convert variables to all upper cases.
-                for(Map.Entry<String,String> e : build.getBuildVariables().entrySet())
+                for(Map.Entry<String,String> e : build.getBuildVariables().entrySet()) {
                     envVars.put(e.getKey(),e.getValue());
+                }
 
                 // Building arguments
                 ArgumentListBuilder args = new ArgumentListBuilder();
