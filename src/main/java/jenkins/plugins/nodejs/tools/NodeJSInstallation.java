@@ -31,7 +31,7 @@ public class NodeJSInstallation extends ToolInstallation
     private static final String UNIX_NODEJS_COMMAND = "node";
 
     private final String nodeJSHome;
-    private boolean unix;
+    private Platform platform;
 
     @DataBoundConstructor
     public NodeJSInstallation(String name, String home, List<? extends ToolProperty<?>> properties) {
@@ -39,9 +39,9 @@ public class NodeJSInstallation extends ToolInstallation
         this.nodeJSHome = super.getHome();
     }
 
-    public NodeJSInstallation(String name, String home, List<? extends ToolProperty<?>> properties, boolean unix) {
+    public NodeJSInstallation(String name, String home, List<? extends ToolProperty<?>> properties, Platform platform) {
         this(name, home, properties);
-        this.unix = unix;
+        this.platform = platform;
     }
 
     private static String launderHome(String home) {
@@ -62,38 +62,44 @@ public class NodeJSInstallation extends ToolInstallation
         return super.getHome();
     }
 
+    /*
+     * (non-Javadoc)
+     * @see hudson.tools.ToolInstallation#translate(hudson.model.Node, hudson.EnvVars, hudson.model.TaskListener)
+     */
+    @Override
     public NodeJSInstallation translate(@Nonnull Node node, EnvVars envs, TaskListener listener) throws IOException, InterruptedException {
         return (NodeJSInstallation) super.translate(node, envs, listener);
     }
 
+    /*
+     * (non-Javadoc)
+     * @see hudson.model.EnvironmentSpecific#forEnvironment(hudson.EnvVars)
+     */
+    @Override
     public NodeJSInstallation forEnvironment(EnvVars environment) {
-        return new NodeJSInstallation(getName(), environment.expand(nodeJSHome), getProperties().toList(), unix);
+        return new NodeJSInstallation(getName(), environment.expand(nodeJSHome), getProperties().toList(), platform);
     }
 
+    /*
+     * (non-Javadoc)
+     * @see hudson.slaves.NodeSpecific#forNode(hudson.model.Node, hudson.model.TaskListener)
+     */
+    @Override
     public NodeJSInstallation forNode(Node node, TaskListener log) throws IOException, InterruptedException {
-        Computer computer = node.toComputer();
-        // TODO post 1.624 use Computer#isUnix
-        if (computer instanceof SlaveComputer)
-            unix = ((SlaveComputer) computer).isUnix();
-        else
-            unix = !Functions.isWindows();
-
-        return new NodeJSInstallation(getName(), translateFor(node, log), getProperties().toList(), unix);
+        return new NodeJSInstallation(getName(), translateFor(node, log), getProperties().toList(), Platform.of(node));
     }
 
     public String getExecutable(final Launcher launcher) throws InterruptedException, IOException {
-
         final File exe = getExeFile();
         return launcher.getChannel().call(new CheckNodeExecutable(exe));
     }
 
     private File getExeFile() {
-        String execName = unix ? UNIX_NODEJS_COMMAND : WINDOWS_NODEJS_COMMAND;
-        return new File(getBinFolder(), execName);
+        return new File(getBinFolder(), platform.nodeFileName);
     }
 
     protected String getBinFolder() {
-        return unix ? getHome()+"/bin" : getHome();
+        return new File(getHome(), platform.binFolder).getAbsolutePath();
     }
 
 
@@ -101,6 +107,7 @@ public class NodeJSInstallation extends ToolInstallation
     public static class DescriptorImpl extends ToolDescriptor<NodeJSInstallation> {
 
         public DescriptorImpl() {
+            // default constructor
         }
 
         @Override
@@ -130,7 +137,8 @@ public class NodeJSInstallation extends ToolInstallation
             this.exe = exe;
         }
 
-        public String call() throws IOException {
+        @Override
+        public String call() {
             if (exe.exists()) {
                 return exe.getPath();
             }
