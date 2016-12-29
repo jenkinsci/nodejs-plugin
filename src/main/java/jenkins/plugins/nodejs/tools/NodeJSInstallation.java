@@ -13,6 +13,7 @@ import hudson.tools.ToolDescriptor;
 import hudson.tools.ToolInstallation;
 import hudson.tools.ToolProperty;
 import jenkins.security.MasterToSlaveCallable;
+import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import javax.annotation.Nonnull;
@@ -62,6 +63,15 @@ public class NodeJSInstallation extends ToolInstallation
         return super.getHome();
     }
 
+    @Override
+    public void buildEnvVars(EnvVars env) {
+        String home = getHome();
+        if (home == null) {
+            return;
+        }
+        env.put("PATH+NODEJS", home + "/bin");
+    }
+
     /*
      * (non-Javadoc)
      * @see hudson.tools.ToolInstallation#translate(hudson.model.Node, hudson.EnvVars, hudson.model.TaskListener)
@@ -103,6 +113,7 @@ public class NodeJSInstallation extends ToolInstallation
     }
 
 
+    @Symbol("nodejs")
     @Extension
     public static class DescriptorImpl extends ToolDescriptor<NodeJSInstallation> {
 
