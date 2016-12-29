@@ -45,6 +45,11 @@
     </properties>
 
     <dependencies>
+        <dependency>
+            <groupId>org.jenkins-ci</groupId>
+            <artifactId>symbol-annotation</artifactId>
+            <version>1.5</version>
+        </dependency>
     </dependencies>
 
     <repositories>
