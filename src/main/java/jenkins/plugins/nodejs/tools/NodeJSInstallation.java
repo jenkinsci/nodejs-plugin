@@ -1,74 +1,41 @@
 package jenkins.plugins.nodejs.tools;
 
-import hudson.*;
-import hudson.model.Computer;
+import hudson.EnvVars;
+import hudson.Extension;
+import hudson.Functions;
+import hudson.Launcher;
+import hudson.Util;
 import hudson.model.EnvironmentSpecific;
-import hudson.model.Node;
 import hudson.model.TaskListener;
-import hudson.slaves.SlaveComputer;
-import jenkins.plugins.nodejs.NodeJSPlugin;
-import hudson.remoting.Callable;
+import hudson.model.Computer;
+import hudson.model.Node;
 import hudson.slaves.NodeSpecific;
+import hudson.tools.ToolProperty;
 import hudson.tools.ToolDescriptor;
 import hudson.tools.ToolInstallation;
-import hudson.tools.ToolProperty;
-import jenkins.security.MasterToSlaveCallable;
-import org.kohsuke.stapler.DataBoundConstructor;
 
-import javax.annotation.Nonnull;
 import java.io.File;
 import java.io.IOException;
-import java.io.Serializable;
 import java.util.List;
 
+import javax.annotation.Nonnull;
+
+import jenkins.security.MasterToSlaveCallable;
+
+import org.kohsuke.stapler.DataBoundConstructor;
+
 /**
+ * Information about JDK installation.
+ *
  * @author fcamblor
+ * @author Nikolas Falco
  */
-public class NodeJSInstallation extends ToolInstallation
-        implements EnvironmentSpecific<NodeJSInstallation>, NodeSpecific<NodeJSInstallation>, Serializable {
-
-    private static final String WINDOWS_NODEJS_COMMAND = "node.exe";
-    private static final String UNIX_NODEJS_COMMAND = "node";
-
-    private final String nodeJSHome;
-    private Platform platform;
+@SuppressWarnings("serial")
+public class NodeJSInstallation extends ToolInstallation implements EnvironmentSpecific<NodeJSInstallation>, NodeSpecific<NodeJSInstallation> {
 
     @DataBoundConstructor
-    public NodeJSInstallation(String name, String home, List<? extends ToolProperty<?>> properties) {
-        super(name, launderHome(home), properties);
-        this.nodeJSHome = super.getHome();
-    }
-
-    public NodeJSInstallation(String name, String home, List<? extends ToolProperty<?>> properties, Platform platform) {
-        this(name, home, properties);
-        this.platform = platform;
-    }
-
-    private static String launderHome(String home) {
-        if (home.endsWith("/") || home.endsWith("\\")) {
-            // see https://issues.apache.org/bugzilla/show_bug.cgi?id=26947
-            // Ant doesn't like the trailing slash, especially on Windows
-            return home.substring(0, home.length() - 1);
-        } else {
-            return home;
-        }
-    }
-
-    @Override
-    public String getHome() {
-        if (nodeJSHome != null) {
-            return nodeJSHome;
-        }
-        return super.getHome();
-    }
-
-    /*
-     * (non-Javadoc)
-     * @see hudson.tools.ToolInstallation#translate(hudson.model.Node, hudson.EnvVars, hudson.model.TaskListener)
-     */
-    @Override
-    public NodeJSInstallation translate(@Nonnull Node node, EnvVars envs, TaskListener listener) throws IOException, InterruptedException {
-        return (NodeJSInstallation) super.translate(node, envs, listener);
+    public NodeJSInstallation(@Nonnull String name, @Nonnull String home, List<? extends ToolProperty<?>> properties) {
+        super(Util.fixEmptyAndTrim(name), Util.fixEmptyAndTrim(home), properties);
     }
 
     /*
@@ -77,7 +44,7 @@ public class NodeJSInstallation extends ToolInstallation
      */
     @Override
     public NodeJSInstallation forEnvironment(EnvVars environment) {
-        return new NodeJSInstallation(getName(), environment.expand(nodeJSHome), getProperties().toList(), platform);
+        return new NodeJSInstallation(getName(), environment.expand(getHome()), getProperties().toList());
     }
 
     /*
@@ -85,29 +52,64 @@ public class NodeJSInstallation extends ToolInstallation
      * @see hudson.slaves.NodeSpecific#forNode(hudson.model.Node, hudson.model.TaskListener)
      */
     @Override
-    public NodeJSInstallation forNode(Node node, TaskListener log) throws IOException, InterruptedException {
-        return new NodeJSInstallation(getName(), translateFor(node, log), getProperties().toList(), Platform.of(node));
+    public NodeJSInstallation forNode(@Nonnull Node node, TaskListener log) throws IOException, InterruptedException {
+        return new NodeJSInstallation(getName(), translateFor(node, log), getProperties().toList());
     }
 
+    /*
+     * (non-Javadoc)
+     * @see hudson.tools.ToolInstallation#buildEnvVars(hudson.EnvVars)
+     */
+    @Override
+    public void buildEnvVars(EnvVars env) {
+        String home = getHome();
+        if (home == null) {
+            return;
+        }
+        env.put("NODEJS_HOME", home);
+        env.put("PATH+NODEJS", getBin());
+//        env.put("PATH+NODEJS", getBin());
+        // env.put("npm_config_userconfig", );
+    }
+
+    /**
+     * Gets the executable path of NodeJS on the given target system.
+     * 
+     * @param launcher
+     * @return the nodejs executable in the system is exists, {@code null}
+     *         otherwise.
+     */
     public String getExecutable(final Launcher launcher) throws InterruptedException, IOException {
-        final File exe = getExeFile();
-        return launcher.getChannel().call(new CheckNodeExecutable(exe));
+        return launcher.getChannel().call(new MasterToSlaveCallable<String, IOException>() {
+            private static final long serialVersionUID = -8509941141741046422L;
+
+            @Override
+            public String call() throws IOException {
+                final Platform platform = Platform.of(Computer.currentComputer().getNode());
+                File exe = getExeFile(platform);
+                if (exe.exists()) {
+                    return exe.getPath();
+                }
+                return null;
+            }
+        });
     }
 
-    private File getExeFile() {
-        return new File(getBinFolder(), platform.nodeFileName);
+    private File getExeFile(@Nonnull Platform platform) {
+        File bin = new File(getHome(), platform.binFolder);
+        return new File(bin, platform.nodeFileName);
     }
 
-    protected String getBinFolder() {
-        return new File(getHome(), platform.binFolder).getAbsolutePath();
+    private String getBin() {
+        // TODO improve the platform test case
+        return new File(getHome(), (Functions.isWindows() ? Platform.WINDOWS : Platform.LINUX).binFolder).getPath();
     }
-
 
     @Extension
     public static class DescriptorImpl extends ToolDescriptor<NodeJSInstallation> {
 
         public DescriptorImpl() {
-            // default constructor
+            load();
         }
 
         @Override
@@ -115,34 +117,11 @@ public class NodeJSInstallation extends ToolInstallation
             return jenkins.plugins.nodejs.tools.Messages.installer_displayName();
         }
 
-        // Persistence is done by NodeJSPlugin
-
-        @Override
-        public NodeJSInstallation[] getInstallations() {
-            return NodeJSPlugin.instance().getInstallations();
-        }
-
         @Override
         public void setInstallations(NodeJSInstallation... installations) {
-            NodeJSPlugin.instance().setInstallations(installations);
-        }
-
-    }
-
-    private static class CheckNodeExecutable extends MasterToSlaveCallable<String, IOException> {
-        private static final long serialVersionUID = 1L;
-        private final File exe;
-
-        public CheckNodeExecutable(File exe) {
-            this.exe = exe;
-        }
-
-        @Override
-        public String call() {
-            if (exe.exists()) {
-                return exe.getPath();
-            }
-            return null;
+            super.setInstallations(installations);
+            save();
         }
     }
+
 }

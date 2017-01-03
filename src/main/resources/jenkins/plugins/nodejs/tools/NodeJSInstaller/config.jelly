@@ -23,22 +23,22 @@ THE SOFTWARE.
 -->
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form">
-  <f:entry title="${%Installation}" field="id">
-    <j:choose>
-      <j:set var="tools" value="${descriptor.installables}"/>
-      <j:when test="${empty(tools)}">
-        <!-- if the list is not available, fall back to text box -->
-        <f:textbox />
-      </j:when>
-      <j:otherwise>
-        <select name="_.id">
-          <j:forEach var="tool" items="${tools}">
-            <f:option value="${tool.id}" selected="${tool.id==instance.id}">${tool.name}</f:option>
-          </j:forEach>
-        </select>
-      </j:otherwise>
-    </j:choose>
-  </f:entry>
+	<f:entry title="${%Installation}" field="id">
+		<j:choose>
+			<j:set var="tools" value="${descriptor.installables}" />
+			<j:when test="${empty(tools)}">
+				<!-- if the list is not available, fall back to text box -->
+				<f:textbox />
+			</j:when>
+			<j:otherwise>
+				<select name="_.id">
+					<j:forEach var="tool" items="${tools}">
+						<f:option value="${tool.id}" selected="${tool.id==instance.id}">${tool.name}</f:option>
+					</j:forEach>
+				</select>
+			</j:otherwise>
+		</j:choose>
+	</f:entry>
     <f:entry title="${%Global npm packages to install}" field="npmPackages">
         <f:textbox name="npmPackages" />
         <f:description>
@@ -47,8 +47,6 @@ THE SOFTWARE.
     </f:entry>
     <f:entry title="${%Global npm packages refresh hours}" field="npmPackagesRefreshHours">
         <f:textbox name="npmPackagesRefreshHours" default="72" />
-        <f:description>
-            ${%Duration, in hours, before 2 npm cache update. Note that 0 will always update npm cache}
-        </f:description>
+        <f:description>${%Duration, in hours, before 2 npm cache update. Note that 0 will always update npm cache}</f:description>
     </f:entry>
 </j:jelly>

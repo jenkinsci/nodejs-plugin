@@ -11,7 +11,8 @@ import hudson.model.Node;
  * Supported platform.
  */
 public enum Platform {
-    LINUX("node", "npm", "bin"), WINDOWS("node.exe", "npm.cmd", ""), OSX("node", "npm", "bin"), SOLARIS("node", "npm", "bin");
+    LINUX("node", "npm", "bin"), WINDOWS("node.exe", "npm.cmd", ""), OSX("node", "npm", "bin"), SOLARIS("node", "npm",
+            "bin");
 
     /**
      * Choose the file name suitable for the downloaded Node bundle.
@@ -38,6 +39,12 @@ public enum Platform {
 
     /**
      * Determines the platform of the given node.
+     *
+     * @param node
+     *            the computer node
+     * @return a platform value that represent the given node
+     * @throws DetectionFailedException
+     *             when the current platform node is not supported.
      */
     public static Platform of(Node node) throws DetectionFailedException {
         try {

@@ -28,6 +28,7 @@ import hudson.FilePath;
 import hudson.Functions;
 import hudson.Launcher;
 import hudson.Launcher.ProcStarter;
+import hudson.Util;
 import hudson.ProxyConfiguration;
 import hudson.model.TaskListener;
 import hudson.model.Node;
@@ -48,7 +49,7 @@ import java.util.Locale;
 import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
 
-import javax.annotation.Nullable;
+import javax.annotation.Nonnull;
 
 import jenkins.MasterToSlaveFileCallable;
 import jenkins.plugins.tools.Installables;
@@ -62,6 +63,8 @@ import com.google.common.collect.Collections2;
  * Install NodeJS from nodejs.org
  *
  * @author Frédéric Camblor
+ * @author Nikolas Falco
+ *
  * @since 0.2
  */
 public class NodeJSInstaller extends DownloadFromUrlInstaller {
@@ -75,7 +78,7 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
     @DataBoundConstructor
     public NodeJSInstaller(String id, String npmPackages, long npmPackagesRefreshHours)    {
         super(id);
-        this.npmPackages = npmPackages;
+        this.npmPackages = Util.fixEmptyAndTrim(npmPackages);
         this.npmPackagesRefreshHours = npmPackagesRefreshHours;
     }
 
@@ -123,7 +126,7 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
         }
 
         // Installing npm packages if needed
-        if (this.npmPackages != null && !"".equals(this.npmPackages)) {
+        if (this.npmPackages != null) {
             boolean skipNpmPackageInstallation = areNpmPackagesUpToDate(expected, this.npmPackages, this.npmPackagesRefreshHours);
             if (!skipNpmPackageInstallation) {
                 expected.child(NPM_PACKAGES_RECORD_FILENAME).delete();
@@ -235,6 +238,7 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
     // update code from ZipExtractionInstaller
     static class /*ZipExtractionInstaller*/ChmodRecAPlusX extends MasterToSlaveFileCallable<Void> {
         private static final long serialVersionUID = 1L;
+        @Override
         public Void invoke(File d, VirtualChannel channel) throws IOException {
             if(!Functions.isWindows())
                 process(d);
@@ -263,30 +267,31 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
     }
 
     @Extension
-    public static final class DescriptorImpl extends DownloadFromUrlInstaller.DescriptorImpl<NodeJSInstaller> {
+    public static final class DescriptorImpl extends DownloadFromUrlInstaller.DescriptorImpl<NodeJSInstaller> { // NOSONAR
         @Override
         public String getDisplayName() {
             return Messages.NodeJSInstaller_DescriptorImpl_displayName();
         }
 
+        @Nonnull
         @Override
         public List<? extends Installable> getInstallables() throws IOException {
             // Filtering non blacklisted installables + sorting installables by version number
             Collection<? extends Installable> filteredInstallables = Collections2.filter(super.getInstallables(),
                     new Predicate<Installable>() {
                         @Override
-                        public boolean apply(@Nullable Installable input) {
+                        public boolean apply(Installable input) {
                             return !InstallerPathResolver.Factory.isVersionBlacklisted(input.id);
                         }
                     });
-            TreeSet<Installable> sortedInstallables = new TreeSet<Installable>(new Comparator<Installable>(){
+            TreeSet<Installable> sortedInstallables = new TreeSet<>(new Comparator<Installable>() {
                 @Override
                 public int compare(Installable o1, Installable o2) {
-                    return NodeJSVersion.parseVersion(o1.id).compareTo(NodeJSVersion.parseVersion(o2.id))*-1;
+                    return NodeJSVersion.parseVersion(o1.id).compareTo(NodeJSVersion.parseVersion(o2.id)) * -1;
                 }
             });
             sortedInstallables.addAll(filteredInstallables);
-            return new ArrayList<Installable>(sortedInstallables);
+            return new ArrayList<>(sortedInstallables);
         }
 
         @Override

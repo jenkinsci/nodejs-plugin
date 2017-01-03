@@ -14,16 +14,20 @@ public enum CPU {
 
     /**
      * Determines the CPU of the given node.
+     *
+     * @param node
+     *            the computer node
+     * @return a CPU value of the cpu of the given node
      * @throws IOException
      * @throws InterruptedException
-     * @throws DetectionFailedException
      */
-    public static CPU of(Node node) throws DetectionFailedException, InterruptedException, IOException {
+    public static CPU of(Node node) throws IOException, InterruptedException {
         return detect(node.toComputer().getSystemProperties());
     }
 
     /**
      * Determines the CPU of the current JVM.
+     *
      * @throws DetectionFailedException
      */
     public static CPU current() throws DetectionFailedException {

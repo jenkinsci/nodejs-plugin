@@ -17,11 +17,11 @@ import java.util.Collections;
 
 import static org.junit.Assert.*;
 
-public class NodeJsCommandInterpreterTest {
+public class NodeJSCommandInterpreterTest {
 
     private static final String COMMAND = "var sys = require('sys'); sys.puts('build number: ' + process.env['BUILD_NUMBER']);";
 
-    private NodeJsCommandInterpreter interpreter;
+    private NodeJSCommandInterpreter interpreter;
     private Descriptor<Builder> descriptor;
     private NodeJSInstallation installation;
 
@@ -31,8 +31,8 @@ public class NodeJsCommandInterpreterTest {
     @Before
     public void setUp() {
         installation = new NodeJSInstallation("11.0.0", "", Collections.<ToolProperty<?>>emptyList());
-        interpreter = new NodeJsCommandInterpreter(COMMAND, installation.getName());
-        descriptor = new NodeJsCommandInterpreter.NodeJsDescriptor();
+        interpreter = new NodeJSCommandInterpreter(COMMAND, installation.getName());
+        descriptor = new NodeJSCommandInterpreter.NodeJsDescriptor();
     }
 
     @Test
@@ -42,12 +42,12 @@ public class NodeJsCommandInterpreterTest {
 
     @Test
     public void testGetContentWithEmptyCommandShouldGiveExpectedValue() {
-        assertEquals("", new NodeJsCommandInterpreter("", installation.getName()).getCommand());
+        assertEquals("", new NodeJSCommandInterpreter("", installation.getName()).getCommand());
     }
 
     @Test
     public void testGetContentWithNullCommandShouldGiveExpectedValue() {
-        assertNull(new NodeJsCommandInterpreter(null, installation.getName()).getCommand());
+        assertNull(new NodeJSCommandInterpreter(null, installation.getName()).getCommand());
     }
 
     @Test
