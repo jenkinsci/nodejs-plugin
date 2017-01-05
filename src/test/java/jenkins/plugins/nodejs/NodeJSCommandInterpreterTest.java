@@ -2,7 +2,7 @@ package jenkins.plugins.nodejs;
 
 import hudson.FilePath;
 import hudson.model.Descriptor;
-import jenkins.plugins.nodejs.tools.Messages;
+import jenkins.plugins.nodejs.Messages;
 import jenkins.plugins.nodejs.tools.NodeJSInstallation;
 import hudson.tasks.Builder;
 import hudson.tools.ToolProperty;
@@ -63,7 +63,7 @@ public class NodeJSCommandInterpreterTest {
 
     @Test
     public void testDescriptorGetDisplayNameShouldGiveExpectedValue() {
-        assertEquals(Messages.NodeJsCommandInterpreter_displayName(), descriptor.getDisplayName());
+        assertEquals(Messages.NodeJSCommandInterpreter_displayName(), descriptor.getDisplayName());
     }
 
     @Test

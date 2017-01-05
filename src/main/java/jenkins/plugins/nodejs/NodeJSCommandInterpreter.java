@@ -15,7 +15,7 @@ import hudson.util.ArgumentListBuilder;
 
 import java.io.IOException;
 
-import jenkins.plugins.nodejs.tools.Messages;
+import jenkins.plugins.nodejs.Messages;
 import jenkins.plugins.nodejs.tools.NodeJSInstallation;
 
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -59,14 +59,14 @@ public class NodeJSCommandInterpreter extends CommandInterpreter {
             // get specific installation for the node
             NodeJSInstallation ni = getNodeJS();
             if (ni == null) {
-                listener.fatalError(Messages.NodeJsCommandInterpreter_noInstallation(nodeJSInstallationName));
+                listener.fatalError(Messages.NodeJSCommandInterpreter_noInstallation(nodeJSInstallationName));
                 return false;
             }
             ni = ni.forNode(Computer.currentComputer().getNode(), listener); // NOSONAR
             ni = ni.forEnvironment(env);
             nodeExec = ni.getExecutable(launcher);
             if(nodeExec==null) {
-                listener.fatalError(Messages.NodeJsCommandInterpreter_noExecutable(ni.getHome()));
+                listener.fatalError(Messages.NodeJSCommandInterpreter_noExecutable(ni.getHome()));
                 return false;
             }
         } catch (IOException e) {
@@ -116,7 +116,7 @@ public class NodeJSCommandInterpreter extends CommandInterpreter {
          */
         @Override
         public String getDisplayName() {
-            return Messages.NodeJsCommandInterpreter_displayName();
+            return Messages.NodeJSCommandInterpreter_displayName();
         }
 
         /**

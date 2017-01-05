@@ -52,6 +52,7 @@ import java.util.concurrent.TimeUnit;
 import javax.annotation.Nonnull;
 
 import jenkins.MasterToSlaveFileCallable;
+import jenkins.plugins.nodejs.Messages;
 import jenkins.plugins.tools.Installables;
 
 import org.kohsuke.stapler.DataBoundConstructor;

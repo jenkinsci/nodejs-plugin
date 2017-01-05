@@ -13,7 +13,7 @@ import java.io.IOException;
 
 import javax.annotation.Nonnull;
 
-import jenkins.plugins.nodejs.tools.Messages;
+import jenkins.plugins.nodejs.Messages;
 import jenkins.plugins.nodejs.tools.NodeJSInstallation;
 import jenkins.tasks.SimpleBuildWrapper;
 
@@ -71,7 +71,7 @@ public class NodeJSBuildWrapper extends SimpleBuildWrapper {
         // get specific installation for the node
         NodeJSInstallation ni = getNodeJS();
         if (ni == null) {
-            throw new IOException(Messages.NodeJsCommandInterpreter_noInstallation(nodeJSInstallationName));
+            throw new IOException(Messages.NodeJSCommandInterpreter_noInstallation(nodeJSInstallationName));
         }
         ni = ni.forNode(workspace.toComputer().getNode(), listener); // NOSONAR
         ni = ni.forEnvironment(initialEnvironment);
@@ -89,7 +89,7 @@ public class NodeJSBuildWrapper extends SimpleBuildWrapper {
 
         @Override
         public String getDisplayName() {
-            return jenkins.plugins.nodejs.tools.Messages.NpmPackagesBuildWrapper_displayName();
+            return Messages.NodeJSBuildWrapper_displayName();
         }
 
         public NodeJSInstallation[] getInstallations() {

@@ -20,6 +20,7 @@ import java.util.List;
 
 import javax.annotation.Nonnull;
 
+import jenkins.plugins.nodejs.Messages;
 import jenkins.security.MasterToSlaveCallable;
 
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -68,7 +69,6 @@ public class NodeJSInstallation extends ToolInstallation implements EnvironmentS
         }
         env.put("NODEJS_HOME", home);
         env.put("PATH+NODEJS", getBin());
-//        env.put("PATH+NODEJS", getBin());
         // env.put("npm_config_userconfig", );
     }
 
@@ -114,7 +114,7 @@ public class NodeJSInstallation extends ToolInstallation implements EnvironmentS
 
         @Override
         public String getDisplayName() {
-            return jenkins.plugins.nodejs.tools.Messages.installer_displayName();
+            return Messages.NodeJSInstallation_displayName();
         }
 
         @Override
