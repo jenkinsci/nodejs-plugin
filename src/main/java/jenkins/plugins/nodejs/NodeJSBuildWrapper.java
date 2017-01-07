@@ -54,6 +54,8 @@ public class NodeJSBuildWrapper extends SimpleBuildWrapper {
 
     /**
      * Gets the NodeJS to invoke, or null to invoke the default one.
+     *
+     * @return a NodeJS installation setup for this job, {@code null} otherwise.
      */
     public NodeJSInstallation getNodeJS() {
         return NodeJSUtils.getNodeJS(nodeJSInstallationName);

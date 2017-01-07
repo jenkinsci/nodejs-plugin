@@ -15,12 +15,19 @@ import jenkins.plugins.nodejs.tools.NodeJSInstallation.DescriptorImpl;
 
     /**
      * Gets the NodeJS to invoke, or null to invoke the default one.
+     *
+     * @param name
+     *            the name of NodeJS installation
+     * @return a NodeJS installation for the given name if exists, {@code null}
+     *         otherwise.
      */
     @Nullable
     public static NodeJSInstallation getNodeJS(@Nullable String name) {
-        for (NodeJSInstallation installation : getInstallations()) {
-            if (name != null && name.equals(installation.getName()))
-                return installation;
+        if (name != null) {
+            for (NodeJSInstallation installation : getInstallations()) {
+                if (name != null && name.equals(installation.getName()))
+                    return installation;
+            }
         }
         return null;
     }

@@ -18,8 +18,8 @@ public enum CPU {
      * @param node
      *            the computer node
      * @return a CPU value of the cpu of the given node
-     * @throws IOException
-     * @throws InterruptedException
+     * @throws IOException in case of IO issues with the remote Node
+     * @throws InterruptedException in case the job is interrupted by user
      */
     public static CPU of(Node node) throws IOException, InterruptedException {
         return detect(node.toComputer().getSystemProperties());
@@ -29,6 +29,7 @@ public enum CPU {
      * Determines the CPU of the current JVM.
      *
      * @throws DetectionFailedException
+     *             when the current platform node is not supported.
      */
     public static CPU current() throws DetectionFailedException {
         return detect(System.getProperties());

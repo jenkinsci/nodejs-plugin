@@ -47,6 +47,11 @@ public class NodeJSCommandInterpreter extends CommandInterpreter {
         this.nodeJSInstallationName = Util.fixEmpty(nodeJSInstallationName);
     }
 
+    /**
+     * Gets the NodeJS to invoke, or null to invoke the default one.
+     *
+     * @return a NodeJS installation setup for this job, {@code null} otherwise.
+     */
     public NodeJSInstallation getNodeJS() {
         return NodeJSUtils.getNodeJS(nodeJSInstallationName);
     }

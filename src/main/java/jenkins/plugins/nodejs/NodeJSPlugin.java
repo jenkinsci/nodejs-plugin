@@ -49,7 +49,7 @@ public class NodeJSPlugin extends Plugin {
 
     /**
      * Get all available NodeJS defined installation.
-     * 
+     *
      * @return an array of defined {@link NodeJSInstallation}
      * @deprecated Use {@link NodeJSUtils#getInstallations()} instead of this.
      */
@@ -66,7 +66,7 @@ public class NodeJSPlugin extends Plugin {
 
     /**
      * Set the NodeJS installation.
-     * 
+     *
      * @param installations an array of {@link NodeJSInstallation}
      * @deprecated You should not set manually system NodeJS installation, in
      *             case use the standard
@@ -77,7 +77,7 @@ public class NodeJSPlugin extends Plugin {
     public void setInstallations(@Nonnull NodeJSInstallation[] installations) {
         DescriptorImpl descriptor = Jenkins.getInstance().getDescriptorByType(NodeJSInstallation.DescriptorImpl.class); // NOSONAR
         if (descriptor != null) {
-            descriptor.setInstallations(installations);
+            descriptor.setInstallations(installations != null ? installations : new NodeJSInstallation[0]);
         }
     }
 

@@ -5,14 +5,14 @@ import hudson.tools.DownloadFromUrlInstaller;
 
 /**
  * Contract to resolve parts of an URL path given some specific inputs.
- * 
+ *
  * @author fcamblor
  * @author Nikolas Falco
  */
 public interface InstallerPathResolver {
 	/**
 	 * Resolve the URL path for the given parameters.
-	 * 
+	 *
 	 * @param version
 	 *            string version of an installable unit
 	 * @param platform
@@ -24,13 +24,13 @@ public interface InstallerPathResolver {
     String resolvePathFor(String version, Platform platform, CPU cpu);
 
     /**
-     * Factory that return lookup for an implementation of {@link InstallerPathResolver}. 
+     * Factory that return lookup for an implementation of {@link InstallerPathResolver}.
      */
     public static class Factory {
 		/**
 		 * Return an implementation adapt for the given installable.
-		 * 
-		 * @param installable
+		 *
+		 * @param installable an installable
 		 * @return an instance of {@link InstallerPathResolver}
 		 * @throws IllegalArgumentException
 		 *             in case the given installable is not supported.
