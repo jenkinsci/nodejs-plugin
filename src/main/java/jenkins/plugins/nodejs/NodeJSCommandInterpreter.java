@@ -1,24 +1,24 @@
 package jenkins.plugins.nodejs;
 
+import java.io.IOException;
+
+import org.kohsuke.stapler.DataBoundConstructor;
+
+import hudson.AbortException;
 import hudson.EnvVars;
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.Launcher;
 import hudson.Util;
-import hudson.model.BuildListener;
 import hudson.model.AbstractBuild;
-import hudson.model.Computer;
+import hudson.model.BuildListener;
 import hudson.model.Descriptor;
+import hudson.model.Node;
 import hudson.tasks.Builder;
 import hudson.tasks.CommandInterpreter;
 import hudson.util.ArgumentListBuilder;
-
-import java.io.IOException;
-
-import jenkins.plugins.nodejs.Messages;
 import jenkins.plugins.nodejs.tools.NodeJSInstallation;
-
-import org.kohsuke.stapler.DataBoundConstructor;
+import jenkins.plugins.nodejs.tools.Platform;
 
 /**
  * This class executes a JavaScript file using node. The file should contain
@@ -44,7 +44,7 @@ public class NodeJSCommandInterpreter extends CommandInterpreter {
     @DataBoundConstructor
     public NodeJSCommandInterpreter(final String command, final String nodeJSInstallationName) {
         super(command);
-        this.nodeJSInstallationName = nodeJSInstallationName;
+        this.nodeJSInstallationName = Util.fixEmpty(nodeJSInstallationName);
     }
 
     public NodeJSInstallation getNodeJS() {
@@ -59,16 +59,27 @@ public class NodeJSCommandInterpreter extends CommandInterpreter {
             // get specific installation for the node
             NodeJSInstallation ni = getNodeJS();
             if (ni == null) {
-                listener.fatalError(Messages.NodeJSCommandInterpreter_noInstallation(nodeJSInstallationName));
-                return false;
+                if (nodeJSInstallationName != null) {
+                    throw new AbortException(Messages.NodeJSCommandInterpreter_noInstallationFound(nodeJSInstallationName));
+                }
+                // use system NodeJS if any, in case let fails later
+                nodeExec = (launcher.isUnix() ? Platform.LINUX : Platform.WINDOWS).nodeFileName;
+            } else {
+                Node node = build.getBuiltOn();
+                if (node == null) {
+                    throw new AbortException(Messages.NodeJSCommandInterpreter_nodeOffline());
+                }
+                ni = ni.forNode(node, listener);
+                ni = ni.forEnvironment(env);
+                ni.buildEnvVars(env);
+                nodeExec = ni.getExecutable(launcher);
+                if (nodeExec == null) {
+                    throw new AbortException(Messages.NodeJSCommandInterpreter_noExecutableFound(ni.getHome()));
+                }
             }
-            ni = ni.forNode(Computer.currentComputer().getNode(), listener); // NOSONAR
-            ni = ni.forEnvironment(env);
-            nodeExec = ni.getExecutable(launcher);
-            if(nodeExec==null) {
-                listener.fatalError(Messages.NodeJSCommandInterpreter_noExecutable(ni.getHome()));
-                return false;
-            }
+        } catch (AbortException e) {
+            listener.fatalError(e.getMessage()); // NOSONAR
+            return false;
         } catch (IOException e) {
             Util.displayIOException(e, listener);
             e.printStackTrace(listener.fatalError(hudson.tasks.Messages.CommandInterpreter_CommandFailed()));
@@ -82,7 +93,7 @@ public class NodeJSCommandInterpreter extends CommandInterpreter {
         if (nodeExec == null) {
             throw new IllegalStateException("Node executable not initialised");
         }
-        
+
         ArgumentListBuilder args = new ArgumentListBuilder(nodeExec, script.getRemote());
         return args.toCommandArray();
     }
@@ -128,7 +139,7 @@ public class NodeJSCommandInterpreter extends CommandInterpreter {
         public String getHelpFile() {
             return "/plugin/nodejs/help.html";
         }
-        
+
         public NodeJSInstallation[] getInstallations() {
             return NodeJSUtils.getInstallations();
         }

@@ -61,7 +61,7 @@ import com.google.common.base.Predicate;
 import com.google.common.collect.Collections2;
 
 /**
- * Install NodeJS from nodejs.org
+ * Automatic NodeJS installer from nodejs.org
  *
  * @author Frédéric Camblor
  * @author Nikolas Falco

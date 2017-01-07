@@ -1,23 +1,24 @@
 package jenkins.plugins.nodejs;
 
-import hudson.EnvVars;
-import hudson.Extension;
-import hudson.FilePath;
-import hudson.Launcher;
-import hudson.model.TaskListener;
-import hudson.model.AbstractProject;
-import hudson.model.Run;
-import hudson.tasks.BuildWrapperDescriptor;
-
 import java.io.IOException;
 
 import javax.annotation.Nonnull;
 
-import jenkins.plugins.nodejs.Messages;
+import org.kohsuke.stapler.DataBoundConstructor;
+
+import hudson.AbortException;
+import hudson.EnvVars;
+import hudson.Extension;
+import hudson.FilePath;
+import hudson.Launcher;
+import hudson.Util;
+import hudson.model.AbstractProject;
+import hudson.model.Node;
+import hudson.model.Run;
+import hudson.model.TaskListener;
+import hudson.tasks.BuildWrapperDescriptor;
 import jenkins.plugins.nodejs.tools.NodeJSInstallation;
 import jenkins.tasks.SimpleBuildWrapper;
-
-import org.kohsuke.stapler.DataBoundConstructor;
 
 /**
  * A simple build wrapper that contribute the NodeJS bin path to the PATH
@@ -35,7 +36,7 @@ public class NodeJSBuildWrapper extends SimpleBuildWrapper {
         public EnvVarsAdapter(@Nonnull Context context) {
             this.context = context;
         }
-        
+
         @Override
         public String put(String key, String value) {
             context.env(key, value);
@@ -48,7 +49,7 @@ public class NodeJSBuildWrapper extends SimpleBuildWrapper {
 
     @DataBoundConstructor
     public NodeJSBuildWrapper(String nodeJSInstallationName){
-        this.nodeJSInstallationName = nodeJSInstallationName;
+        this.nodeJSInstallationName = Util.fixEmpty(nodeJSInstallationName);
     }
 
     /**
@@ -71,9 +72,13 @@ public class NodeJSBuildWrapper extends SimpleBuildWrapper {
         // get specific installation for the node
         NodeJSInstallation ni = getNodeJS();
         if (ni == null) {
-            throw new IOException(Messages.NodeJSCommandInterpreter_noInstallation(nodeJSInstallationName));
+            throw new IOException(Messages.NodeJSCommandInterpreter_noInstallationFound(nodeJSInstallationName));
         }
-        ni = ni.forNode(workspace.toComputer().getNode(), listener); // NOSONAR
+        Node node = workspace.toComputer().getNode();
+        if (node == null) {
+            throw new AbortException(Messages.NodeJSCommandInterpreter_nodeOffline());
+        }
+        ni = ni.forNode(node, listener);
         ni = ni.forEnvironment(initialEnvironment);
         ni.buildEnvVars(new EnvVarsAdapter(context));
     }

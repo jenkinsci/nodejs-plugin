@@ -2,7 +2,6 @@ package jenkins.plugins.nodejs.tools;
 
 import hudson.EnvVars;
 import hudson.Extension;
-import hudson.Functions;
 import hudson.Launcher;
 import hudson.Util;
 import hudson.model.EnvironmentSpecific;
@@ -69,12 +68,11 @@ public class NodeJSInstallation extends ToolInstallation implements EnvironmentS
         }
         env.put("NODEJS_HOME", home);
         env.put("PATH+NODEJS", getBin());
-        // env.put("npm_config_userconfig", );
     }
 
     /**
      * Gets the executable path of NodeJS on the given target system.
-     * 
+     *
      * @param launcher
      * @return the nodejs executable in the system is exists, {@code null}
      *         otherwise.
@@ -102,7 +100,7 @@ public class NodeJSInstallation extends ToolInstallation implements EnvironmentS
 
     private String getBin() {
         // TODO improve the platform test case
-        return new File(getHome(), (Functions.isWindows() ? Platform.WINDOWS : Platform.LINUX).binFolder).getPath();
+        return new File(getHome(), (Computer.currentComputer().isUnix() ? Platform.LINUX : Platform.WINDOWS).binFolder).getPath();
     }
 
     @Extension
