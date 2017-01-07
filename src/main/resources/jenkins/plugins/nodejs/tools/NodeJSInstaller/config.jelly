@@ -23,7 +23,7 @@ THE SOFTWARE.
 -->
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form">
-	<f:entry title="${%Installation}" field="id">
+	<f:entry title="${%id.title}" field="id">
 		<j:choose>
 			<j:set var="tools" value="${descriptor.installables}" />
 			<j:when test="${empty(tools)}">
@@ -39,14 +39,12 @@ THE SOFTWARE.
 			</j:otherwise>
 		</j:choose>
 	</f:entry>
-    <f:entry title="${%Global npm packages to install}" field="npmPackages">
-        <f:textbox name="npmPackages" />
-        <f:description>
-            ${%Specify list of packages to install globally -- see npm install -g. Note that you can fix the package's version by using the syntax `packageName@version`}
-        </f:description>
+
+    <f:entry title="${%npmPackages.title}" description="${%npmPackages.description}">
+        <f:textbox field="npmPackages" />
     </f:entry>
-    <f:entry title="${%Global npm packages refresh hours}" field="npmPackagesRefreshHours">
-        <f:textbox name="npmPackagesRefreshHours" default="72" />
-        <f:description>${%Duration, in hours, before 2 npm cache update. Note that 0 will always update npm cache}</f:description>
+
+    <f:entry title="${%npmPackagesRefreshHours.title}" description="${%npmPackagesRefreshHours.description}">
+        <f:textbox field="npmPackagesRefreshHours" default="72" />
     </f:entry>
 </j:jelly>

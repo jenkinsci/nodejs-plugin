@@ -1,7 +1,7 @@
 <!--
 The MIT License
 
-Copyright (c) 2009, Sun Microsystems, Inc.
+Copyright (c) 2010, Cliffano Subagio
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -23,12 +23,11 @@ THE SOFTWARE.
 -->
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
-    <f:entry title="${%NodeJS Installation}" field="nodeJSInstallationName">
-        <select class="setting-input" name="nodeJSInstallationName">
+    <f:entry title="${%nodeJSInstallationName.title}" description="${%nodeJSInstallationName.description}">
+        <select class="setting-input" name="_.nodeJSInstallationName">
             <j:forEach var="inst" items="${descriptor.installations}">
                 <f:option selected="${inst.name==instance.nodeJSInstallationName}">${inst.name}</f:option>
             </j:forEach>
         </select>
-		<f:description>${%Specify needed nodejs installation where npm installed packages will be provided to the PATH}</f:description>
     </f:entry>
 </j:jelly>
