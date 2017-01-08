@@ -5,7 +5,7 @@ public final class NodeJSConstants {
     /**
      * Default extension for javascript file.
      */
-    public static final String JAVASRIPT_EXT = ".js";
+    public static final String JAVASCRIPT_EXT = ".js";
 
     /**
      * The location of user-level configuration settings.

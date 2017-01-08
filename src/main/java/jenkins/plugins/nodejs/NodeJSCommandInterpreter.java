@@ -120,7 +120,7 @@ public class NodeJSCommandInterpreter extends CommandInterpreter {
 
     @Override
     protected String getFileExtension() {
-        return NodeJSConstants.JAVASRIPT_EXT;
+        return NodeJSConstants.JAVASCRIPT_EXT;
     }
 
     public String getNodeJSInstallationName() {
@@ -166,7 +166,7 @@ public class NodeJSCommandInterpreter extends CommandInterpreter {
         /**
          * Gather all defined npmrc config files.
          *
-         * @return a collection of user npmrc files or {@empty} if no one
+         * @return a collection of user npmrc files or {@code empty} if no one
          *         defined.
          */
         public Collection<Config> getConfigs() {
