@@ -1,7 +1,7 @@
 <!--
 The MIT License
 
-Copyright (c) 2010, Cliffano Subagio
+Copyright (c) 2016, Nikolas Falco
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -22,21 +22,26 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 -->
 <?jelly escape-by-default='true'?>
-<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
-    <f:entry title="${%nodeJSInstallationName.title}" description="${%nodeJSInstallationName.description}">
-        <select class="setting-input" name="_.nodeJSInstallationName">
-            <j:forEach var="inst" items="${descriptor.installations}">
-                <f:option selected="${inst.name==instance.nodeJSInstallationName}">${inst.name}</f:option>
-            </j:forEach>
-        </select>
-    </f:entry>
-    
-    <f:entry title="${%configId.title}">
-    	<select class="setting-input" name="_.configId">
-	    	<f:option value="">${%configId.emptyValue}</f:option>
-	    	<j:forEach var="config" items="${descriptor.configs}">
-            	<f:option selected="${instance.configId == config.id}" value="${config.id}">${config.name}</f:option>
-			</j:forEach>
-    	</select>
-    </f:entry>
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form" xmlns:c="/lib/credentials">
+	<f:entry title="${%url.title}" field="url" >
+		<f:textbox />
+	</f:entry>
+
+	<f:block>
+		<f:optionalBlock title="${%scopes.section.title}" name="hasScopes" checked="${instance.hasScopes}" inline="true">
+			<f:entry title="${%scopes.title}" field="scopes">
+				<f:textbox />
+			</f:entry>
+		</f:optionalBlock>
+	</f:block>
+
+	<f:entry title="${%credentialsId.title}" field="credentialsId">
+		<c:select />
+	</f:entry>
+
+	<f:entry>
+		<div align="right">
+			<input type="button" value="${%btnDelete.label}" class="repeatable-delete" style="margin-left: 1em;" />
+		</div>
+	</f:entry>
 </j:jelly>

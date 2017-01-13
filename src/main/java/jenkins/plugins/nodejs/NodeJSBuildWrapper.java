@@ -1,9 +1,13 @@
 package jenkins.plugins.nodejs;
 
 import java.io.IOException;
+import java.util.Collection;
+import java.util.Collections;
 
 import javax.annotation.Nonnull;
 
+import org.jenkinsci.lib.configprovider.ConfigProvider;
+import org.jenkinsci.lib.configprovider.model.Config;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import hudson.AbortException;
@@ -12,11 +16,14 @@ import hudson.Extension;
 import hudson.FilePath;
 import hudson.Launcher;
 import hudson.Util;
+import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
+import hudson.model.Computer;
 import hudson.model.Node;
 import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.tasks.BuildWrapperDescriptor;
+import jenkins.plugins.nodejs.configfiles.NPMConfig;
 import jenkins.plugins.nodejs.tools.NodeJSInstallation;
 import jenkins.tasks.SimpleBuildWrapper;
 
@@ -46,10 +53,12 @@ public class NodeJSBuildWrapper extends SimpleBuildWrapper {
     }
 
     private final String nodeJSInstallationName;
+    private final String configId;
 
     @DataBoundConstructor
-    public NodeJSBuildWrapper(String nodeJSInstallationName){
+    public NodeJSBuildWrapper(String nodeJSInstallationName, String configId) {
         this.nodeJSInstallationName = Util.fixEmpty(nodeJSInstallationName);
+        this.configId = Util.fixEmpty(configId);
     }
 
     /**
@@ -65,6 +74,10 @@ public class NodeJSBuildWrapper extends SimpleBuildWrapper {
         return nodeJSInstallationName;
     }
 
+    public String getConfigId() {
+        return configId;
+    }
+
     /*
      * (non-Javadoc)
      * @see jenkins.tasks.SimpleBuildWrapper#setUp(jenkins.tasks.SimpleBuildWrapper.Context, hudson.model.Run, hudson.FilePath, hudson.Launcher, hudson.model.TaskListener, hudson.EnvVars)
@@ -76,13 +89,19 @@ public class NodeJSBuildWrapper extends SimpleBuildWrapper {
         if (ni == null) {
             throw new IOException(Messages.NodeJSCommandInterpreter_noInstallationFound(nodeJSInstallationName));
         }
-        Node node = workspace.toComputer().getNode();
+        Computer computer = workspace.toComputer();
+        if (computer == null) {
+            throw new AbortException(Messages.NodeJSCommandInterpreter_nodeOffline());
+        }
+        Node node = computer.getNode();
         if (node == null) {
             throw new AbortException(Messages.NodeJSCommandInterpreter_nodeOffline());
         }
         ni = ni.forNode(node, listener);
         ni = ni.forEnvironment(initialEnvironment);
         ni.buildEnvVars(new EnvVarsAdapter(context));
+
+        NodeJSUtils.supplyConfig(configId, (AbstractBuild<?, ?>) build, listener);
     }
 
 
@@ -101,6 +120,15 @@ public class NodeJSBuildWrapper extends SimpleBuildWrapper {
 
         public NodeJSInstallation[] getInstallations() {
             return NodeJSUtils.getInstallations();
+        }
+
+        public Collection<Config> getConfigs() {
+            ConfigProvider provider = ConfigProvider.getByIdOrNull(NPMConfig.class.getName());
+            if (provider != null) {
+                return provider.getAllConfigs();
+            }
+
+            return Collections.emptyList();
         }
 
     }

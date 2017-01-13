@@ -31,7 +31,7 @@ public class NodeJSCommandInterpreterTest {
     @Before
     public void setUp() {
         installation = new NodeJSInstallation("11.0.0", "", Collections.<ToolProperty<?>>emptyList());
-        interpreter = new NodeJSCommandInterpreter(COMMAND, installation.getName());
+        interpreter = new NodeJSCommandInterpreter(COMMAND, installation.getName(), null);
         descriptor = new NodeJSCommandInterpreter.NodeJsDescriptor();
     }
 
@@ -42,12 +42,12 @@ public class NodeJSCommandInterpreterTest {
 
     @Test
     public void testGetContentWithEmptyCommandShouldGiveExpectedValue() {
-        assertEquals("", new NodeJSCommandInterpreter("", installation.getName()).getCommand());
+        assertEquals("", new NodeJSCommandInterpreter("", installation.getName(), null).getCommand());
     }
 
     @Test
     public void testGetContentWithNullCommandShouldGiveExpectedValue() {
-        assertNull(new NodeJSCommandInterpreter(null, installation.getName()).getCommand());
+        assertNull(new NodeJSCommandInterpreter(null, installation.getName(), null).getCommand());
     }
 
     @Test
