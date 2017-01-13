@@ -67,7 +67,7 @@ public class NodeJSInstallation extends ToolInstallation implements EnvironmentS
             return;
         }
         env.put("NODEJS_HOME", home);
-        env.put("PATH+NODEJS", getBin());
+        env.override("PATH+NODEJS", getBin());
     }
 
     /**
