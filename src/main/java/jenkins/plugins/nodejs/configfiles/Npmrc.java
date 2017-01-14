@@ -26,6 +26,13 @@ public class Npmrc {
 
     private Map<Object, String> properties = new LinkedHashMap<>();
 
+    /**
+     * Parse the given file and store internally all user settings and
+     * comments.
+     *
+     * @param file a valid npmrc user config file content.
+     * @throws IOException in case of I/O failure during file read
+     */
     public static Npmrc load(File file) throws IOException {
         if (file == null) {
             throw new NullPointerException("file is null");
@@ -42,6 +49,12 @@ public class Npmrc {
         return config;
     }
 
+    /**
+     * Parse the given content and store internally all user settings and
+     * comments.
+     *
+     * @param content a valid npmrc user config content.
+     */
     public void from(String content) {
         if (content == null) {
             return;
@@ -74,7 +87,7 @@ public class Npmrc {
     /**
      * Add a comment line at the end of the file.
      *
-     * @param comment the text content without the ';' suffix
+     * @param comment the text content without the ';' prefix
      */
     public void addComment(String comment) {
         properties.put(new Comment() {}, comment);
@@ -97,20 +110,33 @@ public class Npmrc {
         return sb.toString();
     }
 
+    /**
+     * Write the content of user config to a file.
+     *
+     * @param file the destination file
+     * @throws IOException in case of I/O write error
+     */
     public void save(File file) throws IOException {
         try (Writer writer = new FileWriterWithEncoding(file, UTF_8)) {
             IOUtils.write(toString(), writer);
         }
     }
 
-    public boolean containsKey(String key) {
+    /**
+     * Returns {@literal true} if this map contains a user config for the
+     * specified key.
+     *
+     * @param key user setting whose presence in this config
+     * @return {@literal true} if this config already contains the specified key
+     */
+    public boolean contains(String key) {
         return properties.containsKey(key);
     }
 
     /**
      * Get the value for the specified property key.
      *
-     * @param key
+     * @param key user config entry key
      * @return the property value
      */
     public String get(String key) {
@@ -123,7 +149,7 @@ public class Npmrc {
      *
      * @param key property key
      * @param value property value
-     * @return the old value associated to the property key, <code>null</code>
+     * @return the old value associated to the setting key, {@literal null}
      *         otherwise
      */
     public String set(String key, String value) {
@@ -136,8 +162,8 @@ public class Npmrc {
      *
      * @param key property key
      * @param value property value
-     * @return {@code false} the old value associated to the property key,
-     *         {@code true} otherwise
+     * @return {@literal false} the old value associated to the property key,
+     *         {@literal true} otherwise
      */
     public boolean set(String key, boolean value) {
         return Boolean.parseBoolean(properties.put(key, Boolean.toString(value)));

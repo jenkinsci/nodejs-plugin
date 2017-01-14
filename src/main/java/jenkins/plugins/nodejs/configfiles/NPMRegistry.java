@@ -1,16 +1,5 @@
 package jenkins.plugins.nodejs.configfiles;
 
-import hudson.Extension;
-import hudson.Util;
-import hudson.model.AbstractDescribableImpl;
-import hudson.model.ItemGroup;
-import hudson.model.Computer;
-import hudson.model.Descriptor;
-import hudson.security.ACL;
-import hudson.security.AccessControlled;
-import hudson.util.FormValidation;
-import hudson.util.ListBoxModel;
-
 import java.io.Serializable;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -19,9 +8,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.StringTokenizer;
 
+import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
-
-import jenkins.model.Jenkins;
+import javax.annotation.Nullable;
 
 import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.AncestorInPath;
@@ -34,6 +23,32 @@ import com.cloudbees.plugins.credentials.common.StandardUsernameListBoxModel;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.cloudbees.plugins.credentials.domains.HostnameRequirement;
 
+import hudson.Extension;
+import hudson.Util;
+import hudson.model.AbstractDescribableImpl;
+import hudson.model.Computer;
+import hudson.model.Descriptor;
+import hudson.model.ItemGroup;
+import hudson.security.ACL;
+import hudson.security.AccessControlled;
+import hudson.util.FormValidation;
+import hudson.util.ListBoxModel;
+import jenkins.model.Jenkins;
+
+/**
+ * Holder of all informations about a npm public/private registry.
+ * <p>
+ * This class keep all necessary information to access a npm registry that must
+ * be stored in a user config file.
+ * Typically information are:
+ * <ul>
+ * <li>the registry URL</li>
+ * <li>list of scope for the registry, used typical in private registry</li>
+ * <li>account credentials to access the registry</li>
+ * </ul>
+ *
+ * @author Nikolas Falco
+ */
 public class NPMRegistry extends AbstractDescribableImpl<NPMRegistry> implements Serializable {
     private static final long serialVersionUID = -5199710867477461372L;
 
@@ -59,7 +74,7 @@ public class NPMRegistry extends AbstractDescribableImpl<NPMRegistry> implements
      *
      * @param url url of a npm registry
      * @param credentialsId credentials identifier
-     * @param scoped if this registry was designed for a specific scope
+     * @param hasScopes if this registry was designed for a specific scope
      * @param scopes url-safe characters, no leading dots or underscores
      */
     @DataBoundConstructor
@@ -69,17 +84,31 @@ public class NPMRegistry extends AbstractDescribableImpl<NPMRegistry> implements
         this.scopes = hasScopes ? fixScope(Util.fixEmpty(scopes)) : null;
     }
 
-    private String fixScope(String scope) {
+    @Nullable
+    private String fixScope(final @Nullable String scope) {
         if (scope != null && scope.startsWith("@")) {
             return scope.substring(1);
         }
         return scope;
     }
 
+    /**
+     * Get the registry URL
+     *
+     * @return the registry URL
+     */
+    @Nullable
     public String getUrl() {
         return url;
     }
 
+    /**
+     * Get list of scope for this registry.
+     * <p>
+     * The scope are not prefixed with {@literal @} character.
+     *
+     * @return a space separated list of scope.
+     */
     public String getScopes() {
         return scopes;
     }
@@ -88,6 +117,13 @@ public class NPMRegistry extends AbstractDescribableImpl<NPMRegistry> implements
         return scopes != null;
     }
 
+    /**
+     * Provide a list of scope for this registry.
+     * <p>
+     * The scope are not prefixed with {@literal @} character.
+     *
+     * @return list of scope.
+     */
     public List<String> getScopesAsList() {
         List<String> result = Collections.emptyList();
         if (isHasScopes()) {
@@ -96,6 +132,13 @@ public class NPMRegistry extends AbstractDescribableImpl<NPMRegistry> implements
         return result;
     }
 
+    /**
+     * Get list of scope for this registry.
+     * <p>
+     * The scope are not prefixed with {@literal @} character.
+     *
+     * @return a space separated list of scope.
+     */
     public String getCredentialsId() {
         return credentialsId;
     }
@@ -103,7 +146,7 @@ public class NPMRegistry extends AbstractDescribableImpl<NPMRegistry> implements
     @Extension
     public static class DescriptorImpl extends Descriptor<NPMRegistry> {
 
-        public FormValidation doCheckScopes(@QueryParameter boolean hasScopes, @QueryParameter String scopes) {
+        public FormValidation doCheckScopes(final @CheckForNull @QueryParameter boolean hasScopes, @CheckForNull @QueryParameter String scopes) {
             scopes = Util.fixEmptyAndTrim(scopes);
             if (hasScopes) {
                 if (scopes == null) {
@@ -124,7 +167,7 @@ public class NPMRegistry extends AbstractDescribableImpl<NPMRegistry> implements
             return FormValidation.ok();
         }
 
-        public FormValidation doCheckUrl(@QueryParameter String url) {
+        public FormValidation doCheckUrl(final @CheckForNull @QueryParameter String url) {
             if (StringUtils.isBlank(url)) {
                 return FormValidation.error("Empty URL");
             }
@@ -137,9 +180,9 @@ public class NPMRegistry extends AbstractDescribableImpl<NPMRegistry> implements
             return FormValidation.ok();
         }
 
-        public ListBoxModel doFillCredentialsIdItems(@AncestorInPath ItemGroup<?> context,
-                                                     @QueryParameter String credentialsId,
-                                                     @QueryParameter String url) {
+        public ListBoxModel doFillCredentialsIdItems(final @AncestorInPath ItemGroup<?> context,
+                                                     final @CheckForNull @QueryParameter String credentialsId,
+                                                     final @CheckForNull @QueryParameter String url) {
             if (!hasPermission(context)) {
                 return new StandardUsernameListBoxModel().includeCurrentValue(credentialsId);
             }
@@ -157,7 +200,7 @@ public class NPMRegistry extends AbstractDescribableImpl<NPMRegistry> implements
                     .includeCurrentValue(credentialsId);
         }
 
-        private boolean hasPermission(ItemGroup<?> context) {
+        private boolean hasPermission(final ItemGroup<?> context) {
             AccessControlled controller = context instanceof AccessControlled ? (AccessControlled) context : Jenkins.getInstance();
             return controller != null && controller.hasPermission(Computer.CONFIGURE);
         }

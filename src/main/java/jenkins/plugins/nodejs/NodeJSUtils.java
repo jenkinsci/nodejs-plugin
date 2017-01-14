@@ -22,6 +22,7 @@ import jenkins.plugins.nodejs.tools.NodeJSInstallation.DescriptorImpl;
 
 import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.lib.configprovider.model.Config;
+import org.jenkinsci.plugins.configfiles.ConfigFiles;
 import org.jenkinsci.plugins.configfiles.buildwrapper.ManagedFileUtil;
 import org.jenkinsci.plugins.configfiles.common.CleanTempFilesAction;
 
@@ -81,7 +82,7 @@ import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
      */
     public static FilePath supplyConfig(String configId, AbstractBuild<?, ?> build, TaskListener listener) throws AbortException {
         if (StringUtils.isNotBlank(configId)) {
-            Config c = Config.getByIdOrNull(configId);
+            Config c = ConfigFiles.getByIdOrNull(build, configId);
 
             if (c == null) {
                 throw new AbortException("this NodeJS build is setup to use a config with id " + configId + " but can not be find");

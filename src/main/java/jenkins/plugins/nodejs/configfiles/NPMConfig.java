@@ -10,10 +10,12 @@ import java.util.List;
 
 import javax.annotation.Nonnull;
 
+import jenkins.model.Jenkins;
 import jenkins.plugins.nodejs.Messages;
 
 import org.apache.commons.io.IOUtils;
 import org.jenkinsci.lib.configprovider.AbstractConfigProviderImpl;
+import org.jenkinsci.lib.configprovider.ConfigProvider;
 import org.jenkinsci.lib.configprovider.model.Config;
 import org.jenkinsci.lib.configprovider.model.ContentType;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -37,6 +39,16 @@ public class NPMConfig extends Config {
 
     public List<NPMRegistry> getRegistries() {
         return registries;
+    }
+
+    /*
+     * (non-Javadoc)
+     * @see org.jenkinsci.lib.configprovider.model.Config#getDescriptor()
+     */
+    @Override
+    public ConfigProvider getDescriptor() {
+        // boiler template
+        return (ConfigProvider) Jenkins.getActiveInstance().getDescriptorOrDie(getClass());
     }
 
     @Extension

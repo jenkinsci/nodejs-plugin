@@ -34,7 +34,7 @@ public final class RegistryHelper {
     /**
      * Resolves all registry credentials and returns a map paring registry URL
      * to credential.
-     * 
+     *
      * @param build a build being run
      * @return map of registry URL - credential
      */
@@ -63,7 +63,6 @@ public final class RegistryHelper {
      * Fill the npmpc user config with the given registries.
      *
      * @param npmrcContent .npmrc user config
-     * @param registries a list of registry to insert into the user config
      * @param registry2Credentials the credentials to be inserted into the user
      *        config (key: registry URL, value: Jenkins credentials)
      * @return the updated version of the {@code npmrcContent} with the registry

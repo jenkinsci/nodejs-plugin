@@ -37,7 +37,7 @@ public class NpmrcTest {
     @Test
     public void testLoad() throws Exception {
         Npmrc npmrc = Npmrc.load(file);
-        assertTrue(npmrc.containsKey("always-auth"));
+        assertTrue(npmrc.contains("always-auth"));
         assertEquals("true", npmrc.get("always-auth"));
         assertEquals("\"/var/lib/jenkins/tools/jenkins.plugins.nodejs.tools.NodeJSInstallation/Node_6.x\"",
                 npmrc.get("prefix"));
@@ -46,7 +46,7 @@ public class NpmrcTest {
     @Test
     public void testAvoidParseError() throws Exception {
         Npmrc npmrc = Npmrc.load(file);
-        assertFalse(npmrc.containsKey("browser"));
+        assertFalse(npmrc.contains("browser"));
     }
 
     @Test
@@ -60,7 +60,7 @@ public class NpmrcTest {
 
         // reload content
         npmrc = Npmrc.load(file);
-        assertTrue(npmrc.containsKey(testKey));
+        assertTrue(npmrc.contains(testKey));
         assertEquals(testValue, npmrc.get(testKey));
     }
 
