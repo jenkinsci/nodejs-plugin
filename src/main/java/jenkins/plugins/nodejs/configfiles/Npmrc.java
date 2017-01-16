@@ -170,6 +170,36 @@ public class Npmrc {
     }
 
     /**
+     * Get the value for the specified property key as a boolean.
+     *
+     * @param key user config entry key
+     * @return a boolean represented by the property value or {@literal null} if
+     *         the key doesn't exist or the value associated is empty.
+     */
+    public Boolean getAsBoolean(String key) {
+        Boolean result = null;
+        if (contains(key)) {
+            result = Boolean.valueOf(properties.get(key));
+        }
+        return result;
+    }
+
+    /**
+     * Get the value for the specified property key as a number.
+     *
+     * @param key user config entry key
+     * @return an integer represented by the property value or {@literal null}
+     *         if the key doesn't exist or the value associated is empty.
+     */
+    public Integer getAsNumber(String key) {
+        Integer result = null;
+        if (contains(key)) {
+            result = Integer.valueOf(properties.get(key));
+        }
+        return result;
+    }
+
+    /**
      * Marker interface.
      * <p>
      * This class is intended to avoid collision if a special entry key was
@@ -180,4 +210,6 @@ public class Npmrc {
      */
     private interface Comment {
     }
+
+
 }
