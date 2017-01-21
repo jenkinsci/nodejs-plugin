@@ -2,12 +2,10 @@ package jenkins.plugins.nodejs;
 
 import java.io.IOException;
 import java.util.Collection;
-import java.util.Collections;
-
 import javax.annotation.Nonnull;
 
-import org.jenkinsci.lib.configprovider.ConfigProvider;
 import org.jenkinsci.lib.configprovider.model.Config;
+import org.jenkinsci.plugins.configfiles.GlobalConfigFiles;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import hudson.AbortException;
@@ -23,7 +21,7 @@ import hudson.model.Node;
 import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.tasks.BuildWrapperDescriptor;
-import jenkins.plugins.nodejs.configfiles.NPMConfig;
+import jenkins.plugins.nodejs.configfiles.NPMConfig.NPMConfigProvider;
 import jenkins.plugins.nodejs.tools.NodeJSInstallation;
 import jenkins.tasks.SimpleBuildWrapper;
 
@@ -123,12 +121,7 @@ public class NodeJSBuildWrapper extends SimpleBuildWrapper {
         }
 
         public Collection<Config> getConfigs() {
-            ConfigProvider provider = ConfigProvider.getByIdOrNull(NPMConfig.class.getName());
-            if (provider != null) {
-                return provider.getAllConfigs();
-            }
-
-            return Collections.emptyList();
+            return GlobalConfigFiles.get().getConfigs(NPMConfigProvider.class);
         }
 
     }

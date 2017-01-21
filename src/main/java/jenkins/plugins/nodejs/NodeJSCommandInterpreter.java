@@ -2,10 +2,8 @@ package jenkins.plugins.nodejs;
 
 import java.io.IOException;
 import java.util.Collection;
-import java.util.Collections;
-
-import org.jenkinsci.lib.configprovider.ConfigProvider;
 import org.jenkinsci.lib.configprovider.model.Config;
+import org.jenkinsci.plugins.configfiles.GlobalConfigFiles;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import hudson.AbortException;
@@ -21,7 +19,7 @@ import hudson.model.Node;
 import hudson.tasks.Builder;
 import hudson.tasks.CommandInterpreter;
 import hudson.util.ArgumentListBuilder;
-import jenkins.plugins.nodejs.configfiles.NPMConfig;
+import jenkins.plugins.nodejs.configfiles.NPMConfig.NPMConfigProvider;
 import jenkins.plugins.nodejs.tools.NodeJSInstallation;
 import jenkins.plugins.nodejs.tools.Platform;
 
@@ -170,12 +168,7 @@ public class NodeJSCommandInterpreter extends CommandInterpreter {
          *         defined.
          */
         public Collection<Config> getConfigs() {
-            ConfigProvider provider = ConfigProvider.getByIdOrNull(NPMConfig.class.getName());
-            if (provider != null) {
-                return provider.getAllConfigs();
-            }
-
-            return Collections.emptyList();
+            return GlobalConfigFiles.get().getConfigs(NPMConfigProvider.class);
         }
 
     }
