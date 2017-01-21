@@ -1,9 +1,11 @@
 package jenkins.plugins.nodejs.configfiles;
 
+import static jenkins.plugins.nodejs.NodeJSConstants.*;
 import static org.hamcrest.CoreMatchers.*;
 import static org.junit.Assert.*;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -11,6 +13,7 @@ import org.bouncycastle.util.encoders.Base64;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.jvnet.hudson.test.JenkinsRule;
 
 import com.cloudbees.plugins.credentials.CredentialsProvider;
@@ -21,12 +24,13 @@ import com.cloudbees.plugins.credentials.domains.Domain;
 import com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl;
 
 import hudson.model.FreeStyleBuild;
-import static jenkins.plugins.nodejs.NodeJSConstants.*;
 
 public class RegistryHelperTest {
 
     @Rule
     public JenkinsRule j = new JenkinsRule();
+    @Rule
+    public ExpectedException thrown = ExpectedException.none();
     private StandardUsernameCredentials user;
 
     @Before
@@ -85,6 +89,18 @@ public class RegistryHelperTest {
         }
         assertFalse(npmrc.getAsBoolean(helper.compose(prefix, NPM_SETTINGS_ALWAYS_AUTH)));
         assertFalse(npmrc.contains(helper.compose(prefix, NPM_SETTINGS_AUTH)));
+    }
+
+    @Test
+    public void test_too_many_global_registries() {
+        NPMRegistry privateRegistry = new NPMRegistry("https://private.organization.com/", null, null);
+        NPMRegistry officalRegistry = new NPMRegistry("https://registry.npmjs.org/", null, null);
+
+        thrown.expect(NpmConfigException.class);
+        thrown.expectMessage(allOf(containsString(privateRegistry.getUrl()), containsString(officalRegistry.getUrl())));
+
+        RegistryHelper helper = new RegistryHelper(Arrays.asList(privateRegistry, officalRegistry));
+        helper.fillRegistry("", Collections.<String, StandardUsernameCredentials> emptyMap());
     }
 
 }

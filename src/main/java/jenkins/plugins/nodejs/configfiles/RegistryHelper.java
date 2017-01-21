@@ -75,6 +75,8 @@ public final class RegistryHelper {
         Npmrc npmrc = new Npmrc();
         npmrc.from(npmrcContent);
 
+        NPMRegistry global = null;
+
         for (NPMRegistry registry : registries) {
             String authValue = null;
             if (registry2Credentials.containsKey(registry.getUrl())) {
@@ -96,6 +98,13 @@ public final class RegistryHelper {
                     }
                 }
             } else {
+                if (global != null) {
+                    throw new NpmConfigException("Too many registries configured as global, only one is permitted.\n"
+                            + "- " + global.getUrl() + "\n"
+                            + "- " + registry.getUrl());
+                }
+                global = registry;
+
                 // add values to the user config file
                 npmrc.set(NPM_SETTINGS_REGISTRY, registry.getUrl());
                 npmrc.set(NPM_SETTINGS_ALWAYS_AUTH, authValue != null);
