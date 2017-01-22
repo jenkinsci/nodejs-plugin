@@ -1,7 +1,7 @@
 <!--
 The MIT License
 
-Copyright (c) 2010, Cliffano Subagio
+Copyright (c) 2016, Nikolas Falco
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -23,26 +23,39 @@ THE SOFTWARE.
 -->
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
-    <f:entry title="${%nodeJSInstallationName.title}" description="${%nodeJSInstallationName.description}">
-        <select class="setting-input" name="_.nodeJSInstallationName">
-        	<f:option value="">${%nodeJSInstallationName.emptyValue}</f:option>
-            <j:forEach var="inst" items="${descriptor.installations}">
-                <f:option selected="${inst.name==instance.nodeJSInstallationName}">${inst.name}</f:option>
-            </j:forEach>
-        </select>
+	<!-- needed for repeatable properties -->
+	<j:set var="instance" value="${config}"/>
+
+	<j:set var="descriptor" value="${config.descriptor}" />
+
+    <f:entry title="${%ID}" >
+        <f:textbox readonly="readonly" name="config.id" value="${config.id}" />
     </f:entry>
 
-    <f:entry title="${%command.title}" description="See &lt;a href='${rootURL}/env-vars.html' target=_new>the list of available environment variables&lt;/a> accessible by process.env.ENV_VARIABLE.">
-        <f:textarea field="command" />
+    <f:entry title="${%Name}">
+        <f:textbox readonly="readonly" name="config.name" value="${config.name}" />
     </f:entry>
-    
-        
-    <f:entry title="${%configId.title}">
-    	<select class="setting-input validated select" name="_.configId" checkdependson="configId" checkurl="/jenkins/job/test/descriptorByName/jenkins.plugins.nodejs.NodeJSBuildWrapper/checkConfigId">
-	    	<f:option value="">${%configId.emptyValue}</f:option>
-	    	<j:forEach var="config" items="${descriptor.configs}">
-            	<f:option selected="${instance.configId == config.id}" value="${config.id}">${config.name}</f:option>
+
+    <f:entry title="${%Comment}">
+        <f:textbox readonly="readonly" name="config.comment" value="${config.comment}" />
+    </f:entry>
+
+	<f:entry title="${%registry.title}">
+		<table style="width:100%">
+			<j:forEach var="registry" items="${config.registries}">
+				<f:entry title="${%registry.url}" description="${empty(registry.scopes)? '%registry.global' : '%registry.scoped'}">
+					<f:textbox readonly="readonly" name="registry.url" value="${registry.url}" />
+				</f:entry>
+				<j:if test="${!empty(registry.scopes)}">
+					<f:entry title="${%registry.scopes}">
+				       	<f:textbox readonly="readonly" name="registry.scopes" value="${registry.scopes}" />
+					</f:entry>
+				</j:if>
 			</j:forEach>
-    	</select>
-    </f:entry>
+		</table>
+	</f:entry>
+
+	<f:entry title="${%content.title}">
+		<f:textarea readonly="readonly" value="${config.content}" />
+	</f:entry>
 </j:jelly>

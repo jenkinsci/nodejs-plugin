@@ -1,8 +1,14 @@
 package jenkins.plugins.nodejs;
 
 import java.io.IOException;
+import java.util.Collection;
 
+import javax.annotation.CheckForNull;
+
+import org.jenkinsci.lib.configprovider.model.Config;
+import org.jenkinsci.plugins.configfiles.GlobalConfigFiles;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.QueryParameter;
 
 import hudson.AbortException;
 import hudson.EnvVars;
@@ -17,6 +23,10 @@ import hudson.model.Node;
 import hudson.tasks.Builder;
 import hudson.tasks.CommandInterpreter;
 import hudson.util.ArgumentListBuilder;
+import hudson.util.FormValidation;
+import jenkins.plugins.nodejs.configfiles.NPMConfig;
+import jenkins.plugins.nodejs.configfiles.VerifyConfigProviderException;
+import jenkins.plugins.nodejs.configfiles.NPMConfig.NPMConfigProvider;
 import jenkins.plugins.nodejs.tools.NodeJSInstallation;
 import jenkins.plugins.nodejs.tools.Platform;
 
@@ -28,9 +38,8 @@ import jenkins.plugins.nodejs.tools.Platform;
  * @author Nikolas Falco
  */
 public class NodeJSCommandInterpreter extends CommandInterpreter {
-    private static final String JAVASCRIPT_EXT = ".js";
-
     private final String nodeJSInstallationName;
+    private final String configId;
     private transient String nodeExec; // NOSONAR
 
     /**
@@ -40,11 +49,14 @@ public class NodeJSCommandInterpreter extends CommandInterpreter {
      *            the NodeJS script
      * @param nodeJSInstallationName
      *            the NodeJS label configured in Jenkins
+     * @param configId
+     *            the provided Config id
      */
     @DataBoundConstructor
-    public NodeJSCommandInterpreter(final String command, final String nodeJSInstallationName) {
+    public NodeJSCommandInterpreter(final String command, final String nodeJSInstallationName, final String configId) {
         super(command);
         this.nodeJSInstallationName = Util.fixEmpty(nodeJSInstallationName);
+        this.configId = Util.fixEmpty(configId);
     }
 
     /**
@@ -82,6 +94,9 @@ public class NodeJSCommandInterpreter extends CommandInterpreter {
                     throw new AbortException(Messages.NodeJSCommandInterpreter_noExecutableFound(ni.getHome()));
                 }
             }
+
+            // add npmrc config
+            NodeJSUtils.supplyConfig(configId, build, listener);
         } catch (AbortException e) {
             listener.fatalError(e.getMessage()); // NOSONAR
             return false;
@@ -110,11 +125,15 @@ public class NodeJSCommandInterpreter extends CommandInterpreter {
 
     @Override
     protected String getFileExtension() {
-        return JAVASCRIPT_EXT;
+        return NodeJSConstants.JAVASCRIPT_EXT;
     }
 
     public String getNodeJSInstallationName() {
         return nodeJSInstallationName;
+    }
+
+    public String getConfigId() {
+        return configId;
     }
 
     /**
@@ -147,6 +166,28 @@ public class NodeJSCommandInterpreter extends CommandInterpreter {
 
         public NodeJSInstallation[] getInstallations() {
             return NodeJSUtils.getInstallations();
+        }
+
+        /**
+         * Gather all defined npmrc config files.
+         *
+         * @return a collection of user npmrc files or {@code empty} if no one
+         *         defined.
+         */
+        public Collection<Config> getConfigs() {
+            return GlobalConfigFiles.get().getConfigs(NPMConfigProvider.class);
+        }
+
+        public FormValidation doCheckConfigId(@CheckForNull @QueryParameter final String configId) {
+            NPMConfig config = (NPMConfig) GlobalConfigFiles.get().getById(configId);
+            if (config != null) {
+                try {
+                    config.doVerify();
+                } catch (VerifyConfigProviderException e) {
+                    return FormValidation.error(e.getMessage());
+                }
+            }
+            return FormValidation.ok();
         }
 
     }

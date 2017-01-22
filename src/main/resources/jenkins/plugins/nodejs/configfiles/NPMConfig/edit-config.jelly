@@ -1,7 +1,7 @@
 <!--
 The MIT License
 
-Copyright (c) 2010, Cliffano Subagio
+Copyright (c) 2016, Nikolas Falco
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -23,22 +23,19 @@ THE SOFTWARE.
 -->
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+	<!-- needed for repeatable properties -->
+	<j:set var="instance" value="${config}"/>
 
-    <f:entry title="${%nodeJSInstallationName.title}" description="${%nodeJSInstallationName.description}">
-        <select class="setting-input" name="_.nodeJSInstallationName">
-            <j:forEach var="inst" items="${descriptor.installations}">
-                <f:option selected="${inst.name==instance.nodeJSInstallationName}">${inst.name}</f:option>
-            </j:forEach>
-        </select>
-    </f:entry>
+	<p>${%description}</p>
 
-    <f:entry title="${%configId.title}">
-    	<select class="setting-input validated select" name="_.configId" checkdependson="configId" checkurl="/jenkins/job/test/descriptorByName/jenkins.plugins.nodejs.NodeJSBuildWrapper/checkConfigId">
-	    	<f:option value="">${%configId.emptyValue}</f:option>
-	    	<j:forEach var="config" items="${descriptor.configs}">
-            	<f:option selected="${instance.configId == config.id}" value="${config.id}">${config.name}</f:option>
-			</j:forEach>
-    	</select>
-    </f:entry>
-    
+	<j:set var="descriptor" value="${config.descriptor}" />
+	<st:include page="id-name-and-comment" class="${descriptor.clazz}" />
+
+	<f:entry title="${%registry.title}">
+		<f:repeatableProperty field="registries" />
+	</f:entry>
+
+	<f:entry title="${%content.title}">
+		<f:textarea name="config.content" value="${it.content}" />
+	</f:entry>
 </j:jelly>
