@@ -17,6 +17,7 @@ import jenkins.model.Jenkins;
 import jenkins.plugins.nodejs.configfiles.NPMConfig;
 import jenkins.plugins.nodejs.configfiles.NPMRegistry;
 import jenkins.plugins.nodejs.configfiles.RegistryHelper;
+import jenkins.plugins.nodejs.configfiles.VerifyConfigProviderException;
 import jenkins.plugins.nodejs.tools.NodeJSInstallation;
 import jenkins.plugins.nodejs.tools.NodeJSInstallation.DescriptorImpl;
 
@@ -97,19 +98,21 @@ import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
                 listener.getLogger().println("using user config with name " + config.name);
                 String fileContent = config.content;
 
-                listener.getLogger().println("Adding all registry entries");
                 List<NPMRegistry> registries = config.getRegistries();
                 RegistryHelper helper = new RegistryHelper(registries);
                 if (!registries.isEmpty()) {
+                    listener.getLogger().println("Adding all registry entries");
                     Map<String, StandardUsernameCredentials> registry2Credentials = helper.resolveCredentials(build);
                     fileContent = helper.fillRegistry(fileContent, registry2Credentials);
                 }
 
                 try {
                     if (StringUtils.isNotBlank(fileContent)) { // NOSONAR
+                        config.doVerify();
+
                         FilePath workDir = ManagedFileUtil.tempDir(build.getWorkspace());
                         final FilePath f = workDir.createTextTempFile(".npmrc", "", Util.replaceMacro(fileContent, build.getEnvironment(listener)), true);
-                        listener.getLogger().printf("Create %s", f);
+                        listener.getLogger().printf("Created %s", f);
 
                         build.getEnvironments().add(new Environment() {
                             @Override
@@ -121,8 +124,10 @@ import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
                         build.addAction(new CleanTempFilesAction(f.getRemote()));
                         return f;
                     }
+                } catch (VerifyConfigProviderException e) {
+                    throw new AbortException("Invalid user config: " + e.getMessage());
                 } catch (Exception e) {
-                    throw new IllegalStateException("the npmrc user config could not be supplied for the current build: " + e.getMessage(), e);
+                    throw new IllegalStateException("the npmrc user config could not be supplied for the current build", e);
                 }
             }
         }

@@ -21,10 +21,17 @@ import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredenti
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.cloudbees.plugins.credentials.domains.HostnameRequirement;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.Util;
 import hudson.model.Run;
 import hudson.util.Secret;
 
+/**
+ * Helper to fill properly credentials in the the user configuration file.
+ *
+ * @author Nikolas Falco
+ * @since 1.0
+ */
 public final class RegistryHelper {
 
     private final List<NPMRegistry> registries;
@@ -71,11 +78,10 @@ public final class RegistryHelper {
      * @return the updated version of the {@code npmrcContent} with the registry
      *         credentials added
      */
+    @SuppressFBWarnings(value = "DM_DEFAULT_ENCODING", justification = "npm auth_token could not support base64 UTF-8 char encoding")
     public String fillRegistry(String npmrcContent, Map<String, StandardUsernameCredentials> registry2Credentials) {
         Npmrc npmrc = new Npmrc();
         npmrc.from(npmrcContent);
-
-        NPMRegistry global = null;
 
         for (NPMRegistry registry : registries) {
             String authValue = null;
@@ -98,13 +104,6 @@ public final class RegistryHelper {
                     }
                 }
             } else {
-                if (global != null) {
-                    throw new NpmConfigException("Too many registries configured as global, only one is permitted.\n"
-                            + "- " + global.getUrl() + "\n"
-                            + "- " + registry.getUrl());
-                }
-                global = registry;
-
                 // add values to the user config file
                 npmrc.set(NPM_SETTINGS_REGISTRY, registry.getUrl());
                 npmrc.set(NPM_SETTINGS_ALWAYS_AUTH, authValue != null);
@@ -119,8 +118,14 @@ public final class RegistryHelper {
 
     @Nonnull
     public String calculatePrefix(@Nonnull final String registryURL) {
-        String url = trimSlash(registryURL);
-        return "//" + url.substring((toURL(url).getProtocol() + "://").length()) + '/';
+        String trimmedURL = trimSlash(registryURL);
+
+        URL url = toURL(trimmedURL);
+        if (url == null) {
+            throw new IllegalArgumentException("Invalid url " + registryURL);
+        }
+
+        return "//" + trimmedURL.substring((url.getProtocol() + "://").length()) + '/';
     }
 
     @Nonnull
@@ -130,7 +135,7 @@ public final class RegistryHelper {
 
     @Nonnull
     private String trimSlash(@Nonnull final String url) {
-        if (url.endsWith("/")) {
+        if (url != null && url.endsWith("/")) {
             return url.substring(0, url.length() - 1);
         }
         return url;

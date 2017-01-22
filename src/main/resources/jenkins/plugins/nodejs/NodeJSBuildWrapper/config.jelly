@@ -23,6 +23,7 @@ THE SOFTWARE.
 -->
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+
     <f:entry title="${%nodeJSInstallationName.title}" description="${%nodeJSInstallationName.description}">
         <select class="setting-input" name="_.nodeJSInstallationName">
             <j:forEach var="inst" items="${descriptor.installations}">
@@ -30,13 +31,14 @@ THE SOFTWARE.
             </j:forEach>
         </select>
     </f:entry>
-    
+
     <f:entry title="${%configId.title}">
-    	<select class="setting-input" name="_.configId">
+    	<select class="setting-input validated select" name="_.configId" checkdependson="configId" checkurl="/jenkins/job/test/descriptorByName/jenkins.plugins.nodejs.NodeJSBuildWrapper/checkConfigId">
 	    	<f:option value="">${%configId.emptyValue}</f:option>
 	    	<j:forEach var="config" items="${descriptor.configs}">
             	<f:option selected="${instance.configId == config.id}" value="${config.id}">${config.name}</f:option>
 			</j:forEach>
     	</select>
     </f:entry>
+    
 </j:jelly>

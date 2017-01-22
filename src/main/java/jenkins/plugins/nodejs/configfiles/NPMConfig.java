@@ -2,7 +2,6 @@ package jenkins.plugins.nodejs.configfiles;
 
 import hudson.Extension;
 import hudson.Util;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -41,13 +40,34 @@ public class NPMConfig extends Config {
         return registries;
     }
 
+    /**
+     * Perform a validation of the configuration, if validation pass no
+     * {@link VerifyConfigProviderException} will be raised.
+     *
+     * @throws VerifyConfigProviderException
+     *             in case this configuration is not valid.
+     */
+    public void doVerify() throws VerifyConfigProviderException {
+        // check if more than registry is setup to be global
+        NPMRegistry globalRegistry = null;
+
+        for (NPMRegistry registry : registries) {
+            if (!registry.isHasScopes()) {
+                if (globalRegistry != null) {
+                    throw new VerifyConfigProviderException(Messages.NPMConfig_verifyTooGlobalRegistry());
+                }
+                globalRegistry = registry;
+            }
+        }
+    }
+
     /*
      * (non-Javadoc)
      * @see org.jenkinsci.lib.configprovider.model.Config#getDescriptor()
      */
     @Override
     public ConfigProvider getDescriptor() {
-        // boiler template
+        // boilerplate template
         return (ConfigProvider) Jenkins.getActiveInstance().getDescriptorOrDie(getClass());
     }
 

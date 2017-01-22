@@ -38,7 +38,7 @@ THE SOFTWARE.
     
         
     <f:entry title="${%configId.title}">
-    	<select class="setting-input" name="_.configId">
+    	<select class="setting-input validated select" name="_.configId" checkdependson="configId" checkurl="/jenkins/job/test/descriptorByName/jenkins.plugins.nodejs.NodeJSBuildWrapper/checkConfigId">
 	    	<f:option value="">${%configId.emptyValue}</f:option>
 	    	<j:forEach var="config" items="${descriptor.configs}">
             	<f:option selected="${instance.configId == config.id}" value="${config.id}">${config.name}</f:option>

@@ -2,11 +2,14 @@ package jenkins.plugins.nodejs;
 
 import java.io.IOException;
 import java.util.Collection;
+
+import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 
 import org.jenkinsci.lib.configprovider.model.Config;
 import org.jenkinsci.plugins.configfiles.GlobalConfigFiles;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.QueryParameter;
 
 import hudson.AbortException;
 import hudson.EnvVars;
@@ -21,7 +24,10 @@ import hudson.model.Node;
 import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.tasks.BuildWrapperDescriptor;
+import hudson.util.FormValidation;
+import jenkins.plugins.nodejs.configfiles.NPMConfig;
 import jenkins.plugins.nodejs.configfiles.NPMConfig.NPMConfigProvider;
+import jenkins.plugins.nodejs.configfiles.VerifyConfigProviderException;
 import jenkins.plugins.nodejs.tools.NodeJSInstallation;
 import jenkins.tasks.SimpleBuildWrapper;
 
@@ -122,6 +128,18 @@ public class NodeJSBuildWrapper extends SimpleBuildWrapper {
 
         public Collection<Config> getConfigs() {
             return GlobalConfigFiles.get().getConfigs(NPMConfigProvider.class);
+        }
+
+        public FormValidation doCheckConfigId(@CheckForNull @QueryParameter final String configId) {
+            NPMConfig config = (NPMConfig) GlobalConfigFiles.get().getById(configId);
+            if (config != null) {
+                try {
+                    config.doVerify();
+                } catch (VerifyConfigProviderException e) {
+                    return FormValidation.error(e.getMessage());
+                }
+            }
+            return FormValidation.ok();
         }
 
     }

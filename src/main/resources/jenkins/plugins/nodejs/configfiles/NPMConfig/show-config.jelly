@@ -23,10 +23,36 @@ THE SOFTWARE.
 -->
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
-	<st:include page="id-name-and-comment" class="${descriptor.clazz}" />
-	
+	<!-- needed for repeatable properties -->
+	<j:set var="instance" value="${config}"/>
+
+	<j:set var="descriptor" value="${config.descriptor}" />
+
+    <f:entry title="${%ID}" >
+        <f:textbox readonly="readonly" name="config.id" value="${config.id}" />
+    </f:entry>
+
+    <f:entry title="${%Name}">
+        <f:textbox readonly="readonly" name="config.name" value="${config.name}" />
+    </f:entry>
+
+    <f:entry title="${%Comment}">
+        <f:textbox readonly="readonly" name="config.comment" value="${config.comment}" />
+    </f:entry>
+
 	<f:entry title="${%registry.title}">
-		<f:repeatableProperty field="registries" />
+		<table style="width:100%">
+			<j:forEach var="registry" items="${config.registries}">
+				<f:entry title="${%registry.url}" description="${empty(registry.scopes)? '%registry.global' : '%registry.scoped'}">
+					<f:textbox readonly="readonly" name="registry.url" value="${registry.url}" />
+				</f:entry>
+				<j:if test="${!empty(registry.scopes)}">
+					<f:entry title="${%registry.scopes}">
+				       	<f:textbox readonly="readonly" name="registry.scopes" value="${registry.scopes}" />
+					</f:entry>
+				</j:if>
+			</j:forEach>
+		</table>
 	</f:entry>
 
 	<f:entry title="${%content.title}">

@@ -19,7 +19,7 @@ import org.apache.commons.io.output.FileWriterWithEncoding;
  * Npm config file parser.
  *
  * @author Nikolas Falco
- *
+ * @since 1.0
  */
 public class Npmrc {
     private static final String UTF_8 = "UTF-8";

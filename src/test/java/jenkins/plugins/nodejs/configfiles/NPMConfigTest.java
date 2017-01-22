@@ -3,9 +3,12 @@ package jenkins.plugins.nodejs.configfiles;
 import static org.hamcrest.CoreMatchers.*;
 import static org.junit.Assert.*;
 
+import java.util.Arrays;
+
 import org.jenkinsci.lib.configprovider.model.Config;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.jvnet.hudson.test.JenkinsRule;
 
 import hudson.model.Descriptor;
@@ -15,6 +18,8 @@ public class NPMConfigTest {
 
     @Rule
     public JenkinsRule j = new JenkinsRule();
+    @Rule
+    public ExpectedException thrown = ExpectedException.none();
 
     @Test
     public void test_load_template() {
@@ -37,6 +42,17 @@ public class NPMConfigTest {
         assertNull(config.comment);
         assertNull(config.content);
         assertNotNull(config.getRegistries());
+    }
+
+    @Test
+    public void test_too_many_global_registries() throws Exception {
+        NPMRegistry privateRegistry = new NPMRegistry("https://private.organization.com/", null, null);
+        NPMRegistry officalRegistry = new NPMRegistry("https://registry.npmjs.org/", null, null);
+
+        thrown.expect(VerifyConfigProviderException.class);
+
+        NPMConfig config = new NPMConfig("too_many_registry", null, null, null, "myprovider", Arrays.asList(privateRegistry, officalRegistry));
+        config.doVerify();
     }
 
 }

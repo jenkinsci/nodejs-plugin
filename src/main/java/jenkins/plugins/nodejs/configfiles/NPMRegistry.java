@@ -48,6 +48,7 @@ import jenkins.model.Jenkins;
  * </ul>
  *
  * @author Nikolas Falco
+ * @since 1.0
  */
 public class NPMRegistry extends AbstractDescribableImpl<NPMRegistry> implements Serializable {
     private static final long serialVersionUID = -5199710867477461372L;
@@ -146,7 +147,8 @@ public class NPMRegistry extends AbstractDescribableImpl<NPMRegistry> implements
     @Extension
     public static class DescriptorImpl extends Descriptor<NPMRegistry> {
 
-        public FormValidation doCheckScopes(final @CheckForNull @QueryParameter boolean hasScopes, @CheckForNull @QueryParameter String scopes) {
+        public FormValidation doCheckScopes(@CheckForNull @QueryParameter final boolean hasScopes,
+                                            @CheckForNull @QueryParameter String scopes) {
             scopes = Util.fixEmptyAndTrim(scopes);
             if (hasScopes) {
                 if (scopes == null) {
@@ -167,7 +169,7 @@ public class NPMRegistry extends AbstractDescribableImpl<NPMRegistry> implements
             return FormValidation.ok();
         }
 
-        public FormValidation doCheckUrl(final @CheckForNull @QueryParameter String url) {
+        public FormValidation doCheckUrl(@CheckForNull @QueryParameter final String url) {
             if (StringUtils.isBlank(url)) {
                 return FormValidation.error("Empty URL");
             }
@@ -180,9 +182,9 @@ public class NPMRegistry extends AbstractDescribableImpl<NPMRegistry> implements
             return FormValidation.ok();
         }
 
-        public ListBoxModel doFillCredentialsIdItems(final @AncestorInPath ItemGroup<?> context,
-                                                     final @CheckForNull @QueryParameter String credentialsId,
-                                                     final @CheckForNull @QueryParameter String url) {
+        public ListBoxModel doFillCredentialsIdItems(@AncestorInPath final ItemGroup<?> context,
+                                                     @Nonnull @QueryParameter final String credentialsId,
+                                                     @Nonnull @QueryParameter final String url) {
             if (!hasPermission(context)) {
                 return new StandardUsernameListBoxModel().includeCurrentValue(credentialsId);
             }
