@@ -4,6 +4,9 @@ import java.io.IOException;
 import java.util.Locale;
 import java.util.Map;
 
+import javax.annotation.Nonnull;
+
+import hudson.model.Computer;
 import hudson.model.Node;
 
 /**
@@ -21,8 +24,12 @@ public enum CPU {
      * @throws IOException in case of IO issues with the remote Node
      * @throws InterruptedException in case the job is interrupted by user
      */
-    public static CPU of(Node node) throws IOException, InterruptedException {
-        return detect(node.toComputer().getSystemProperties());
+    public static CPU of(@Nonnull Node node) throws IOException, InterruptedException {
+        Computer computer = node.toComputer();
+        if (computer == null) {
+            throw new DetectionFailedException("Node offline");
+        }
+        return detect(computer.getSystemProperties());
     }
 
     /**

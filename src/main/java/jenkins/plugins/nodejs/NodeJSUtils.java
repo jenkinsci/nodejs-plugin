@@ -61,9 +61,9 @@ import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
      */
     @Nonnull
     public static NodeJSInstallation[] getInstallations() {
-        DescriptorImpl descriptor = Jenkins.getInstance().getDescriptorByType(NodeJSInstallation.DescriptorImpl.class); // NOSONAR
+        DescriptorImpl descriptor = Jenkins.getActiveInstance().getDescriptorByType(NodeJSInstallation.DescriptorImpl.class);
         if (descriptor == null) {
-            throw new IllegalStateException("Impossible to retrieve NodeJSInstallation descriptor");
+            throw new IllegalStateException("Impossible retrieve NodeJSInstallation descriptor");
         }
         return descriptor.getInstallations();
     }

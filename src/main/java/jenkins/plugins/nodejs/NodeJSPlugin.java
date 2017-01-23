@@ -8,6 +8,7 @@ import java.io.IOException;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import jenkins.model.Jenkins;
 import jenkins.plugins.nodejs.tools.NodeJSInstallation;
 import jenkins.plugins.nodejs.tools.NodeJSInstallation.DescriptorImpl;
@@ -35,6 +36,7 @@ public class NodeJSPlugin extends Plugin {
         }
     }
 
+    @SuppressFBWarnings("UWF_NULL_FIELD")
     @Override
     public void postInitialize() throws Exception {
         super.postInitialize();
@@ -75,7 +77,7 @@ public class NodeJSPlugin extends Plugin {
      */
     @Deprecated
     public void setInstallations(@Nonnull NodeJSInstallation[] installations) {
-        DescriptorImpl descriptor = Jenkins.getInstance().getDescriptorByType(NodeJSInstallation.DescriptorImpl.class); // NOSONAR
+        DescriptorImpl descriptor = Jenkins.getActiveInstance().getDescriptorByType(NodeJSInstallation.DescriptorImpl.class);
         if (descriptor != null) {
             descriptor.setInstallations(installations != null ? installations : new NodeJSInstallation[0]);
         }

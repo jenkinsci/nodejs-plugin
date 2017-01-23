@@ -40,9 +40,10 @@ import jenkins.tasks.SimpleBuildWrapper;
  */
 public class NodeJSBuildWrapper extends SimpleBuildWrapper {
 
-    @SuppressWarnings("serial")
-    private static class EnvVarsAdapter extends EnvVars { // NOSONAR
-        private final transient Context context;
+    private static class EnvVarsAdapter extends EnvVars {
+        private static final long serialVersionUID = 1L;
+
+        private final transient Context context; // NOSONAR
 
         public EnvVarsAdapter(@Nonnull Context context) {
             this.context = context;

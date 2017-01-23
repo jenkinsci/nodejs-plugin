@@ -83,10 +83,13 @@ public class NodeJSInstallation extends ToolInstallation implements EnvironmentS
 
             @Override
             public String call() throws IOException {
-                final Platform platform = Platform.of(Computer.currentComputer().getNode());
-                File exe = getExeFile(platform);
-                if (exe.exists()) {
-                    return exe.getPath();
+                Node node = Computer.currentComputer().getNode();
+                if (node != null) {
+                    final Platform platform = Platform.of(node);
+                    File exe = getExeFile(platform);
+                    if (exe.exists()) {
+                        return exe.getPath();
+                    }
                 }
                 return null;
             }
@@ -100,7 +103,8 @@ public class NodeJSInstallation extends ToolInstallation implements EnvironmentS
 
     private String getBin() {
         // TODO improve the platform test case
-        return new File(getHome(), (Computer.currentComputer().isUnix() ? Platform.LINUX : Platform.WINDOWS).binFolder).getPath();
+        Boolean isUnix = Computer.currentComputer().isUnix(); // findbugs ... what a nut!
+        return new File(getHome(), (isUnix == null || isUnix ? Platform.LINUX : Platform.WINDOWS).binFolder).getPath();
     }
 
     @Extension
