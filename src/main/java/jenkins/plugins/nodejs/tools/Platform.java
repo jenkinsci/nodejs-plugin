@@ -11,8 +11,7 @@ import hudson.model.Node;
  * Supported platform.
  */
 public enum Platform {
-    LINUX("node", "npm", "bin"), WINDOWS("node.exe", "npm.cmd", ""), OSX("node", "npm", "bin"), SOLARIS("node", "npm",
-            "bin");
+    LINUX("node", "npm", "bin"), WINDOWS("node.exe", "npm.cmd", ""), OSX("node", "npm", "bin");
 
     /**
      * Choose the file name suitable for the downloaded Node bundle.
@@ -69,9 +68,6 @@ public enum Platform {
         }
         if (arch.contains("windows")) {
             return WINDOWS;
-        }
-        if (arch.contains("sun") || arch.contains("solaris")) {
-            return SOLARIS;
         }
         if (arch.contains("mac")) {
             return OSX;
