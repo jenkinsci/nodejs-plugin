@@ -41,7 +41,7 @@ import jenkins.tasks.SimpleBuildWrapper;
 public class NodeJSBuildWrapper extends SimpleBuildWrapper {
 
     @SuppressWarnings("serial")
-    private class EnvVarsAdapter extends EnvVars { // NOSONAR
+    private static class EnvVarsAdapter extends EnvVars { // NOSONAR
         private final transient Context context;
 
         public EnvVarsAdapter(@Nonnull Context context) {
@@ -51,7 +51,12 @@ public class NodeJSBuildWrapper extends SimpleBuildWrapper {
         @Override
         public String put(String key, String value) {
             context.env(key, value);
-            return null;
+            return null; // old value does not exist, just one binding for key
+        }
+
+        @Override
+        public void override(String key, String value) {
+            put(key, value);
         }
 
     }
@@ -135,7 +140,7 @@ public class NodeJSBuildWrapper extends SimpleBuildWrapper {
             if (config != null) {
                 try {
                     config.doVerify();
-                } catch (VerifyConfigProviderException e) {
+                } catch (VerifyConfigProviderException e) { // NOSONAR I need only message
                     return FormValidation.error(e.getMessage());
                 }
             }
