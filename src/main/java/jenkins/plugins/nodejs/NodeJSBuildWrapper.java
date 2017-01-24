@@ -29,6 +29,7 @@ import jenkins.plugins.nodejs.configfiles.NPMConfig;
 import jenkins.plugins.nodejs.configfiles.NPMConfig.NPMConfigProvider;
 import jenkins.plugins.nodejs.configfiles.VerifyConfigProviderException;
 import jenkins.plugins.nodejs.tools.NodeJSInstallation;
+import jenkins.plugins.nodejs.tools.pathresolvers.FixEnvVarEnvironmentContributingAction;
 import jenkins.tasks.SimpleBuildWrapper;
 
 /**
@@ -110,6 +111,11 @@ public class NodeJSBuildWrapper extends SimpleBuildWrapper {
         ni = ni.forNode(node, listener);
         ni = ni.forEnvironment(initialEnvironment);
         ni.buildEnvVars(new EnvVarsAdapter(context));
+
+        // TODO remove this workaround on JENKINS-26583
+        if (build.getAction(FixEnvVarEnvironmentContributingAction.class) == null) {
+            build.addAction(new FixEnvVarEnvironmentContributingAction(ni));
+        }
 
         // add npmrc config
         NodeJSUtils.supplyConfig(configId, (AbstractBuild<?, ?>) build, listener, initialEnvironment);

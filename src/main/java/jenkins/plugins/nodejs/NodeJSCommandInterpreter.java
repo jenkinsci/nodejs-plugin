@@ -29,6 +29,7 @@ import jenkins.plugins.nodejs.configfiles.VerifyConfigProviderException;
 import jenkins.plugins.nodejs.configfiles.NPMConfig.NPMConfigProvider;
 import jenkins.plugins.nodejs.tools.NodeJSInstallation;
 import jenkins.plugins.nodejs.tools.Platform;
+import jenkins.plugins.nodejs.tools.pathresolvers.FixEnvVarEnvironmentContributingAction;
 
 /**
  * This class executes a JavaScript file using node. The file should contain
@@ -93,6 +94,11 @@ public class NodeJSCommandInterpreter extends CommandInterpreter {
                 if (nodeExec == null) {
                     throw new AbortException(Messages.NodeJSBuilders_noExecutableFound(ni.getHome()));
                 }
+            }
+
+            // TODO remove this workaround on JENKINS-26583
+            if (build.getAction(FixEnvVarEnvironmentContributingAction.class) == null) {
+                build.addAction(new FixEnvVarEnvironmentContributingAction(ni));
             }
 
             // add npmrc config
