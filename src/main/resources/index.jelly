@@ -27,5 +27,5 @@ THE SOFTWARE.
 -->
 <?jelly escape-by-default='true'?>
 <div>
-   NodeJS Plugin executes <a href=''http://nodejs.org/''>NodeJS</a> script as a build step.
+   NodeJS Plugin executes <a href="http://nodejs.org/">NodeJS</a> script as a build step.
 </div>
