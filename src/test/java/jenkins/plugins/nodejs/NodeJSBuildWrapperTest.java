@@ -47,6 +47,7 @@ public class NodeJSBuildWrapperTest {
         when(installation.forNode(any(Node.class), any(TaskListener.class))).thenReturn(installation);
         when(installation.forEnvironment(any(EnvVars.class))).thenReturn(installation);
         when(installation.getName()).thenReturn("mockNode");
+        when(installation.getHome()).thenReturn("/nodejs/home");
 
         NodeJSBuildWrapper bw = new MockNodeJSBuildWrapper(installation.getName(), config.id);
 
