@@ -40,10 +40,6 @@
         </license>
     </licenses>
 
-    <properties>
-        <findbugs.failOnError>false</findbugs.failOnError>
-    </properties>
-
     <dependencies>
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
