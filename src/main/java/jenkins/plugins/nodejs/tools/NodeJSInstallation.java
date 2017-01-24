@@ -9,12 +9,14 @@ import hudson.model.TaskListener;
 import hudson.model.Computer;
 import hudson.model.Node;
 import hudson.slaves.NodeSpecific;
+import hudson.tools.ToolInstaller;
 import hudson.tools.ToolProperty;
 import hudson.tools.ToolDescriptor;
 import hudson.tools.ToolInstallation;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 
 import javax.annotation.Nonnull;
@@ -67,7 +69,7 @@ public class NodeJSInstallation extends ToolInstallation implements EnvironmentS
             return;
         }
         env.put("NODEJS_HOME", home);
-        env.put("PATH+NODEJS", getBin());
+        env.override("PATH+NODEJS", getBin());
     }
 
     /**
@@ -110,20 +112,16 @@ public class NodeJSInstallation extends ToolInstallation implements EnvironmentS
     @Extension
     public static class DescriptorImpl extends ToolDescriptor<NodeJSInstallation> {
 
-        public DescriptorImpl() {
-            load();
-        }
-
         @Override
         public String getDisplayName() {
             return Messages.NodeJSInstallation_displayName();
         }
 
         @Override
-        public void setInstallations(NodeJSInstallation... installations) {
-            super.setInstallations(installations);
-            save();
+        public List<? extends ToolInstaller> getDefaultInstallers() {
+            return Collections.singletonList(new NodeJSInstaller(null, null, 72));
         }
+
     }
 
 }
