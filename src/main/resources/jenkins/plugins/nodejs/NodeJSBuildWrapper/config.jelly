@@ -22,7 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 -->
 <?jelly escape-by-default='true'?>
-<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form" xmlns:cf="/lib/nodejs">
 
     <f:entry title="${%nodeJSInstallationName.title}" description="${%nodeJSInstallationName.description}">
         <select class="setting-input" name="_.nodeJSInstallationName">
@@ -33,12 +33,7 @@ THE SOFTWARE.
     </f:entry>
 
     <f:entry title="${%configId.title}">
-    	<select class="setting-input validated select" name="_.configId" checkdependson="configId" checkurl="/jenkins/job/test/descriptorByName/jenkins.plugins.nodejs.NodeJSBuildWrapper/checkConfigId">
-	    	<f:option value="">${%configId.emptyValue}</f:option>
-	    	<j:forEach var="config" items="${descriptor.configs}">
-            	<f:option selected="${instance.configId == config.id}" value="${config.id}">${config.name}</f:option>
-			</j:forEach>
-    	</select>
+    	<cf:select field="configId" configs="${descriptor.configs}" allowsEmpty="true" emptyValue="" emptyLabel="${%configId.emptyValue}" />
     </f:entry>
     
 </j:jelly>
