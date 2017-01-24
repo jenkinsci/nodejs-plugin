@@ -97,21 +97,22 @@ public class NodeJSBuildWrapper extends SimpleBuildWrapper {
         // get specific installation for the node
         NodeJSInstallation ni = getNodeJS();
         if (ni == null) {
-            throw new IOException(Messages.NodeJSCommandInterpreter_noInstallationFound(nodeJSInstallationName));
+            throw new IOException(Messages.NodeJSBuilders_noInstallationFound(nodeJSInstallationName));
         }
         Computer computer = workspace.toComputer();
         if (computer == null) {
-            throw new AbortException(Messages.NodeJSCommandInterpreter_nodeOffline());
+            throw new AbortException(Messages.NodeJSBuilders_nodeOffline());
         }
         Node node = computer.getNode();
         if (node == null) {
-            throw new AbortException(Messages.NodeJSCommandInterpreter_nodeOffline());
+            throw new AbortException(Messages.NodeJSBuilders_nodeOffline());
         }
         ni = ni.forNode(node, listener);
         ni = ni.forEnvironment(initialEnvironment);
         ni.buildEnvVars(new EnvVarsAdapter(context));
 
-        NodeJSUtils.supplyConfig(configId, (AbstractBuild<?, ?>) build, listener);
+        // add npmrc config
+        NodeJSUtils.supplyConfig(configId, (AbstractBuild<?, ?>) build, listener, initialEnvironment);
     }
 
 

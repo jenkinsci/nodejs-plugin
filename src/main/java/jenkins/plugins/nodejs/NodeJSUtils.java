@@ -1,6 +1,7 @@
 package jenkins.plugins.nodejs;
 
 import hudson.AbortException;
+import hudson.EnvVars;
 import hudson.FilePath;
 import hudson.Util;
 import hudson.model.Environment;
@@ -79,9 +80,10 @@ import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
      * @param configId the configuration identification
      * @param build a build being run
      * @param listener a way to report progress
+     * @param env the environment variables set at the outset
      * @throws AbortException in case the provided configId is not valid
      */
-    public static FilePath supplyConfig(String configId, AbstractBuild<?, ?> build, TaskListener listener) throws AbortException {
+    public static FilePath supplyConfig(String configId, AbstractBuild<?, ?> build, TaskListener listener, EnvVars env) throws AbortException {
         if (StringUtils.isNotBlank(configId)) {
             Config c = ConfigFiles.getByIdOrNull(build, configId);
 
@@ -111,7 +113,7 @@ import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
                         config.doVerify();
 
                         FilePath workDir = ManagedFileUtil.tempDir(build.getWorkspace());
-                        final FilePath f = workDir.createTextTempFile(".npmrc", "", Util.replaceMacro(fileContent, build.getEnvironment(listener)), true);
+                        final FilePath f = workDir.createTextTempFile(".npmrc", "", Util.replaceMacro(fileContent, env), true);
                         listener.getLogger().printf("Created %s", f);
 
                         build.getEnvironments().add(new Environment() {

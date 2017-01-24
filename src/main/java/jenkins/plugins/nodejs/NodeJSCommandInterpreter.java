@@ -77,26 +77,26 @@ public class NodeJSCommandInterpreter extends CommandInterpreter {
             NodeJSInstallation ni = getNodeJS();
             if (ni == null) {
                 if (nodeJSInstallationName != null) {
-                    throw new AbortException(Messages.NodeJSCommandInterpreter_noInstallationFound(nodeJSInstallationName));
+                    throw new AbortException(Messages.NodeJSBuilders_noInstallationFound(nodeJSInstallationName));
                 }
                 // use system NodeJS if any, in case let fails later
                 nodeExec = (launcher.isUnix() ? Platform.LINUX : Platform.WINDOWS).nodeFileName;
             } else {
                 Node node = build.getBuiltOn();
                 if (node == null) {
-                    throw new AbortException(Messages.NodeJSCommandInterpreter_nodeOffline());
+                    throw new AbortException(Messages.NodeJSBuilders_nodeOffline());
                 }
                 ni = ni.forNode(node, listener);
                 ni = ni.forEnvironment(env);
                 ni.buildEnvVars(env);
                 nodeExec = ni.getExecutable(launcher);
                 if (nodeExec == null) {
-                    throw new AbortException(Messages.NodeJSCommandInterpreter_noExecutableFound(ni.getHome()));
+                    throw new AbortException(Messages.NodeJSBuilders_noExecutableFound(ni.getHome()));
                 }
             }
 
             // add npmrc config
-            NodeJSUtils.supplyConfig(configId, build, listener);
+            NodeJSUtils.supplyConfig(configId, build, listener, env);
         } catch (AbortException e) {
             listener.fatalError(e.getMessage()); // NOSONAR
             return false;

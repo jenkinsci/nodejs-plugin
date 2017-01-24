@@ -53,7 +53,7 @@ public class NpmrcFileSupplyTest {
 
         FreeStyleBuild build = new MockBuild(j.createFreeStyleProject(), new FilePath(folder.newFolder()), enviroments);
 
-        FilePath npmrcFile = NodeJSUtils.supplyConfig(config.id, build, j.createTaskListener());
+        FilePath npmrcFile = NodeJSUtils.supplyConfig(config.id, build, j.createTaskListener(), new EnvVars());
         assertTrue(npmrcFile.exists());
         assertTrue(npmrcFile.length() > 0);
 
