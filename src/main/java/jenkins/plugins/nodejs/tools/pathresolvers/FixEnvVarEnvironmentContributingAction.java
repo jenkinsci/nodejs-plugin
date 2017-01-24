@@ -8,7 +8,7 @@ import jenkins.plugins.nodejs.tools.NodeJSInstallation;
 //@Issue("JENKINS-26583")
 public class FixEnvVarEnvironmentContributingAction implements EnvironmentContributingAction {
 
-    private NodeJSInstallation installation;
+    private transient NodeJSInstallation installation;
 
     public FixEnvVarEnvironmentContributingAction(NodeJSInstallation installation) {
         this.installation = installation;
@@ -33,7 +33,7 @@ public class FixEnvVarEnvironmentContributingAction implements EnvironmentContri
     public void buildEnvVars(AbstractBuild<?, ?> build, EnvVars env) {
         String home = installation.getHome();
         // check if not already added
-        if (env.containsKey("PATH") && !env.get("PATH").contains(home)) {
+        if (env.get("PATH") == null || !env.get("PATH").contains(home)) {
             installation.buildEnvVars(env);
         }
     }
