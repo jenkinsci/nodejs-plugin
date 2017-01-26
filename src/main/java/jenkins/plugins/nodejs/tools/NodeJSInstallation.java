@@ -75,9 +75,11 @@ public class NodeJSInstallation extends ToolInstallation implements EnvironmentS
     /**
      * Gets the executable path of NodeJS on the given target system.
      *
-     * @param launcher
+     * @param launcher a way to start processes
      * @return the nodejs executable in the system is exists, {@code null}
      *         otherwise.
+     * @throws InterruptedException if the step is interrupted
+     * @throws IOException if something goes wrong
      */
     public String getExecutable(final Launcher launcher) throws InterruptedException, IOException {
         return launcher.getChannel().call(new MasterToSlaveCallable<String, IOException>() {

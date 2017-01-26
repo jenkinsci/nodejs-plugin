@@ -68,6 +68,10 @@ public class NodeJSCommandInterpreter extends CommandInterpreter {
         return NodeJSUtils.getNodeJS(nodeJSInstallationName);
     }
 
+    /*
+     * (non-Javadoc)
+     * @see hudson.tasks.CommandInterpreter#perform(hudson.model.AbstractBuild, hudson.Launcher, hudson.model.BuildListener)
+     */
     @Override
     public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) throws InterruptedException {
         try {
