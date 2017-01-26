@@ -80,6 +80,7 @@ public class NodeJSPlugin extends Plugin {
         DescriptorImpl descriptor = Jenkins.getActiveInstance().getDescriptorByType(NodeJSInstallation.DescriptorImpl.class);
         if (descriptor != null) {
             descriptor.setInstallations(installations != null ? installations : new NodeJSInstallation[0]);
+            descriptor.save();
         }
     }
 
