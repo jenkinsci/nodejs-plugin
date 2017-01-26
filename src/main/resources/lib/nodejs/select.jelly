@@ -60,7 +60,14 @@ THE SOFTWARE.
 			<option value="${emptyValue}">${emptyLabel}</option>
 		</j:if>
 		<j:forEach var="config" items="${configs}">
-			<option selected="${value == config.id}" value="${config.id}">${config.name}</option>
+			<j:choose>
+				<j:when test="${value == config.id}">
+					<option value="${config.id}" selected="true">${config.name}</option>
+				</j:when>
+				<j:otherwise>
+					<option value="${config.id}">${config.name}</option>
+				</j:otherwise>
+			</j:choose>
 		</j:forEach>
 	</m:select>
 </j:jelly>
