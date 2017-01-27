@@ -67,7 +67,8 @@ public class NodeJSBuildWrapperTest {
 
         final Config config = createSetting("my-config-id", null, null);
 
-        final NodeJSInstallation installation = new NodeJSInstallation("inject_var", "/home/nodejs", null);
+        String nodejsHome = new File("/home", "nodejs").getAbsolutePath(); // platform independent
+        final NodeJSInstallation installation = new NodeJSInstallation("inject_var", nodejsHome, null);
 
         NodeJSBuildWrapper bw = new MockNodeJSBuildWrapper(installation, config.id);
 
