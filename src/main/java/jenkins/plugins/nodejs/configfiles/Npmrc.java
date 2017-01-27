@@ -31,6 +31,7 @@ public class Npmrc {
      * comments.
      *
      * @param file a valid npmrc user config file content.
+     * @return the instance of parsed user config.
      * @throws IOException in case of I/O failure during file read
      */
     public static Npmrc load(File file) throws IOException {
@@ -210,6 +211,5 @@ public class Npmrc {
      */
     private interface Comment {
     }
-
 
 }

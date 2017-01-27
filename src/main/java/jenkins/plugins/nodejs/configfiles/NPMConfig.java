@@ -41,8 +41,10 @@ public class NPMConfig extends Config {
     }
 
     /**
-     * Perform a validation of the configuration, if validation pass no
-     * {@link VerifyConfigProviderException} will be raised.
+     * Perform a validation of the configuration.
+     * <p>
+     * If validation pass then no {@link VerifyConfigProviderException} will be
+     * raised.
      *
      * @throws VerifyConfigProviderException
      *             in case this configuration is not valid.
@@ -52,6 +54,8 @@ public class NPMConfig extends Config {
         NPMRegistry globalRegistry = null;
 
         for (NPMRegistry registry : registries) {
+            registry.doVerify();
+
             if (!registry.isHasScopes()) {
                 if (globalRegistry != null) {
                     throw new VerifyConfigProviderException(Messages.NPMConfig_verifyTooGlobalRegistry());

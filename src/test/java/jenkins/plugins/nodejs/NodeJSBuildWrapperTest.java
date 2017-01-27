@@ -8,6 +8,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
+import org.hamcrest.CoreMatchers;
 import org.jenkinsci.lib.configprovider.model.Config;
 import org.jenkinsci.plugins.configfiles.GlobalConfigFiles;
 import org.junit.Rule;
@@ -35,31 +36,47 @@ public class NodeJSBuildWrapperTest {
     @Rule
     public JenkinsRule j = new JenkinsRule();
 
-    private static NodeJSInstallation installation;
-
     @Test
     public void test_creation_of_config() throws Exception {
         FreeStyleProject job = j.createFreeStyleProject("free");
 
         final Config config = createSetting("my-config-id", "email=foo@acme.com", null);
 
-        installation = mock(NodeJSInstallation.class);
-        when(installation.forNode(any(Node.class), any(TaskListener.class))).thenReturn(installation);
-        when(installation.forEnvironment(any(EnvVars.class))).thenReturn(installation);
+        NodeJSInstallation installation = mock(NodeJSInstallation.class);
+        when(installation.forNode(any(Node.class), any(TaskListener.class))).then(RETURNS_SELF);
+        when(installation.forEnvironment(any(EnvVars.class))).then(RETURNS_SELF);
         when(installation.getName()).thenReturn("mockNode");
         when(installation.getHome()).thenReturn("/nodejs/home");
 
-        NodeJSBuildWrapper bw = new MockNodeJSBuildWrapper(installation.getName(), config.id);
+        NodeJSBuildWrapper bw = new MockNodeJSBuildWrapper(installation, config.id);
 
         job.getBuildWrappersList().add(bw);
 
-        job.getBuildersList().add(new VerifyEnvVariableBuilder(NodeJSConstants.NPM_USERCONFIG));
+        job.getBuildersList().add(new FileVerifier());
 
         j.assertBuildStatus(Result.SUCCESS, job.scheduleBuild2(0));
 
         verify(installation).forNode(any(Node.class), any(TaskListener.class));
         verify(installation).forEnvironment(any(EnvVars.class));
         verify(installation, atLeast(1)).buildEnvVars(any(EnvVars.class));
+    }
+
+    @Test
+    public void test_inject_path_variable() throws Exception {
+        FreeStyleProject job = j.createFreeStyleProject("free");
+
+        final Config config = createSetting("my-config-id", null, null);
+
+        String nodejsHome = new File("/home", "nodejs").getAbsolutePath(); // platform independent
+        final NodeJSInstallation installation = new NodeJSInstallation("inject_var", nodejsHome, null);
+
+        NodeJSBuildWrapper bw = new MockNodeJSBuildWrapper(installation, config.id);
+
+        job.getBuildWrappersList().add(bw);
+
+        job.getBuildersList().add(new PathVerifier(installation));
+
+        j.assertBuildStatus(Result.SUCCESS, job.scheduleBuild2(0));
     }
 
     private Config createSetting(String id, String content, List<NPMRegistry> registries) {
@@ -73,9 +90,11 @@ public class NodeJSBuildWrapperTest {
     }
 
     private static final class MockNodeJSBuildWrapper extends NodeJSBuildWrapper {
+        private NodeJSInstallation installation;
 
-        public MockNodeJSBuildWrapper(String nodeJSInstallationName, String configId) {
-            super(nodeJSInstallationName, configId);
+        public MockNodeJSBuildWrapper(NodeJSInstallation installation, String configId) {
+            super(installation.getName(), configId);
+            this.installation = installation;
         }
 
         @Override
@@ -89,26 +108,44 @@ public class NodeJSBuildWrapperTest {
         }
     }
 
-    private static final class VerifyEnvVariableBuilder extends Builder {
-        private String var;
-
-        public VerifyEnvVariableBuilder(String var) {
-            this.var = var;
-        }
-
+    private static abstract class VerifyEnvVariableBuilder extends Builder {
         @Override
         public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener)
                 throws InterruptedException, IOException {
 
             EnvVars env = build.getEnvironment(listener);
-            assertTrue("variable " + var + " not set", env.containsKey(var));
-
-            String value = env.get(var);
-            assertNotNull("empty value for environment variable " + var, value);
-
-            assertTrue("file of variable " + var + " does not exists or is not a file", new File(value).isFile());
-
+            verify(env);
             return true;
         }
+
+        public abstract void verify(EnvVars env);
     }
+
+    private static final class FileVerifier extends VerifyEnvVariableBuilder {
+        @Override
+        public void verify(EnvVars env) {
+            String var = NodeJSConstants.NPM_USERCONFIG;
+            String value = env.get(var);
+
+            assertTrue("variable " + var + " not set", env.containsKey(var));
+            assertNotNull("empty value for environment variable " + var, value);
+            assertTrue("file of variable " + var + " does not exists or is not a file", new File(value).isFile());
+        }
+    }
+
+    private static final class PathVerifier extends VerifyEnvVariableBuilder {
+        private final NodeJSInstallation installation;
+
+        private PathVerifier(NodeJSInstallation installation) {
+            this.installation = installation;
+        }
+
+        @Override
+        public void verify(EnvVars env) {
+            String expectedValue = installation.getHome();
+            assertEquals(env.get("NODEJS_HOME"), expectedValue);
+            assertThat(env.get("PATH"), CoreMatchers.containsString(expectedValue));
+        }
+    }
+
 }

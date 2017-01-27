@@ -32,6 +32,7 @@ import hudson.model.ItemGroup;
 import hudson.security.ACL;
 import hudson.security.AccessControlled;
 import hudson.util.FormValidation;
+import hudson.util.FormValidation.Kind;
 import hudson.util.ListBoxModel;
 import jenkins.model.Jenkins;
 
@@ -144,6 +145,29 @@ public class NPMRegistry extends AbstractDescribableImpl<NPMRegistry> implements
         return credentialsId;
     }
 
+    /**
+     * Perform the validation of current registry.
+     * <p>
+     * If validation pass then no {@link VerifyConfigProviderException} will be
+     * raised.
+     *
+     * @throws VerifyConfigProviderException
+     *             in case this configuration is not valid.
+     */
+    public void doVerify() throws VerifyConfigProviderException {
+        // recycle validations from descriptor
+        DescriptorImpl descriptor = new DescriptorImpl();
+
+        throwException(descriptor.doCheckUrl(getUrl()));
+        throwException(descriptor.doCheckScopes(isHasScopes(), getScopes()));
+    }
+
+    private void throwException(FormValidation form) throws VerifyConfigProviderException {
+        if (form.kind == Kind.ERROR) {
+            throw new VerifyConfigProviderException(form.getLocalizedMessage());
+        }
+    }
+
     @Extension
     public static class DescriptorImpl extends Descriptor<NPMRegistry> {
 
@@ -175,7 +199,7 @@ public class NPMRegistry extends AbstractDescribableImpl<NPMRegistry> implements
             }
 
             // test malformed URL
-            if (toURL(url) == null) {
+            if (url.indexOf('$') == -1 && toURL(url) == null) {
                 return FormValidation.error("Invalid URL, should start with https://");
             }
 

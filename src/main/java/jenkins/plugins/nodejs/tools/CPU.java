@@ -35,6 +35,7 @@ public enum CPU {
     /**
      * Determines the CPU of the current JVM.
      *
+     * @return the current CPU
      * @throws DetectionFailedException
      *             when the current platform node is not supported.
      */
