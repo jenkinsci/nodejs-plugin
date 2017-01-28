@@ -13,6 +13,7 @@ import hudson.tools.ToolInstaller;
 import hudson.tools.ToolProperty;
 import hudson.tools.ToolDescriptor;
 import hudson.tools.ToolInstallation;
+import org.jenkinsci.Symbol;
 
 import java.io.File;
 import java.io.IOException;
@@ -113,6 +114,8 @@ public class NodeJSInstallation extends ToolInstallation implements EnvironmentS
         return new File(getHome(), (isUnix == null || isUnix ? Platform.LINUX : Platform.WINDOWS).binFolder).getPath();
     }
 
+
+    @Symbol("nodejs")
     @Extension
     public static class DescriptorImpl extends ToolDescriptor<NodeJSInstallation> {
 
