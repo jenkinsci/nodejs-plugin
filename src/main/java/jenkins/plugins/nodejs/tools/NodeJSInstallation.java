@@ -23,8 +23,10 @@ import javax.annotation.Nonnull;
 
 import jenkins.plugins.nodejs.Messages;
 import jenkins.security.MasterToSlaveCallable;
+import net.sf.json.JSONObject;
 
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.StaplerRequest;
 
 /**
  * Information about JDK installation.
@@ -114,6 +116,11 @@ public class NodeJSInstallation extends ToolInstallation implements EnvironmentS
     @Extension
     public static class DescriptorImpl extends ToolDescriptor<NodeJSInstallation> {
 
+        public DescriptorImpl() {
+            // load installations at Jenkins startup
+            load();
+        }
+
         @Override
         public String getDisplayName() {
             return Messages.NodeJSInstallation_displayName();
@@ -122,6 +129,22 @@ public class NodeJSInstallation extends ToolInstallation implements EnvironmentS
         @Override
         public List<? extends ToolInstaller> getDefaultInstallers() {
             return Collections.singletonList(new NodeJSInstaller(null, null, 72));
+        }
+
+        /*
+         * (non-Javadoc)
+         * @see hudson.tools.Descriptor#configure(org.kohsuke.stapler.StaplerRequest, net.sf.json.JSONObject)
+         */
+        @Override
+        public boolean configure(StaplerRequest req, JSONObject json) throws hudson.model.Descriptor.FormException {
+            boolean result = super.configure(req, json);
+            /*
+             * Invoked when the global configuration page is submitted. If
+             * installation are modified programmatically than it's a developer
+             * task perform the call to save method on this descriptor.
+             */
+            save();
+            return result;
         }
 
     }
