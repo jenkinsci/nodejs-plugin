@@ -7,7 +7,7 @@
     </parent>
 
     <artifactId>nodejs</artifactId>
-    <version>1.0.1-SNAPSHOT</version>
+    <version>1.0.2-SNAPSHOT</version>
     <name>NodeJS Plugin</name>
     <description>Executes NodeJS script as a build step.</description>
     <url>http://wiki.jenkins-ci.org/display/JENKINS/NodeJS+Plugin</url>
