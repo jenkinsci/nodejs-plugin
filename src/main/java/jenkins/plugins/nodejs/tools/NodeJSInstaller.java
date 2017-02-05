@@ -23,20 +23,6 @@
  */
 package jenkins.plugins.nodejs.tools;
 
-import hudson.Extension;
-import hudson.FilePath;
-import hudson.Functions;
-import hudson.Launcher;
-import hudson.Launcher.ProcStarter;
-import hudson.Util;
-import hudson.ProxyConfiguration;
-import hudson.model.TaskListener;
-import hudson.model.Node;
-import hudson.remoting.VirtualChannel;
-import hudson.tools.DownloadFromUrlInstaller;
-import hudson.tools.ToolInstallation;
-import hudson.util.ArgumentListBuilder;
-
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
@@ -51,14 +37,27 @@ import java.util.concurrent.TimeUnit;
 
 import javax.annotation.Nonnull;
 
-import jenkins.MasterToSlaveFileCallable;
-import jenkins.plugins.nodejs.Messages;
-import jenkins.plugins.tools.Installables;
-
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import com.google.common.base.Predicate;
 import com.google.common.collect.Collections2;
+
+import hudson.Extension;
+import hudson.FilePath;
+import hudson.Functions;
+import hudson.Launcher;
+import hudson.Launcher.ProcStarter;
+import hudson.ProxyConfiguration;
+import hudson.Util;
+import hudson.model.Node;
+import hudson.model.TaskListener;
+import hudson.remoting.VirtualChannel;
+import hudson.tools.DownloadFromUrlInstaller;
+import hudson.tools.ToolInstallation;
+import hudson.util.ArgumentListBuilder;
+import jenkins.MasterToSlaveFileCallable;
+import jenkins.plugins.nodejs.Messages;
+import jenkins.plugins.tools.Installables;
 
 /**
  * Automatic NodeJS installer from nodejs.org

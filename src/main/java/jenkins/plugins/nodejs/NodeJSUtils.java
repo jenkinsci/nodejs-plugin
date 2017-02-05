@@ -4,13 +4,12 @@ import hudson.AbortException;
 import hudson.EnvVars;
 import hudson.FilePath;
 import hudson.Util;
-import hudson.model.Environment;
+import hudson.model.Run;
 import hudson.model.TaskListener;
-import hudson.model.AbstractBuild;
-
 import java.util.List;
 import java.util.Map;
 
+import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
@@ -79,11 +78,13 @@ import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
      *
      * @param configId the configuration identification
      * @param build a build being run
+     * @param workspace a workspace of the build
      * @param listener a way to report progress
      * @param env the environment variables set at the outset
      * @throws AbortException in case the provided configId is not valid
      */
-    public static FilePath supplyConfig(String configId, AbstractBuild<?, ?> build, TaskListener listener, EnvVars env) throws AbortException {
+    @CheckForNull
+    public static FilePath supplyConfig(String configId, Run<?, ?> build, FilePath workspace, TaskListener listener, EnvVars env) throws AbortException {
         if (StringUtils.isNotBlank(configId)) {
             Config c = ConfigFiles.getByIdOrNull(build, configId);
 
@@ -112,16 +113,9 @@ import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
                     if (StringUtils.isNotBlank(fileContent)) { // NOSONAR
                         config.doVerify();
 
-                        FilePath workDir = ManagedFileUtil.tempDir(build.getWorkspace());
+                        FilePath workDir = ManagedFileUtil.tempDir(workspace);
                         final FilePath f = workDir.createTextTempFile(".npmrc", "", Util.replaceMacro(fileContent, env), true);
                         listener.getLogger().printf("Created %s", f);
-
-                        build.getEnvironments().add(new Environment() {
-                            @Override
-                            public void buildEnvVars(Map<String, String> env) {
-                                env.put(NodeJSConstants.NPM_USERCONFIG,  f.getRemote());
-                            }
-                        });
 
                         build.addAction(new CleanTempFilesAction(f.getRemote()));
                         return f;

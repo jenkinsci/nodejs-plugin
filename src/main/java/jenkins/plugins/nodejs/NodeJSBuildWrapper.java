@@ -6,6 +6,7 @@ import java.util.Collection;
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 
+import org.jenkinsci.Symbol;
 import org.jenkinsci.lib.configprovider.model.Config;
 import org.jenkinsci.plugins.configfiles.GlobalConfigFiles;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -17,7 +18,6 @@ import hudson.Extension;
 import hudson.FilePath;
 import hudson.Launcher;
 import hudson.Util;
-import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.Computer;
 import hudson.model.Node;
@@ -112,10 +112,14 @@ public class NodeJSBuildWrapper extends SimpleBuildWrapper {
         ni.buildEnvVars(new EnvVarsAdapter(context));
 
         // add npmrc config
-        NodeJSUtils.supplyConfig(configId, (AbstractBuild<?, ?>) build, listener, initialEnvironment);
+        FilePath configFile = NodeJSUtils.supplyConfig(configId, build, workspace, listener, initialEnvironment);
+        if (configFile != null) {
+            context.env(NodeJSConstants.NPM_USERCONFIG,  configFile.getRemote());
+        }
     }
 
 
+    @Symbol("nodejs")
     @Extension
     public static final class DescriptorImpl extends BuildWrapperDescriptor {
 

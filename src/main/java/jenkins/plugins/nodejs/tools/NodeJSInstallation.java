@@ -1,20 +1,5 @@
 package jenkins.plugins.nodejs.tools;
 
-import hudson.EnvVars;
-import hudson.Extension;
-import hudson.Launcher;
-import hudson.Util;
-import hudson.model.EnvironmentSpecific;
-import hudson.model.TaskListener;
-import hudson.model.Computer;
-import hudson.model.Node;
-import hudson.slaves.NodeSpecific;
-import hudson.tools.ToolInstaller;
-import hudson.tools.ToolProperty;
-import hudson.tools.ToolDescriptor;
-import hudson.tools.ToolInstallation;
-import org.jenkinsci.Symbol;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
@@ -22,12 +7,24 @@ import java.util.List;
 
 import javax.annotation.Nonnull;
 
-import jenkins.plugins.nodejs.Messages;
-import jenkins.security.MasterToSlaveCallable;
-import net.sf.json.JSONObject;
-
+import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.StaplerRequest;
+
+import hudson.EnvVars;
+import hudson.Extension;
+import hudson.Util;
+import hudson.model.Computer;
+import hudson.model.EnvironmentSpecific;
+import hudson.model.Node;
+import hudson.model.TaskListener;
+import hudson.slaves.NodeSpecific;
+import hudson.tools.ToolDescriptor;
+import hudson.tools.ToolInstallation;
+import hudson.tools.ToolInstaller;
+import hudson.tools.ToolProperty;
+import jenkins.plugins.nodejs.Messages;
+import net.sf.json.JSONObject;
 
 /**
  * Information about JDK installation.
@@ -38,9 +35,16 @@ import org.kohsuke.stapler.StaplerRequest;
 @SuppressWarnings("serial")
 public class NodeJSInstallation extends ToolInstallation implements EnvironmentSpecific<NodeJSInstallation>, NodeSpecific<NodeJSInstallation> {
 
+    private final transient Platform platform;
+
     @DataBoundConstructor
     public NodeJSInstallation(@Nonnull String name, @Nonnull String home, List<? extends ToolProperty<?>> properties) {
+        this(name, home, properties, null);
+    }
+
+    protected NodeJSInstallation(@Nonnull String name, @Nonnull String home, List<? extends ToolProperty<?>> properties, Platform platform) {
         super(Util.fixEmptyAndTrim(name), Util.fixEmptyAndTrim(home), properties);
+        this.platform = platform;
     }
 
     /*
@@ -49,7 +53,7 @@ public class NodeJSInstallation extends ToolInstallation implements EnvironmentS
      */
     @Override
     public NodeJSInstallation forEnvironment(EnvVars environment) {
-        return new NodeJSInstallation(getName(), environment.expand(getHome()), getProperties().toList());
+        return new NodeJSInstallation(getName(), environment.expand(getHome()), getProperties().toList(), platform);
     }
 
     /*
@@ -58,7 +62,7 @@ public class NodeJSInstallation extends ToolInstallation implements EnvironmentS
      */
     @Override
     public NodeJSInstallation forNode(@Nonnull Node node, TaskListener log) throws IOException, InterruptedException {
-        return new NodeJSInstallation(getName(), translateFor(node, log), getProperties().toList());
+        return new NodeJSInstallation(getName(), translateFor(node, log), getProperties().toList(), Platform.of(node));
     }
 
     /*
@@ -76,31 +80,19 @@ public class NodeJSInstallation extends ToolInstallation implements EnvironmentS
     }
 
     /**
-     * Gets the executable path of NodeJS on the given target system.
+     * Gets the executable path of NodeJS on the target system.
      *
-     * @param launcher a way to start processes
-     * @return the nodejs executable in the system is exists, {@code null}
-     *         otherwise.
-     * @throws InterruptedException if the step is interrupted
-     * @throws IOException if something goes wrong
+     * @return the nodejs executable in the executable system is exists,
+     *         {@code null} otherwise.
+     * @throws IOException
+     *             if something goes wrong
      */
-    public String getExecutable(final Launcher launcher) throws InterruptedException, IOException {
-        return launcher.getChannel().call(new MasterToSlaveCallable<String, IOException>() {
-            private static final long serialVersionUID = -8509941141741046422L;
-
-            @Override
-            public String call() throws IOException {
-                Node node = Computer.currentComputer().getNode();
-                if (node != null) {
-                    final Platform platform = Platform.of(node);
-                    File exe = getExeFile(platform);
-                    if (exe.exists()) {
-                        return exe.getPath();
-                    }
-                }
-                return null;
-            }
-        });
+    public String getExecutable() throws IOException {
+        File exe = getExeFile(getPlatform());
+        if (exe.exists()) {
+            return exe.getPath();
+        }
+        return null;
     }
 
     private File getExeFile(@Nonnull Platform platform) {
@@ -109,9 +101,33 @@ public class NodeJSInstallation extends ToolInstallation implements EnvironmentS
     }
 
     private String getBin() {
-        // TODO improve the platform test case
-        Boolean isUnix = Computer.currentComputer().isUnix(); // findbugs ... what a nut!
-        return new File(getHome(), (isUnix == null || isUnix ? Platform.LINUX : Platform.WINDOWS).binFolder).getPath();
+        try {
+            return new File(getHome(), getPlatform().binFolder).getPath();
+        } catch (DetectionFailedException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private Platform getPlatform() throws DetectionFailedException {
+        Platform currentPlatform = platform;
+
+        // missed call method forNode
+        if (currentPlatform == null) {
+            Computer computer = Computer.currentComputer();
+            if (computer == null) {
+                // pipeline use case
+                throw new RuntimeException(Messages.NodeJSBuilders_nodeOffline());
+            }
+
+            Node node = computer.getNode();
+            if (node == null) {
+                throw new RuntimeException(Messages.NodeJSBuilders_nodeOffline());
+            }
+
+            currentPlatform = Platform.of(node);
+        }
+
+        return currentPlatform;
     }
 
 

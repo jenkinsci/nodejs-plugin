@@ -1,0 +1,13 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('Build') {
+            steps {
+			    nodejs(nodeJSInstallationName: 'Node 6.x', configId: null) {
+			        sh 'npm config ls'
+			    }
+            }
+        }
+    }
+}

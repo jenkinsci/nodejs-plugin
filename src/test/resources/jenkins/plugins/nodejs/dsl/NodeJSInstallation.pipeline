@@ -1,0 +1,15 @@
+pipeline {
+    agent any
+
+    tools {
+        nodejs 'Node 6.x'
+    }
+
+    stages {
+        stage('Build') {
+            steps {
+                sh 'npm -version'
+            }
+        }
+    }
+}

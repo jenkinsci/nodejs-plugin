@@ -8,7 +8,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.bouncycastle.util.encoders.Base64;
+import org.apache.commons.codec.binary.Base64;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -74,7 +74,7 @@ public class RegistryHelperTest {
         assertTrue("Missing setting " + NPM_SETTINGS_AUTH, npmrc.contains(NPM_SETTINGS_AUTH));
         String auth = npmrc.get(NPM_SETTINGS_AUTH);
         assertNotNull("Unexpected value for " + NPM_SETTINGS_AUTH, npmrc);
-        auth = new String(Base64.decode(auth));
+        auth = new String(Base64.decodeBase64(auth));
         assertThat(auth, allOf(startsWith(user.getUsername()), endsWith("mypassword")));
 
         // test official registry

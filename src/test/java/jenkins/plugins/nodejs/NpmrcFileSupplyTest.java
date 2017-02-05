@@ -1,6 +1,5 @@
 package jenkins.plugins.nodejs;
 
-import static jenkins.plugins.nodejs.NodeJSConstants.*;
 import static org.junit.Assert.*;
 
 import java.io.File;
@@ -48,12 +47,11 @@ public class NpmrcFileSupplyTest {
         Config config = createSetting("mytest", "email=guest@example.com",
                 Arrays.asList(privateRegistry, officalRegistry));
 
-        EnvVars environment = new EnvVars();
         List<Environment> enviroments = new ArrayList<Environment>();
 
         FreeStyleBuild build = new MockBuild(j.createFreeStyleProject(), new FilePath(folder.newFolder()), enviroments);
 
-        FilePath npmrcFile = NodeJSUtils.supplyConfig(config.id, build, j.createTaskListener(), new EnvVars());
+        FilePath npmrcFile = NodeJSUtils.supplyConfig(config.id, build, build.getWorkspace(), j.createTaskListener(), new EnvVars());
         assertTrue(npmrcFile.exists());
         assertTrue(npmrcFile.length() > 0);
 
@@ -62,11 +60,6 @@ public class NpmrcFileSupplyTest {
         assertEquals("Unexpected value from settings email", "guest@example.com", npmrc.get("email"));
 
         assertFalse("No environment found", enviroments.isEmpty());
-        for (Environment env : enviroments) {
-            env.buildEnvVars(environment);
-        }
-        assertEquals("Invalid enviroment variable " + NPM_USERCONFIG, npmrcFile.getRemote(),
-                environment.get(NPM_USERCONFIG));
     }
 
     private StandardUsernameCredentials createUser(String id, String username, String password) {
