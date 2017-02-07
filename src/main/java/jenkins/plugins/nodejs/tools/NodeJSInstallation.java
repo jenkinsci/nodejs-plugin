@@ -11,6 +11,7 @@ import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.StaplerRequest;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.EnvVars;
 import hudson.Extension;
 import hudson.Util;
@@ -33,8 +34,10 @@ import net.sf.json.JSONObject;
  * @author Nikolas Falco
  */
 @SuppressWarnings("serial")
+@SuppressFBWarnings(value = "SE_NO_SERIALVERSIONID")
 public class NodeJSInstallation extends ToolInstallation implements EnvironmentSpecific<NodeJSInstallation>, NodeSpecific<NodeJSInstallation> {
 
+    @SuppressFBWarnings(value = "SE_TRANSIENT_FIELD_NOT_RESTORED", justification = "calculate at runtime, its value depends on the OS where it run")
     private final transient Platform platform;
 
     @DataBoundConstructor

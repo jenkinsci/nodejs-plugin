@@ -58,8 +58,6 @@ public class NpmrcFileSupplyTest {
         Npmrc npmrc = Npmrc.load(new File(npmrcFile.getRemote()));
         assertTrue("Missing setting email", npmrc.contains("email"));
         assertEquals("Unexpected value from settings email", "guest@example.com", npmrc.get("email"));
-
-        assertFalse("No environment found", enviroments.isEmpty());
     }
 
     private StandardUsernameCredentials createUser(String id, String username, String password) {
