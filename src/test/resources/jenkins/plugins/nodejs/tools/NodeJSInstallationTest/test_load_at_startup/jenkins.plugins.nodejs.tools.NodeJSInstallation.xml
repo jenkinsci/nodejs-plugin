@@ -1,0 +1,19 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<jenkins.plugins.nodejs.tools.NodeJSInstallation_-DescriptorImpl>
+  <installations class="jenkins.plugins.nodejs.tools.NodeJSInstallation-array">
+    <jenkins.plugins.nodejs.tools.NodeJSInstallation>
+      <name>myNode</name>
+      <home>/tmp/foo</home>
+      <properties>
+        <hudson.tools.InstallSourceProperty>
+          <installers>
+            <jenkins.plugins.nodejs.tools.NodeJSInstaller>
+              <id></id>
+              <npmPackagesRefreshHours>72</npmPackagesRefreshHours>
+            </jenkins.plugins.nodejs.tools.NodeJSInstaller>
+          </installers>
+        </hudson.tools.InstallSourceProperty>
+      </properties>
+    </jenkins.plugins.nodejs.tools.NodeJSInstallation>
+  </installations>
+</jenkins.plugins.nodejs.tools.NodeJSInstallation_-DescriptorImpl>
