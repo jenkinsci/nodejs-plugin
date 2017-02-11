@@ -37,6 +37,7 @@ import java.util.concurrent.TimeUnit;
 
 import javax.annotation.Nonnull;
 
+import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import com.google.common.base.Predicate;
@@ -126,7 +127,7 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
         }
 
         // Installing npm packages if needed
-        if (this.npmPackages != null) {
+        if (StringUtils.isNotBlank(this.npmPackages)) { // JENKINS-41876
             boolean skipNpmPackageInstallation = areNpmPackagesUpToDate(expected, this.npmPackages, this.npmPackagesRefreshHours);
             if (!skipNpmPackageInstallation) {
                 expected.child(NPM_PACKAGES_RECORD_FILENAME).delete();
