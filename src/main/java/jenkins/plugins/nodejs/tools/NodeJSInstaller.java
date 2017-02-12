@@ -71,6 +71,13 @@ import jenkins.plugins.tools.Installables;
 public class NodeJSInstaller extends DownloadFromUrlInstaller {
 
     public static final String NPM_PACKAGES_RECORD_FILENAME = ".npmPackages";
+
+    /**
+     * Define the elapse time before perform a new npm install for defined
+     * global packages.
+     */
+    public static final int NPM_PACKAGES_REFRESH_HOURS = 72;
+
     private final String npmPackages;
     private final Long npmPackagesRefreshHours;
     private Platform platform;
@@ -105,8 +112,8 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
     // implementation
     @Override
     public FilePath performInstallation(ToolInstallation tool, Node node, TaskListener log) throws IOException, InterruptedException {
-        this.platform = Platform.of(node);
-        this.cpu = CPU.of(node);
+        this.platform = getPlatform(node);
+        this.cpu = getCPU(node);
 
         FilePath expected;
         Installable installable = getInstallable();
@@ -126,9 +133,27 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
             }
         }
 
-        // Installing npm packages if needed
-        if (StringUtils.isNotBlank(this.npmPackages)) { // JENKINS-41876
-            boolean skipNpmPackageInstallation = areNpmPackagesUpToDate(expected, this.npmPackages, this.npmPackagesRefreshHours);
+        refreshGlobalPackages(node, log, expected);
+
+        return expected;
+    }
+
+    private CPU getCPU(Node node) throws IOException, InterruptedException {
+        return CPU.of(node);
+    }
+
+    private Platform getPlatform(Node node) throws DetectionFailedException {
+        return Platform.of(node);
+    }
+
+    /*
+     * Installing npm packages if needed
+     */
+    protected void refreshGlobalPackages(Node node, TaskListener log, FilePath expected) throws IOException, InterruptedException {
+        String globalPackages = getNpmPackages();
+
+        if (StringUtils.isNotBlank(globalPackages)) { // JENKINS-41876
+            boolean skipNpmPackageInstallation = areNpmPackagesUpToDate(expected, globalPackages, getNpmPackagesRefreshHours());
             if (!skipNpmPackageInstallation) {
                 expected.child(NPM_PACKAGES_RECORD_FILENAME).delete();
 
@@ -144,7 +169,7 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
 
                 npmScriptArgs.add("install");
                 npmScriptArgs.add("-g");
-                for (String packageName : this.npmPackages.split("\\s")) {
+                for (String packageName : globalPackages.split("\\s")) {
                     npmScriptArgs.add(packageName);
                 }
 
@@ -153,16 +178,14 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
 
                 if (returnCode == 0) {
                     // leave a record for the next up-to-date check
-                    expected.child(NPM_PACKAGES_RECORD_FILENAME).write(this.npmPackages, "UTF-8");
+                    expected.child(NPM_PACKAGES_RECORD_FILENAME).write(globalPackages, "UTF-8");
                     expected.child(NPM_PACKAGES_RECORD_FILENAME).act(new ChmodRecAPlusX());
                 }
             }
         }
-
-        return expected;
     }
 
-    private static boolean areNpmPackagesUpToDate(FilePath expected, String npmPackages, long npmPackagesRefreshHours) throws IOException, InterruptedException {
+    public static boolean areNpmPackagesUpToDate(FilePath expected, String npmPackages, long npmPackagesRefreshHours) throws IOException, InterruptedException {
         FilePath marker = expected.child(NPM_PACKAGES_RECORD_FILENAME);
         return marker.exists() && marker.readToString().equals(npmPackages) && System.currentTimeMillis() < marker.lastModified()+ TimeUnit.HOURS.toMillis(npmPackagesRefreshHours);
     }

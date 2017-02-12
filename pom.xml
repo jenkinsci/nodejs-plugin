@@ -33,12 +33,17 @@
             <timezone>+1</timezone>
         </developer>
     </developers>
+
     <licenses>
         <license>
             <name>MIT License</name>
             <url>LICENSE.txt</url>
         </license>
     </licenses>
+
+    <properties>
+        <powermock.version>1.7.0RC2</powermock.version>
+    </properties>
 
     <dependencies>
         <dependency>
@@ -55,6 +60,18 @@
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
             <version>2.6.4</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.powermock</groupId>
+            <artifactId>powermock-module-junit4</artifactId>
+            <version>${powermock.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.powermock</groupId>
+            <artifactId>powermock-api-mockito2</artifactId>
+            <version>${powermock.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -129,12 +146,13 @@
             </plugin>
         </plugins>
     </reporting>
+
     <scm>
         <connection>scm:git:git://github.com/jenkinsci/nodejs-plugin.git</connection>
         <developerConnection>scm:git:git@github.com:jenkinsci/nodejs-plugin.git</developerConnection>
         <url>https://github.com/jenkinsci/nodejs-plugin</url>
-      <tag>HEAD</tag>
-  </scm>
+        <tag>HEAD</tag>
+    </scm>
 
     <pluginRepositories>
         <pluginRepository>
@@ -142,5 +160,5 @@
             <url>http://repo.jenkins-ci.org/public/</url>
         </pluginRepository>
     </pluginRepositories>
-</project>  
 
+</project>
