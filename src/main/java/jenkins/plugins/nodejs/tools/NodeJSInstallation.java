@@ -1,3 +1,26 @@
+/*
+ * The MIT License
+ *
+ * Copyright (c) 2009-2010, Sun Microsystems, Inc., CloudBees, Inc.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ */
 package jenkins.plugins.nodejs.tools;
 
 import java.io.File;
@@ -79,7 +102,7 @@ public class NodeJSInstallation extends ToolInstallation implements EnvironmentS
             return;
         }
         env.put("NODEJS_HOME", home);
-        env.override("PATH+NODEJS", getBin());
+        env.override("PATH+NODEJS", getBin().getAbsolutePath());
     }
 
     /**
@@ -91,21 +114,16 @@ public class NodeJSInstallation extends ToolInstallation implements EnvironmentS
      *             if something goes wrong
      */
     public String getExecutable() throws IOException {
-        File exe = getExeFile(getPlatform());
-        if (exe.exists()) {
-            return exe.getPath();
-        }
-        return null;
+        return getExeFile(getPlatform()).getAbsolutePath();
     }
 
     private File getExeFile(@Nonnull Platform platform) {
-        File bin = new File(getHome(), platform.binFolder);
-        return new File(bin, platform.nodeFileName);
+        return new File(getBin(), platform.nodeFileName);
     }
 
-    private String getBin() {
+    private File getBin() {
         try {
-            return new File(getHome(), getPlatform().binFolder).getPath();
+            return new File(getHome(), getPlatform().binFolder);
         } catch (DetectionFailedException e) {
             throw new RuntimeException(e);
         }

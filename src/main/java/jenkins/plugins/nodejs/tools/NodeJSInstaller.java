@@ -76,7 +76,7 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
      * Define the elapse time before perform a new npm install for defined
      * global packages.
      */
-    public static final int NPM_PACKAGES_REFRESH_HOURS = 72;
+    public static final int DEFAULT_NPM_PACKAGES_REFRESH_HOURS = 72;
 
     private final String npmPackages;
     private final Long npmPackagesRefreshHours;

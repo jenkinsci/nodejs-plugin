@@ -20,7 +20,7 @@ public class NodeJSInstallerTest {
 
     @Test
     public void test_skip_install_global_packages_when_empty() throws Exception {
-        MockNodeJSInstaller mock = new MockNodeJSInstaller("test-id", " ", NodeJSInstaller.NPM_PACKAGES_REFRESH_HOURS);
+        MockNodeJSInstaller mock = new MockNodeJSInstaller("test-id", " ", NodeJSInstaller.DEFAULT_NPM_PACKAGES_REFRESH_HOURS);
         mock.performInstallation(null, null, null);
     }
 
