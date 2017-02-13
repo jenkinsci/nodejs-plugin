@@ -37,6 +37,7 @@ import org.kohsuke.stapler.StaplerRequest;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.EnvVars;
 import hudson.Extension;
+import hudson.Launcher;
 import hudson.Util;
 import hudson.model.Computer;
 import hudson.model.EnvironmentSpecific;
@@ -48,6 +49,7 @@ import hudson.tools.ToolInstallation;
 import hudson.tools.ToolInstaller;
 import hudson.tools.ToolProperty;
 import jenkins.plugins.nodejs.Messages;
+import jenkins.security.MasterToSlaveCallable;
 import net.sf.json.JSONObject;
 
 /**
@@ -102,31 +104,60 @@ public class NodeJSInstallation extends ToolInstallation implements EnvironmentS
             return;
         }
         env.put("NODEJS_HOME", home);
-        env.override("PATH+NODEJS", getBin().getAbsolutePath());
+        env.override("PATH+NODEJS", getBin());
     }
 
     /**
-     * Gets the executable path of NodeJS on the target system.
+     * Gets the executable path of NodeJS on the given target system.
      *
-     * @return the nodejs executable in the executable system is exists,
-     *         {@code null} otherwise.
-     * @throws IOException
-     *             if something goes wrong
+     * @param launcher a way to start processes
+     * @return the nodejs executable in the system is exists, {@code null}
+     *         otherwise.
+     * @throws InterruptedException if the step is interrupted
+     * @throws IOException if something goes wrong
      */
-    public String getExecutable() throws IOException {
-        return getExeFile(getPlatform()).getAbsolutePath();
+    public String getExecutable(final Launcher launcher) throws InterruptedException, IOException {
+        // DO NOT REMOVE this callable otherwise paths constructed by File
+        // and similar API will be based on the master node O.S.
+        return launcher.getChannel().call(new MasterToSlaveCallable<String, IOException>() {
+            private static final long serialVersionUID = -8509941141741046422L;
+
+            @Override
+            public String call() throws IOException {
+                Platform currentPlatform = getPlatform();
+                File exe = new File(getBin(), currentPlatform.nodeFileName);
+                if (exe.exists()) {
+                    return exe.getPath();
+                }
+                return null;
+            }
+        });
     }
 
-    private File getExeFile(@Nonnull Platform platform) {
-        return new File(getBin(), platform.nodeFileName);
-    }
-
-    private File getBin() {
+    /**
+     * Calculate the NodeJS bin folder based on current Node platform. We can't
+     * use {@link Computer#currentComputer()} because it's always null in case of
+     * pipeline.
+     *
+     * @return path of the bin folder for the installation tool in the current
+     *         Node.
+     */
+    private String getBin() {
+        String bin = getHome();
         try {
-            return new File(getHome(), getPlatform().binFolder);
+            Platform currentPlatform = getPlatform();
+            switch (currentPlatform) {
+            case WINDOWS:
+                bin += '\\' + currentPlatform.binFolder;
+                break;
+            default:
+                bin += '/' + currentPlatform.binFolder;
+            }
         } catch (DetectionFailedException e) {
             throw new RuntimeException(e);
         }
+
+        return bin;
     }
 
     private Platform getPlatform() throws DetectionFailedException {

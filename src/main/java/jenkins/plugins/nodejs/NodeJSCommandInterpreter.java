@@ -1,6 +1,5 @@
 package jenkins.plugins.nodejs;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 
@@ -32,7 +31,6 @@ import jenkins.plugins.nodejs.configfiles.NPMConfig.NPMConfigProvider;
 import jenkins.plugins.nodejs.configfiles.VerifyConfigProviderException;
 import jenkins.plugins.nodejs.tools.NodeJSInstallation;
 import jenkins.plugins.nodejs.tools.Platform;
-import jenkins.security.MasterToSlaveCallable;
 
 /**
  * This class executes a JavaScript file using node. The file should contain
@@ -42,25 +40,6 @@ import jenkins.security.MasterToSlaveCallable;
  * @author Nikolas Falco
  */
 public class NodeJSCommandInterpreter extends CommandInterpreter {
-
-    /*
-     * This class must be kept simple and serialisable because has to run on
-     * slave.
-     */
-    private static class ExecutableVerifier extends MasterToSlaveCallable<Boolean, IOException> {
-        private static final long serialVersionUID = -8960093360218932530L;
-
-        private final String executable;
-
-        public ExecutableVerifier(String executable) {
-            this.executable = executable;
-        }
-
-        @Override
-        public Boolean call() throws IOException {
-            return new File(executable).exists();
-        }
-    }
 
     private final String nodeJSInstallationName;
     private final String configId;
@@ -119,11 +98,8 @@ public class NodeJSCommandInterpreter extends CommandInterpreter {
                 ni = ni.forEnvironment(env);
                 ni.buildEnvVars(env);
 
-                nodeExec = ni.getExecutable();
-
-                // ensure that executable exists on target node
-                Boolean exists = launcher.getChannel().call(new ExecutableVerifier(nodeExec));
-                if (exists == null || !exists) {
+                nodeExec = ni.getExecutable(launcher);
+                if (nodeExec == null) {
                     throw new AbortException(Messages.NodeJSBuilders_noExecutableFound(ni.getHome()));
                 }
             }
