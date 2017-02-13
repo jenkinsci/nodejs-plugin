@@ -1,41 +1,50 @@
 package jenkins.plugins.nodejs;
 
-import java.io.File;
-import java.io.IOException;
+import static org.mockito.Mockito.*;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.jvnet.hudson.test.Issue;
+import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
-import hudson.FilePath;
 import hudson.model.Node;
 import hudson.model.TaskListener;
+import hudson.tools.DownloadFromUrlInstaller;
 import hudson.tools.ToolInstallation;
+import jenkins.plugins.nodejs.tools.CPU;
 import jenkins.plugins.nodejs.tools.NodeJSInstaller;
+import jenkins.plugins.nodejs.tools.Platform;
 
 @RunWith(PowerMockRunner.class)
 @PrepareForTest(NodeJSInstaller.class)
 public class NodeJSInstallerTest {
 
+    @Issue("JENKINS-41876")
     @Test
-    public void test_skip_install_global_packages_when_empty() throws Exception {
-        MockNodeJSInstaller mock = new MockNodeJSInstaller("test-id", " ", NodeJSInstaller.DEFAULT_NPM_PACKAGES_REFRESH_HOURS);
-        mock.performInstallation(null, null, null);
-    }
+    public void testMethodThatCallsStaticMethod() throws Exception {
+        String expectedPackages = " ";
+        int expectedRefreshHours = 72;
+        Node currentNode = mock(Node.class);
 
-    private class MockNodeJSInstaller extends NodeJSInstaller {
+        // mock all the static methods in a class called "Static"
+        PowerMockito.mockStatic(NodeJSInstaller.class);
 
-        public MockNodeJSInstaller(String id, String npmPackages, long npmPackagesRefreshHours) {
-            super(id, npmPackages, npmPackagesRefreshHours);
-        }
+        // create partial mock
+        NodeJSInstaller installer = new NodeJSInstaller("test-id", expectedPackages, expectedRefreshHours);
+        NodeJSInstaller spy = PowerMockito.spy(installer);
 
-        @Override
-        public FilePath performInstallation(ToolInstallation tool, Node node, TaskListener log) throws IOException, InterruptedException {
-            FilePath expected = new FilePath(new File("/home/tools"));
-            refreshGlobalPackages(node, log, expected);
-            return expected;
-        }
+        // use Mockito to set up your expectation
+        when(NodeJSInstaller.areNpmPackagesUpToDate(null, expectedPackages, expectedRefreshHours)).thenThrow(new AssertionError());
+        PowerMockito.suppress(PowerMockito.methodsDeclaredIn(DownloadFromUrlInstaller.class));
+        PowerMockito.doReturn(null).when(spy).getInstallable();
+        PowerMockito.doReturn(Platform.LINUX).when(spy, "getPlatform", currentNode);
+        PowerMockito.doReturn(CPU.amd64).when(spy, "getCPU", currentNode);
+        when(spy.getNpmPackages()).thenReturn(expectedPackages);
+
+        // execute test
+        spy.performInstallation(mock(ToolInstallation.class), currentNode, mock(TaskListener.class));
     }
 
 }
