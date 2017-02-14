@@ -111,8 +111,10 @@ public class NodeJSBuildWrapper extends SimpleBuildWrapper {
         ni = ni.forEnvironment(initialEnvironment);
         ni.buildEnvVars(new EnvVarsAdapter(context));
 
+        EnvVars env = initialEnvironment.overrideAll(context.getEnv());
+
         // add npmrc config
-        FilePath configFile = NodeJSUtils.supplyConfig(configId, build, workspace, listener, initialEnvironment);
+        FilePath configFile = NodeJSUtils.supplyConfig(configId, build, workspace, listener, env);
         if (configFile != null) {
             context.env(NodeJSConstants.NPM_USERCONFIG,  configFile.getRemote());
         }

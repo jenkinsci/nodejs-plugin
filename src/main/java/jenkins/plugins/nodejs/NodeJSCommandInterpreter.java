@@ -2,7 +2,6 @@ package jenkins.plugins.nodejs;
 
 import java.io.IOException;
 import java.util.Collection;
-
 import javax.annotation.CheckForNull;
 
 import org.jenkinsci.Symbol;
@@ -20,6 +19,7 @@ import hudson.Util;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.BuildListener;
+import hudson.model.Environment;
 import hudson.model.Node;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
@@ -94,9 +94,17 @@ public class NodeJSCommandInterpreter extends CommandInterpreter {
                     throw new AbortException(Messages.NodeJSBuilders_nodeOffline());
                 }
 
+                final EnvVars niEnv = new EnvVars();
+
                 ni = ni.forNode(node, listener);
                 ni = ni.forEnvironment(env);
-                ni.buildEnvVars(env);
+                ni.buildEnvVars(niEnv);
+
+                // enhance env with installation environment because is passed to supplyConfig
+                env.overrideAll(niEnv);
+
+                // add an Environment so when the in super class is called build.getEnviroment() gets the enhanced env
+                build.getEnvironments().add(Environment.create(niEnv));
 
                 nodeExec = ni.getExecutable(launcher);
                 if (nodeExec == null) {
