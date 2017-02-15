@@ -21,11 +21,20 @@ import jenkins.plugins.nodejs.tools.Platform;
 @PrepareForTest(NodeJSInstaller.class)
 public class NodeJSInstallerTest {
 
+    /**
+     * Verify that the installer skip install of global package also if
+     * npmPackage is an empty/spaces string.
+     * <p>
+     * This could happen because after migration 0.2 -> 1.0 the persistence
+     * could have npmPackages value empty or with spaces. XStream
+     * de-serialisation does use constructs object using constructor so value
+     * can be safely set to null.
+     */
     @Issue("JENKINS-41876")
     @Test
-    public void testMethodThatCallsStaticMethod() throws Exception {
+    public void test_skip_install_global_packages_when_empty() throws Exception {
         String expectedPackages = " ";
-        int expectedRefreshHours = 72;
+        int expectedRefreshHours = NodeJSInstaller.DEFAULT_NPM_PACKAGES_REFRESH_HOURS;
         Node currentNode = mock(Node.class);
 
         // mock all the static methods in a class called "Static"

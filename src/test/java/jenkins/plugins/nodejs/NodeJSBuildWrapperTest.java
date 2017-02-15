@@ -1,8 +1,8 @@
 package jenkins.plugins.nodejs;
 
+import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
-import static org.junit.Assert.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -14,21 +14,17 @@ import org.jenkinsci.plugins.configfiles.GlobalConfigFiles;
 import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
+import org.powermock.api.mockito.PowerMockito;
 
 import hudson.EnvVars;
-import hudson.Launcher;
-import hudson.model.AbstractBuild;
-import hudson.model.BuildListener;
-import hudson.model.Descriptor;
 import hudson.model.FreeStyleProject;
 import hudson.model.Node;
 import hudson.model.Result;
 import hudson.model.TaskListener;
-import hudson.tasks.BuildWrapper;
-import hudson.tasks.Builder;
+import jenkins.plugins.nodejs.VerifyEnvVariableBuilder.FileVerifier;
 import jenkins.plugins.nodejs.configfiles.NPMConfig;
-import jenkins.plugins.nodejs.configfiles.NPMRegistry;
 import jenkins.plugins.nodejs.configfiles.NPMConfig.NPMConfigProvider;
+import jenkins.plugins.nodejs.configfiles.NPMRegistry;
 import jenkins.plugins.nodejs.tools.NodeJSInstallation;
 
 public class NodeJSBuildWrapperTest {
@@ -37,22 +33,13 @@ public class NodeJSBuildWrapperTest {
     public JenkinsRule j = new JenkinsRule();
 
     @Test
-    public void test_creation_of_config() throws Exception {
+    public void test_calls_sequence_of_installer() throws Exception {
         FreeStyleProject job = j.createFreeStyleProject("free");
 
-        final Config config = createSetting("my-config-id", "email=foo@acme.com", null);
-
-        NodeJSInstallation installation = mock(NodeJSInstallation.class);
-        when(installation.forNode(any(Node.class), any(TaskListener.class))).then(RETURNS_SELF);
-        when(installation.forEnvironment(any(EnvVars.class))).then(RETURNS_SELF);
-        when(installation.getName()).thenReturn("mockNode");
-        when(installation.getHome()).thenReturn("/nodejs/home");
-
-        NodeJSBuildWrapper bw = new MockNodeJSBuildWrapper(installation, config.id);
+        NodeJSInstallation installation = mockInstaller();
+        NodeJSBuildWrapper bw = mockWrapper(installation, mock(NPMConfig.class));
 
         job.getBuildWrappersList().add(bw);
-
-        job.getBuildersList().add(new FileVerifier());
 
         j.assertBuildStatus(Result.SUCCESS, job.scheduleBuild2(0));
 
@@ -62,22 +49,37 @@ public class NodeJSBuildWrapperTest {
     }
 
     @Test
+    public void test_creation_of_config() throws Exception {
+        FreeStyleProject job = j.createFreeStyleProject("free");
+
+        final Config config = createSetting("my-config-id", "email=foo@acme.com", null);
+
+        NodeJSInstallation installation = mockInstaller();
+        NodeJSBuildWrapper bw = mockWrapper(installation, config);
+
+        job.getBuildWrappersList().add(bw);
+
+        job.getBuildersList().add(new FileVerifier());
+
+        j.assertBuildStatus(Result.SUCCESS, job.scheduleBuild2(0));
+    }
+
+    @Test
     public void test_inject_path_variable() throws Exception {
         FreeStyleProject job = j.createFreeStyleProject("free");
 
         final Config config = createSetting("my-config-id", null, null);
 
-        String nodejsHome = new File("/home", "nodejs").getAbsolutePath(); // platform independent
-        final NodeJSInstallation installation = new NodeJSInstallation("inject_var", nodejsHome, null);
+        NodeJSInstallation installation = new NodeJSInstallation("test", getTestHome(), null);
+        NodeJSBuildWrapper spy = mockWrapper(installation, config);
 
-        NodeJSBuildWrapper bw = new MockNodeJSBuildWrapper(installation, config.id);
-
-        job.getBuildWrappersList().add(bw);
+        job.getBuildWrappersList().add(spy);
 
         job.getBuildersList().add(new PathVerifier(installation));
 
         j.assertBuildStatus(Result.SUCCESS, job.scheduleBuild2(0));
     }
+
 
     private Config createSetting(String id, String content, List<NPMRegistry> registries) {
         String providerId = new NPMConfigProvider().getProviderId();
@@ -89,48 +91,24 @@ public class NodeJSBuildWrapperTest {
         return config;
     }
 
-    private static final class MockNodeJSBuildWrapper extends NodeJSBuildWrapper {
-        private NodeJSInstallation installation;
-
-        public MockNodeJSBuildWrapper(NodeJSInstallation installation, String configId) {
-            super(installation.getName(), configId);
-            this.installation = installation;
-        }
-
-        @Override
-        public NodeJSInstallation getNodeJS() {
-            return installation;
-        };
-
-        @Override
-        public Descriptor<BuildWrapper> getDescriptor() {
-            return new NodeJSBuildWrapper.DescriptorImpl();
-        }
+    private NodeJSBuildWrapper mockWrapper(NodeJSInstallation installation, Config config) {
+        NodeJSBuildWrapper wrapper = PowerMockito.spy(new NodeJSBuildWrapper("mock", config.id));
+        doReturn(installation).when(wrapper).getNodeJS();
+        doReturn(new NodeJSBuildWrapper.DescriptorImpl()).when(wrapper).getDescriptor();
+        return wrapper;
     }
 
-    private static abstract class VerifyEnvVariableBuilder extends Builder {
-        @Override
-        public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener)
-                throws InterruptedException, IOException {
-
-            EnvVars env = build.getEnvironment(listener);
-            verify(env);
-            return true;
-        }
-
-        public abstract void verify(EnvVars env);
+    private NodeJSInstallation mockInstaller() throws IOException, InterruptedException {
+        NodeJSInstallation mock = mock(NodeJSInstallation.class);
+        when(mock.forNode(any(Node.class), any(TaskListener.class))).then(RETURNS_SELF);
+        when(mock.forEnvironment(any(EnvVars.class))).then(RETURNS_SELF);
+        when(mock.getName()).thenReturn("mockNode");
+        when(mock.getHome()).thenReturn(getTestHome());
+        return mock;
     }
 
-    private static final class FileVerifier extends VerifyEnvVariableBuilder {
-        @Override
-        public void verify(EnvVars env) {
-            String var = NodeJSConstants.NPM_USERCONFIG;
-            String value = env.get(var);
-
-            assertTrue("variable " + var + " not set", env.containsKey(var));
-            assertNotNull("empty value for environment variable " + var, value);
-            assertTrue("file of variable " + var + " does not exists or is not a file", new File(value).isFile());
-        }
+    private String getTestHome() {
+        return new File("/home", "nodejs").getAbsolutePath();
     }
 
     private static final class PathVerifier extends VerifyEnvVariableBuilder {
@@ -143,8 +121,10 @@ public class NodeJSBuildWrapperTest {
         @Override
         public void verify(EnvVars env) {
             String expectedValue = installation.getHome();
-            assertEquals(env.get("NODEJS_HOME"), expectedValue);
+            assertEquals("Unexpected value for " + NodeJSConstants.ENVVAR_NODEJS_HOME, expectedValue, env.get(NodeJSConstants.ENVVAR_NODEJS_HOME));
             assertThat(env.get("PATH"), CoreMatchers.containsString(expectedValue));
+            // check that PATH is not exact the NodeJS home otherwise means PATH was overridden
+            assertThat(env.get("PATH"), CoreMatchers.is(CoreMatchers.not(expectedValue))); // JENKINS-41947
         }
     }
 

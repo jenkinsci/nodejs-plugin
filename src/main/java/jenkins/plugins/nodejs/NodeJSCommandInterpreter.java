@@ -18,9 +18,9 @@ import hudson.Launcher;
 import hudson.Util;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
-import hudson.model.BuildListener;
 import hudson.model.Environment;
 import hudson.model.Node;
+import hudson.model.TaskListener;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
 import hudson.tasks.CommandInterpreter;
@@ -73,12 +73,13 @@ public class NodeJSCommandInterpreter extends CommandInterpreter {
 
     /*
      * (non-Javadoc)
-     * @see hudson.tasks.CommandInterpreter#perform(hudson.model.AbstractBuild, hudson.Launcher, hudson.model.BuildListener)
+     * @see hudson.tasks.CommandInterpreter#perform(hudson.model.AbstractBuild, hudson.Launcher, hudson.model.TaskListener)
      */
     @Override
-    public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) throws InterruptedException {
+    public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, TaskListener listener) throws InterruptedException {
         try {
             EnvVars env = build.getEnvironment(listener);
+            EnvVars newEnv = new EnvVars();
 
             // get specific installation for the node
             NodeJSInstallation ni = getNodeJS();
@@ -94,17 +95,12 @@ public class NodeJSCommandInterpreter extends CommandInterpreter {
                     throw new AbortException(Messages.NodeJSBuilders_nodeOffline());
                 }
 
-                final EnvVars niEnv = new EnvVars();
-
                 ni = ni.forNode(node, listener);
                 ni = ni.forEnvironment(env);
-                ni.buildEnvVars(niEnv);
+                ni.buildEnvVars(newEnv);
 
                 // enhance env with installation environment because is passed to supplyConfig
-                env.overrideAll(niEnv);
-
-                // add an Environment so when the in super class is called build.getEnviroment() gets the enhanced env
-                build.getEnvironments().add(Environment.create(niEnv));
+                env.overrideAll(newEnv);
 
                 nodeExec = ni.getExecutable(launcher);
                 if (nodeExec == null) {
@@ -115,8 +111,11 @@ public class NodeJSCommandInterpreter extends CommandInterpreter {
             // add npmrc config
             FilePath configFile = NodeJSUtils.supplyConfig(configId, build, build.getWorkspace(), listener, env);
             if (configFile != null) {
-                env.put(NodeJSConstants.NPM_USERCONFIG,  configFile.getRemote());
+                newEnv.put(NodeJSConstants.NPM_USERCONFIG,  configFile.getRemote());
             }
+
+            // add an Environment so when the in super class is called build.getEnviroment() gets the enhanced env
+            build.getEnvironments().add(Environment.create(newEnv));
 
         } catch (AbortException e) {
             listener.fatalError(e.getMessage()); // NOSONAR
@@ -126,6 +125,10 @@ public class NodeJSCommandInterpreter extends CommandInterpreter {
             e.printStackTrace(listener.fatalError(hudson.tasks.Messages.CommandInterpreter_CommandFailed()));
         }
 
+        return internalPerform(build, launcher, listener);
+    }
+
+    protected boolean internalPerform(AbstractBuild<?, ?> build, Launcher launcher, TaskListener listener) throws InterruptedException {
         return super.perform(build, launcher, listener);
     }
 

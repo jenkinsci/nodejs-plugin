@@ -49,6 +49,7 @@ import hudson.tools.ToolInstallation;
 import hudson.tools.ToolInstaller;
 import hudson.tools.ToolProperty;
 import jenkins.plugins.nodejs.Messages;
+import jenkins.plugins.nodejs.NodeJSConstants;
 import jenkins.security.MasterToSlaveCallable;
 import net.sf.json.JSONObject;
 
@@ -103,8 +104,8 @@ public class NodeJSInstallation extends ToolInstallation implements EnvironmentS
         if (home == null) {
             return;
         }
-        env.put("NODEJS_HOME", home);
-        env.put("PATH+NODEJS", getBin());
+        env.put(NodeJSConstants.ENVVAR_NODEJS_HOME, home);
+        env.put(NodeJSConstants.ENVVAR_NODEJS_PATH, getBin());
     }
 
     /**
