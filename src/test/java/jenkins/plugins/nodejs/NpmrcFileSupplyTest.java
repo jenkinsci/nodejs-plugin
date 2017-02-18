@@ -1,6 +1,7 @@
 package jenkins.plugins.nodejs;
 
 import static org.junit.Assert.*;
+import static org.mockito.Mockito.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -14,6 +15,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.jvnet.hudson.test.JenkinsRule;
+import org.powermock.api.mockito.PowerMockito;
 
 import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
@@ -25,13 +27,33 @@ import hudson.model.Environment;
 import hudson.model.EnvironmentList;
 import hudson.model.FreeStyleBuild;
 import hudson.model.FreeStyleProject;
-import hudson.model.TaskListener;
 import jenkins.plugins.nodejs.configfiles.NPMConfig;
 import jenkins.plugins.nodejs.configfiles.NPMConfig.NPMConfigProvider;
 import jenkins.plugins.nodejs.configfiles.NPMRegistry;
 import jenkins.plugins.nodejs.configfiles.Npmrc;
 
 public class NpmrcFileSupplyTest {
+
+    /* package */ static class MockBuild extends FreeStyleBuild {
+        public MockBuild(FreeStyleProject project, File workspace) throws IOException {
+            super(mock(project));
+            setWorkspace(new FilePath(workspace));
+        }
+
+        private static FreeStyleProject mock(FreeStyleProject project) {
+            FreeStyleProject spy = PowerMockito.spy(project);
+            doReturn(new EnvVars()).when(spy).getCharacteristicEnvVars();
+            return spy;
+        }
+
+        @Override
+        public EnvironmentList getEnvironments() {
+            if (buildEnvironments == null) {
+                buildEnvironments = new ArrayList<Environment>();
+            }
+            return new EnvironmentList(buildEnvironments);
+        }
+    }
 
     @Rule
     public JenkinsRule j = new JenkinsRule();
@@ -44,12 +66,9 @@ public class NpmrcFileSupplyTest {
         NPMRegistry privateRegistry = new NPMRegistry("https://private.organization.com/", user.getId(), null);
         NPMRegistry officalRegistry = new NPMRegistry("https://registry.npmjs.org/", null, "@user1 user2");
 
-        Config config = createSetting("mytest", "email=guest@example.com",
-                Arrays.asList(privateRegistry, officalRegistry));
+        Config config = createSetting("mytest", "email=guest@example.com", Arrays.asList(privateRegistry, officalRegistry));
 
-        List<Environment> enviroments = new ArrayList<Environment>();
-
-        FreeStyleBuild build = new MockBuild(j.createFreeStyleProject(), new FilePath(folder.newFolder()), enviroments);
+        FreeStyleBuild build = new MockBuild(j.createFreeStyleProject(), folder.newFolder());
 
         FilePath npmrcFile = NodeJSUtils.supplyConfig(config.id, build, build.getWorkspace(), j.createTaskListener(), new EnvVars());
         assertTrue(npmrcFile.exists());
@@ -74,24 +93,4 @@ public class NpmrcFileSupplyTest {
         return config;
     }
 
-    private class MockBuild extends FreeStyleBuild {
-        List<Environment> environments = new ArrayList<Environment>();
-
-        public MockBuild(FreeStyleProject project, FilePath workspace, List<Environment> enviroments)
-                throws IOException {
-            super(project);
-            setWorkspace(workspace);
-            this.environments = enviroments;
-        }
-
-        @Override
-        public EnvVars getEnvironment(TaskListener log) throws IOException, InterruptedException {
-            return new EnvVars();
-        }
-
-        @Override
-        public EnvironmentList getEnvironments() {
-            return new EnvironmentList(environments);
-        }
-    }
 }
