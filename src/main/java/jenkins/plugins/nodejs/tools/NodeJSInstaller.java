@@ -25,6 +25,9 @@ package jenkins.plugins.nodejs.tools;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.Proxy;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
@@ -43,6 +46,7 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Collections2;
 
+import hudson.EnvVars;
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.Functions;
@@ -56,8 +60,10 @@ import hudson.remoting.VirtualChannel;
 import hudson.tools.DownloadFromUrlInstaller;
 import hudson.tools.ToolInstallation;
 import hudson.util.ArgumentListBuilder;
+import hudson.util.Secret;
 import jenkins.MasterToSlaveFileCallable;
 import jenkins.plugins.nodejs.Messages;
+import jenkins.plugins.nodejs.NodeJSConstants;
 import jenkins.plugins.tools.Installables;
 
 /**
@@ -173,8 +179,16 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
                     npmScriptArgs.add(packageName);
                 }
 
+                EnvVars env = new EnvVars();
+                env.put(NodeJSConstants.ENVVAR_NODEJS_PATH, binFolder.getRemote());
+                try {
+                    buildProxyEnvVars(env);
+                } catch (URISyntaxException e) {
+                    log.error("Wrong proxy URL: " + e.getMessage());
+                }
+
                 hudson.Launcher launcher = node.createLauncher(log);
-				int returnCode = launcher.launch().envs("PATH+NODEJS=" + binFolder.getRemote()).cmds(npmScriptArgs).stdout(log).join();
+				int returnCode = launcher.launch().envs(env).cmds(npmScriptArgs).stdout(log).join();
 
                 if (returnCode == 0) {
                     // leave a record for the next up-to-date check
@@ -182,6 +196,26 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
                     expected.child(NPM_PACKAGES_RECORD_FILENAME).act(new ChmodRecAPlusX());
                 }
             }
+        }
+    }
+
+    private void buildProxyEnvVars(EnvVars env) throws IOException, URISyntaxException {
+        // Should be read from npmrc file ?
+        String registry = NodeJSConstants.DEFAULT_NPM_REGISTRY;
+
+        ProxyConfiguration proxycfg = ProxyConfiguration.load();
+        if (proxycfg != null && proxycfg.createProxy(registry) != Proxy.NO_PROXY) {
+            String userInfo = proxycfg.getUserName() != null ? proxycfg.getUserName() : null;
+            // append password only if userName if is defined
+            if (userInfo != null && proxycfg.getEncryptedPassword() != null) {
+                userInfo += ":" + Secret.decrypt(proxycfg.getEncryptedPassword());
+            }
+
+            String proxyURL = new URI("http", userInfo, proxycfg.name, proxycfg.port, null, null, null).toString();
+
+            // refer to https://docs.npmjs.com/misc/config#https-proxy
+            env.put("HTTP_PROXY", proxyURL);
+            env.put("HTTPS_PROXY", proxyURL);
         }
     }
 

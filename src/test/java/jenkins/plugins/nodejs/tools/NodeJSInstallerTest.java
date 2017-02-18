@@ -1,4 +1,4 @@
-package jenkins.plugins.nodejs;
+package jenkins.plugins.nodejs.tools;
 
 import static org.mockito.Mockito.*;
 
@@ -13,9 +13,6 @@ import hudson.model.Node;
 import hudson.model.TaskListener;
 import hudson.tools.DownloadFromUrlInstaller;
 import hudson.tools.ToolInstallation;
-import jenkins.plugins.nodejs.tools.CPU;
-import jenkins.plugins.nodejs.tools.NodeJSInstaller;
-import jenkins.plugins.nodejs.tools.Platform;
 
 @RunWith(PowerMockRunner.class)
 @PrepareForTest(NodeJSInstaller.class)
@@ -37,7 +34,7 @@ public class NodeJSInstallerTest {
         int expectedRefreshHours = NodeJSInstaller.DEFAULT_NPM_PACKAGES_REFRESH_HOURS;
         Node currentNode = mock(Node.class);
 
-        // mock all the static methods in a class called "Static"
+        // mock all the static methods in the class
         PowerMockito.mockStatic(NodeJSInstaller.class);
 
         // create partial mock
