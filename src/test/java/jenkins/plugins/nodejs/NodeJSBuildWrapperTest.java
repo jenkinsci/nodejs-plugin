@@ -58,7 +58,7 @@ public class NodeJSBuildWrapperTest {
 
         verify(installation).forNode(any(Node.class), any(TaskListener.class));
         verify(installation).forEnvironment(any(EnvVars.class));
-        verify(installation).buildEnvVars(any(EnvVars.class));
+        verify(installation, atLeast(1)).buildEnvVars(any(EnvVars.class));
     }
 
     @Test
