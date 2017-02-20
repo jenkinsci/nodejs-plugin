@@ -38,9 +38,7 @@ import jenkins.plugins.nodejs.tools.NodeJSInstallation;
         }
 
         @Override
-        protected boolean internalPerform(AbstractBuild<?, ?> build, Launcher launcher, TaskListener listener)
-                throws InterruptedException {
-            super.internalPerform(build, launcher, listener);
+        protected boolean internalPerform(AbstractBuild<?, ?> build, Launcher launcher, TaskListener listener) throws InterruptedException {
             if (verifier != null) {
                 try {
                     verifier.verify(build, launcher, listener);

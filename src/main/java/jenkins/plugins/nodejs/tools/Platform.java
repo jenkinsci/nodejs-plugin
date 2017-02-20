@@ -72,7 +72,7 @@ public enum Platform {
         if (arch.contains("mac")) {
             return OSX;
         }
-        throw new DetectionFailedException("Unknown CPU name: " + arch);
+        throw new DetectionFailedException("Unknown OS name: " + arch);
     }
 
 }
