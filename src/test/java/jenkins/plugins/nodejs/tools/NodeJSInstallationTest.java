@@ -10,12 +10,14 @@ import org.junit.Test;
 import org.jvnet.hudson.test.Issue;
 import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.recipes.LocalData;
+import org.powermock.reflect.Whitebox;
 import org.xml.sax.SAXException;
 
 import com.gargoylesoftware.htmlunit.html.HtmlButton;
 import com.gargoylesoftware.htmlunit.html.HtmlForm;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
 
+import hudson.model.Computer;
 import hudson.tools.InstallSourceProperty;
 import hudson.tools.ToolProperty;
 import hudson.tools.ToolPropertyDescriptor;
@@ -29,8 +31,21 @@ public class NodeJSInstallationTest {
     public JenkinsRule r = new JenkinsRule();
 
     /**
+     * Verify node executable is begin initialised correctly on a slave
+     * node where {@link Computer#currentComputer()} is {@code null}.
+     */
+    @Issue("JENKINS-42232")
+    @Test
+    public void test_executable_resolved_on_slave_node() throws Exception {
+        assertNull(Computer.currentComputer());
+        NodeJSInstallation installation = new NodeJSInstallation("test_executable_resolved_on_slave_node", "/home/nodejs", null);
+        Platform platform = Whitebox.invokeMethod(installation, "getPlatform");
+        assertEquals(Platform.current(), platform);
+    }
+
+    /**
      * Verify that the singleton installation descriptor load data from disk
-     * when on its constructor
+     * when its constructor is called.
      */
     @LocalData
     @Test

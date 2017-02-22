@@ -64,7 +64,7 @@ import net.sf.json.JSONObject;
 public class NodeJSInstallation extends ToolInstallation implements EnvironmentSpecific<NodeJSInstallation>, NodeSpecific<NodeJSInstallation> {
 
     @SuppressFBWarnings(value = "SE_TRANSIENT_FIELD_NOT_RESTORED", justification = "calculate at runtime, its value depends on the OS where it run")
-    private final transient Platform platform;
+    private transient Platform platform;
 
     @DataBoundConstructor
     public NodeJSInstallation(@Nonnull String name, @Nonnull String home, List<? extends ToolProperty<?>> properties) {
@@ -173,17 +173,19 @@ public class NodeJSInstallation extends ToolInstallation implements EnvironmentS
         // missed call method forNode
         if (currentPlatform == null) {
             Computer computer = Computer.currentComputer();
-            if (computer == null) {
-                // pipeline use case
-                throw new DetectionFailedException(Messages.NodeJSBuilders_nodeOffline());
+            if (computer != null) {
+                Node node = computer.getNode();
+                if (node == null) {
+                    throw new DetectionFailedException(Messages.NodeJSBuilders_nodeOffline());
+                }
+
+                currentPlatform = Platform.of(node);
+            } else {
+                // pipeline or MasterToSlave use case
+                currentPlatform = Platform.current();
             }
 
-            Node node = computer.getNode();
-            if (node == null) {
-                throw new DetectionFailedException(Messages.NodeJSBuilders_nodeOffline());
-            }
-
-            currentPlatform = Platform.of(node);
+            platform = currentPlatform;
         }
 
         return currentPlatform;
