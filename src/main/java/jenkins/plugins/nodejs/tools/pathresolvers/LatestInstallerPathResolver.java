@@ -59,7 +59,7 @@ public class LatestInstallerPathResolver implements InstallerPathResolver {
 
         switch (cpu) {
         case i386:
-            if (NodeJSVersion.parseVersion(version).compareTo(new NodeJSVersion(4, 0, 0)) >= 0) {
+            if (platform == Platform.OSX && NodeJSVersion.parseVersion(version).compareTo(new NodeJSVersion(4, 0, 0)) >= 0) {
             	throw new IllegalArgumentException("Unresolvable nodeJS installer for version=" + version + ", cpu=" + cpu.name() + ", platform=" + platform.name());
             }
             arch = "x86";
