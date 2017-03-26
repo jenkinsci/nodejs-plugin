@@ -25,7 +25,6 @@ package jenkins.plugins.nodejs.tools;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.Proxy;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -182,7 +181,7 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
                 EnvVars env = new EnvVars();
                 env.put(NodeJSConstants.ENVVAR_NODEJS_PATH, binFolder.getRemote());
                 try {
-                    buildProxyEnvVars(env);
+                    buildProxyEnvVars(env, log);
                 } catch (URISyntaxException e) {
                     log.error("Wrong proxy URL: " + e.getMessage());
                 }
@@ -199,23 +198,31 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
         }
     }
 
-    private void buildProxyEnvVars(EnvVars env) throws IOException, URISyntaxException {
-        // Should be read from npmrc file ?
-        String registry = NodeJSConstants.DEFAULT_NPM_REGISTRY;
-
+    private void buildProxyEnvVars(EnvVars env, TaskListener log) throws IOException, URISyntaxException {
         ProxyConfiguration proxycfg = ProxyConfiguration.load();
-        if (proxycfg != null && proxycfg.createProxy(registry) != Proxy.NO_PROXY) {
-            String userInfo = proxycfg.getUserName() != null ? proxycfg.getUserName() : null;
-            // append password only if userName if is defined
-            if (userInfo != null && proxycfg.getEncryptedPassword() != null) {
-                userInfo += ":" + Secret.decrypt(proxycfg.getEncryptedPassword());
+        if (proxycfg == null) {
+            // no proxy configured
+            return;
+        }
+
+        String userInfo = proxycfg.getUserName() != null ? proxycfg.getUserName() : null;
+        // append password only if userName if is defined
+        if (userInfo != null && proxycfg.getEncryptedPassword() != null) {
+            userInfo += ":" + Secret.decrypt(proxycfg.getEncryptedPassword());
+        }
+
+        String proxyURL = new URI("http", userInfo, proxycfg.name, proxycfg.port, null, null, null).toString();
+
+        // refer to https://docs.npmjs.com/misc/config#https-proxy
+        env.put("HTTP_PROXY", proxyURL);
+        env.put("HTTPS_PROXY", proxyURL);
+        String noProxyHosts = proxycfg.noProxyHost;
+        if (noProxyHosts != null) {
+            if (noProxyHosts.contains("*")) {
+                log.getLogger().println("INFO: npm doesn't support wild card in no_proxy configuration");
             }
-
-            String proxyURL = new URI("http", userInfo, proxycfg.name, proxycfg.port, null, null, null).toString();
-
-            // refer to https://docs.npmjs.com/misc/config#https-proxy
-            env.put("HTTP_PROXY", proxyURL);
-            env.put("HTTPS_PROXY", proxyURL);
+            // refer to https://github.com/npm/npm/issues/7168
+            env.put("NO_PROXY", noProxyHosts.replaceAll("(\r?\n)+", ","));
         }
     }
 
