@@ -11,7 +11,7 @@ import jenkins.plugins.nodejs.tools.Platform;
 /**
  * Calculate the name of the installer for the specified version according the
  * architecture and CPU of the destination node.
- * 
+ *
  * @author fcamblor
  * @author Nikolas Falco
  */
@@ -22,7 +22,7 @@ public class LatestInstallerPathResolver implements InstallerPathResolver {
 
     private static final NodeJSVersionRange[] MSI_RANGES = new NodeJSVersionRange[] { new NodeJSVersionRange("[0, 4.5)"),
                                                                                      new NodeJSVersionRange("[5, 6.2]") };
-    
+
     /*
      * (non-Javadoc)
      * @see jenkins.plugins.nodejs.tools.InstallerPathResolver#resolvePathFor(java.lang.String, jenkins.plugins.nodejs.tools.Platform, jenkins.plugins.nodejs.tools.CPU)
@@ -69,6 +69,14 @@ public class LatestInstallerPathResolver implements InstallerPathResolver {
                 path = "x64/";
             }
             arch = "x64";
+            break;
+        case arm64:
+        case armv6l:
+        case armv7l:
+            if (NodeJSVersion.parseVersion(version).compareTo(new NodeJSVersion(4, 0, 0)) < 0) {
+                throw new IllegalArgumentException("Unresolvable nodeJS installer for version=" + version + ", cpu=" + cpu.name() + ", platform=" + platform.name());
+            }
+            arch = cpu.name();
             break;
         default:
             throw new IllegalArgumentException("Unresolvable nodeJS installer for version=" + version + ", cpu=" + cpu.name());

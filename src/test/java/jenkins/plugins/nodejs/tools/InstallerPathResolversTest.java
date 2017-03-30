@@ -64,6 +64,10 @@ public class InstallerPathResolversTest {
 
             for (Platform platform : Platform.values()) {
                 for (CPU cpu : CPU.values()) {
+                    if (cpu.name().startsWith("arm") && platform != Platform.LINUX) {
+                        // arm are only supported on linux
+                        continue;
+                    }
                     String testName = String.format("version=%s,cpu=%s,platform=%s", installable.id, cpu.name(), platform.name());
                     testPossibleParams.add(new Object[] { installable, platform, cpu, testName });
                 }
