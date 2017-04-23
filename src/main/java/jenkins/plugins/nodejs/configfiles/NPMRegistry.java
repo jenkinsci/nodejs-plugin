@@ -168,6 +168,11 @@ public class NPMRegistry extends AbstractDescribableImpl<NPMRegistry> implements
         }
     }
 
+    @Override
+    public String toString() {
+        return "url: " + url + (scopes != null ? " scopes: [" + scopes + "]" : "") + (credentialsId != null ? " credentialId: " + credentialsId : "");
+    }
+
     @Extension
     public static class DescriptorImpl extends Descriptor<NPMRegistry> {
 

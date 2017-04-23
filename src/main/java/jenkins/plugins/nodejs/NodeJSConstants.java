@@ -54,5 +54,14 @@ public final class NodeJSConstants {
      * login to the global registry.
      */
     public static final String NPM_SETTINGS_AUTH = "_auth";
+    /**
+     * The user name used to login to the scoped registry.
+     */
+    public static final String NPM_SETTINGS_USER = "username";
+    /**
+     * The authentication base64 string &gt;PASSWORD&lt; used to
+     * login to the scoped registry.
+     */
+    public static final String NPM_SETTINGS_PASSWORD = "_password";
 
 }

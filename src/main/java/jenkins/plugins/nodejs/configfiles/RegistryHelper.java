@@ -4,6 +4,7 @@ import static jenkins.plugins.nodejs.NodeJSConstants.*;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -34,9 +35,9 @@ import hudson.util.Secret;
  */
 public final class RegistryHelper {
 
-    private final List<NPMRegistry> registries;
+    private final Collection<NPMRegistry> registries;
 
-    public RegistryHelper(@CheckForNull List<NPMRegistry> registries) {
+    public RegistryHelper(@CheckForNull Collection<NPMRegistry> registries) {
         this.registries = registries;
     }
 
@@ -84,36 +85,51 @@ public final class RegistryHelper {
         npmrc.from(npmrcContent);
 
         for (NPMRegistry registry : registries) {
-            String authValue = null;
+            StandardUsernamePasswordCredentials credentials = null;
             if (registry2Credentials.containsKey(registry.getUrl())) {
-                StandardUsernamePasswordCredentials credentials = (StandardUsernamePasswordCredentials) registry2Credentials.get(registry.getUrl());
-                authValue = credentials.getUsername() + ':' + Secret.toString(credentials.getPassword());
-                authValue = Base64.encodeBase64String(authValue.getBytes());
+                credentials = (StandardUsernamePasswordCredentials) registry2Credentials.get(registry.getUrl());
             }
 
             if (registry.isHasScopes()) {
                 for (String scope : registry.getScopesAsList()) {
                     // remove protocol from the registry URL
                     String registryPrefix = calculatePrefix(registry.getUrl());
+                    // ensure that URL ends with the / or will not match with scoped entries
+                    String registryURL = fixURL(registry.getUrl());
 
                     // add scoped values to the user config file
-                    npmrc.set(compose('@' + scope, NPM_SETTINGS_REGISTRY), registry.getUrl());
-                    npmrc.set(compose(registryPrefix, NPM_SETTINGS_ALWAYS_AUTH), authValue != null);
-                    if (authValue != null) { // NOSONAR
-                        npmrc.set(compose(registryPrefix, NPM_SETTINGS_AUTH), authValue);
+                    npmrc.set(compose('@' + scope, NPM_SETTINGS_REGISTRY), registryURL);
+                    npmrc.set(compose(registryPrefix, NPM_SETTINGS_ALWAYS_AUTH), credentials != null);
+                    if (credentials != null) { // NOSONAR
+                        // the _auth directive seems not be considered for scoped registry
+                        // only authToken or username/password works
+                        String passwordValue = Base64.encodeBase64String(Secret.toString(credentials.getPassword()).getBytes());
+                        npmrc.set(compose(registryPrefix, NPM_SETTINGS_USER), credentials.getUsername());
+                        npmrc.set(compose(registryPrefix, NPM_SETTINGS_PASSWORD), passwordValue);
                     }
                 }
             } else {
                 // add values to the user config file
                 npmrc.set(NPM_SETTINGS_REGISTRY, registry.getUrl());
-                npmrc.set(NPM_SETTINGS_ALWAYS_AUTH, authValue != null);
-                if (authValue != null) {
+                npmrc.set(NPM_SETTINGS_ALWAYS_AUTH, credentials != null);
+                if (credentials != null) {
+                    String authValue = credentials.getUsername() + ':' + Secret.toString(credentials.getPassword());
+                    authValue = Base64.encodeBase64String(authValue.getBytes());
                     npmrc.set(NPM_SETTINGS_AUTH, authValue);
                 }
             }
         }
 
         return npmrc.toString();
+    }
+
+    @Nonnull
+    private String fixURL(@Nonnull final String registryURL) {
+        String url = registryURL;
+        if (!url.endsWith("/")) {
+            url += "/";
+        }
+        return url;
     }
 
     @Nonnull
