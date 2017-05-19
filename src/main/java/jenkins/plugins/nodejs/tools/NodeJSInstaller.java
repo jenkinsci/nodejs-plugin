@@ -270,7 +270,7 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
             msi.copyFrom(archive);
             try {
                 Launcher launch = temp.createLauncher(listener);
-                ProcStarter starter = launch.launch().cmds(new File("cmd"), "/c", "for %A in (.) do msiexec TARGETDIR=%~sA /a "+ temp.getName() + "\\nodejs.msi /qn /L* " + temp.getName() + "\\log.txt");
+                ProcStarter starter = launch.launch().cmds(new File("cmd"), "/c", "for %A in (.) do msiexec TARGETDIR=\"%~sA\" /a "+ temp.getName() + "\\nodejs.msi /qn /L* " + temp.getName() + "\\log.txt");
                 starter=starter.pwd(expected);
 
                 int exitCode=starter.join();
