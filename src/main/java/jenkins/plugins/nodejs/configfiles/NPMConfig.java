@@ -1,23 +1,31 @@
 package jenkins.plugins.nodejs.configfiles;
 
-import hudson.Extension;
-import hudson.Util;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import javax.annotation.Nonnull;
 
-import jenkins.model.Jenkins;
-import jenkins.plugins.nodejs.Messages;
-
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.lib.configprovider.AbstractConfigProviderImpl;
 import org.jenkinsci.lib.configprovider.ConfigProvider;
 import org.jenkinsci.lib.configprovider.model.Config;
 import org.jenkinsci.lib.configprovider.model.ContentType;
 import org.kohsuke.stapler.DataBoundConstructor;
+
+import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
+
+import hudson.AbortException;
+import hudson.Extension;
+import hudson.FilePath;
+import hudson.Util;
+import hudson.model.Run;
+import hudson.model.TaskListener;
+import jenkins.model.Jenkins;
+import jenkins.plugins.nodejs.Messages;
 
 /**
  * A config/provider to handle the special case of a npmrc config file
@@ -103,6 +111,31 @@ public class NPMConfig extends Config {
             } catch (IOException e) { // NOSONAR
                 return null;
             }
+        }
+
+        @Override
+        public String supplyContent(Config configFile, Run<?, ?> build, FilePath workDir, TaskListener listener, List<String> tempFiles) throws IOException {
+            String fileContent = configFile.content;
+            if (configFile instanceof NPMConfig) {
+                NPMConfig config = (NPMConfig) configFile;
+
+                List<NPMRegistry> registries = config.getRegistries();
+                RegistryHelper helper = new RegistryHelper(registries);
+                if (!registries.isEmpty()) {
+                    listener.getLogger().println("Adding all registry entries");
+                    Map<String, StandardUsernameCredentials> registry2Credentials = helper.resolveCredentials(build);
+                    fileContent = helper.fillRegistry(fileContent, registry2Credentials);
+                }
+
+                try {
+                    if (StringUtils.isNotBlank(fileContent)) { // NOSONAR
+                        config.doVerify();
+                    }
+                } catch (VerifyConfigProviderException e) {
+                    throw new AbortException("Invalid user config: " + e.getMessage());
+                }
+            }
+            return fileContent;
         }
 
     }

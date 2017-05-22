@@ -10,6 +10,8 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.jenkinsci.lib.configprovider.model.Config;
+import org.jenkinsci.lib.configprovider.model.ConfigFile;
+import org.jenkinsci.lib.configprovider.model.ConfigFileManager;
 import org.jenkinsci.plugins.configfiles.GlobalConfigFiles;
 import org.junit.Rule;
 import org.junit.Test;
@@ -70,7 +72,7 @@ public class NpmrcFileSupplyTest {
 
         FreeStyleBuild build = new MockBuild(j.createFreeStyleProject(), folder.newFolder());
 
-        FilePath npmrcFile = NodeJSUtils.supplyConfig(config.id, build, build.getWorkspace(), j.createTaskListener(), new EnvVars());
+        FilePath npmrcFile = ConfigFileManager.provisionConfigFile(new ConfigFile(config.id, null, true), null, build, build.getWorkspace(), j.createTaskListener(), new ArrayList<String>(1));
         assertTrue(npmrcFile.exists());
         assertTrue(npmrcFile.length() > 0);
 

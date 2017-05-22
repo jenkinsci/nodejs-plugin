@@ -68,7 +68,7 @@ public class NodeJSBuildWrapperTest {
     public void test_inject_path_variable() throws Exception {
         FreeStyleProject job = j.createFreeStyleProject("free");
 
-        final Config config = createSetting("my-config-id", null, null);
+        final Config config = createSetting("my-config-id", "", null);
 
         NodeJSInstallation installation = new NodeJSInstallation("test", getTestHome(), null);
         NodeJSBuildWrapper spy = mockWrapper(installation, config);

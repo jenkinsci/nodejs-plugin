@@ -1,6 +1,7 @@
 package jenkins.plugins.nodejs;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 
 import javax.annotation.CheckForNull;
@@ -8,7 +9,10 @@ import javax.annotation.Nonnull;
 
 import org.jenkinsci.Symbol;
 import org.jenkinsci.lib.configprovider.model.Config;
+import org.jenkinsci.lib.configprovider.model.ConfigFile;
+import org.jenkinsci.lib.configprovider.model.ConfigFileManager;
 import org.jenkinsci.plugins.configfiles.GlobalConfigFiles;
+import org.jenkinsci.plugins.configfiles.common.CleanTempFilesAction;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
@@ -114,9 +118,11 @@ public class NodeJSBuildWrapper extends SimpleBuildWrapper {
         EnvVars env = initialEnvironment.overrideAll(context.getEnv());
 
         // add npmrc config
-        FilePath configFile = NodeJSUtils.supplyConfig(configId, build, workspace, listener, env);
-        if (configFile != null) {
+        if (configId != null) {
+            ConfigFile cf = new ConfigFile(configId, null, true);
+            FilePath configFile = ConfigFileManager.provisionConfigFile(cf, env, build, workspace, listener, new ArrayList<String>());
             context.env(NodeJSConstants.NPM_USERCONFIG,  configFile.getRemote());
+            build.addAction(new CleanTempFilesAction(configFile.getRemote()));
         }
     }
 
