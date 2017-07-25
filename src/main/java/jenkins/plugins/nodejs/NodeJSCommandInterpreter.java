@@ -12,6 +12,7 @@ import org.jenkinsci.lib.configprovider.model.ConfigFileManager;
 import org.jenkinsci.plugins.configfiles.GlobalConfigFiles;
 import org.jenkinsci.plugins.configfiles.common.CleanTempFilesAction;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 
 import hudson.AbortException;
@@ -46,8 +47,22 @@ import jenkins.plugins.nodejs.tools.Platform;
 public class NodeJSCommandInterpreter extends CommandInterpreter {
 
     private final String nodeJSInstallationName;
-    private final String configId;
+    private String configId;
+
     private transient String nodeExec; // NOSONAR
+
+    /**
+     * Constructs a {@link NodeJSCommandInterpreter} with specified command.
+     *
+     * @param command
+     *            the NodeJS script
+     * @param nodeJSInstallationName
+     *            the NodeJS label configured in Jenkins
+     */
+    @DataBoundConstructor
+    public NodeJSCommandInterpreter(final String command, final String nodeJSInstallationName) {
+        this(command, nodeJSInstallationName, null);
+    }
 
     /**
      * Constructs a {@link NodeJSCommandInterpreter} with specified command.
@@ -59,7 +74,6 @@ public class NodeJSCommandInterpreter extends CommandInterpreter {
      * @param configId
      *            the provided Config id
      */
-    @DataBoundConstructor
     public NodeJSCommandInterpreter(final String command, final String nodeJSInstallationName, final String configId) {
         super(command);
         this.nodeJSInstallationName = Util.fixEmpty(nodeJSInstallationName);
@@ -164,6 +178,11 @@ public class NodeJSCommandInterpreter extends CommandInterpreter {
 
     public String getConfigId() {
         return configId;
+    }
+
+    @DataBoundSetter
+    public void setConfigId(String configId) {
+        this.configId = Util.fixEmpty(configId);
     }
 
     /**

@@ -14,6 +14,7 @@ import org.jenkinsci.lib.configprovider.model.ConfigFileManager;
 import org.jenkinsci.plugins.configfiles.GlobalConfigFiles;
 import org.jenkinsci.plugins.configfiles.common.CleanTempFilesAction;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 
 import hudson.AbortException;
@@ -67,9 +68,13 @@ public class NodeJSBuildWrapper extends SimpleBuildWrapper {
     }
 
     private final String nodeJSInstallationName;
-    private final String configId;
+    private String configId;
 
     @DataBoundConstructor
+    public NodeJSBuildWrapper(String nodeJSInstallationName) {
+        this(nodeJSInstallationName, null);
+    }
+
     public NodeJSBuildWrapper(String nodeJSInstallationName, String configId) {
         this.nodeJSInstallationName = Util.fixEmpty(nodeJSInstallationName);
         this.configId = Util.fixEmpty(configId);
@@ -90,6 +95,11 @@ public class NodeJSBuildWrapper extends SimpleBuildWrapper {
 
     public String getConfigId() {
         return configId;
+    }
+
+    @DataBoundSetter
+    public void setConfigId(String configId) {
+        this.configId = Util.fixEmpty(configId);
     }
 
     /*
