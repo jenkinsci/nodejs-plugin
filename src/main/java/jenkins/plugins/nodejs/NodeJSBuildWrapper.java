@@ -123,6 +123,10 @@ public class NodeJSBuildWrapper extends SimpleBuildWrapper {
         }
         ni = ni.forNode(node, listener);
         ni = ni.forEnvironment(initialEnvironment);
+        String exec = ni.getExecutable(launcher);
+        if (exec == null) {
+        	throw new AbortException(Messages.NodeJSBuilders_noExecutableFound(ni.getHome()));
+        }
         ni.buildEnvVars(new EnvVarsAdapter(context));
 
         EnvVars env = initialEnvironment.overrideAll(context.getEnv());
@@ -131,7 +135,7 @@ public class NodeJSBuildWrapper extends SimpleBuildWrapper {
         if (configId != null) {
             ConfigFile cf = new ConfigFile(configId, null, true);
             FilePath configFile = ConfigFileManager.provisionConfigFile(cf, env, build, workspace, listener, new ArrayList<String>());
-            context.env(NodeJSConstants.NPM_USERCONFIG,  configFile.getRemote());
+            context.env(NodeJSConstants.NPM_USERCONFIG, configFile.getRemote());
             build.addAction(new CleanTempFilesAction(configFile.getRemote()));
         }
     }

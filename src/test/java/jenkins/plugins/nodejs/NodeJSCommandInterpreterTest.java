@@ -23,6 +23,7 @@ import hudson.Launcher;
 import hudson.model.AbstractBuild;
 import hudson.model.FreeStyleProject;
 import hudson.model.Node;
+import hudson.model.Result;
 import hudson.model.TaskListener;
 import jenkins.plugins.nodejs.CIBuilderHelper.Verifier;
 import jenkins.plugins.nodejs.CIBuilderHelper;
@@ -110,6 +111,19 @@ public class NodeJSCommandInterpreterTest {
         verify(installation).forNode(any(Node.class), any(TaskListener.class));
         verify(installation).forEnvironment(any(EnvVars.class));
         verify(installation).buildEnvVars(any(EnvVars.class));
+    }
+
+    @Issue("JENKINS-45840")
+    @Test
+    public void test_check_no_executable_in_installation_folder() throws Exception {
+        NodeJSInstallation installation = mockInstaller();
+        when(installation.getExecutable(any(Launcher.class))).thenReturn(null);
+
+        NodeJSCommandInterpreter builder = CIBuilderHelper.createMock("test_creation_of_config", installation, null);
+
+        FreeStyleProject job = j.createFreeStyleProject("free");
+        job.getBuildersList().add(builder);
+        j.assertBuildStatus(Result.FAILURE, job.scheduleBuild2(0));
     }
 
     private Config createSetting(String id, String content, List<NPMRegistry> registries) {

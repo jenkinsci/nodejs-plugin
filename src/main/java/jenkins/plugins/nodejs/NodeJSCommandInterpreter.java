@@ -115,6 +115,11 @@ public class NodeJSCommandInterpreter extends CommandInterpreter {
 
                 ni = ni.forNode(node, listener);
                 ni = ni.forEnvironment(env);
+                String exec = ni.getExecutable(launcher);
+                if (exec == null) {
+                	listener.fatalError(Messages.NodeJSBuilders_noExecutableFound(ni.getHome()));
+                    return false;
+                }
                 ni.buildEnvVars(newEnv);
 
                 // enhance env with installation environment because is passed to supplyConfig

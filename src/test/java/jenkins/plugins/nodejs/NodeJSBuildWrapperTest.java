@@ -13,10 +13,12 @@ import org.jenkinsci.lib.configprovider.model.Config;
 import org.jenkinsci.plugins.configfiles.GlobalConfigFiles;
 import org.junit.Rule;
 import org.junit.Test;
+import org.jvnet.hudson.test.Issue;
 import org.jvnet.hudson.test.JenkinsRule;
 import org.powermock.api.mockito.PowerMockito;
 
 import hudson.EnvVars;
+import hudson.Launcher;
 import hudson.model.FreeStyleProject;
 import hudson.model.Node;
 import hudson.model.Result;
@@ -25,7 +27,9 @@ import jenkins.plugins.nodejs.VerifyEnvVariableBuilder.FileVerifier;
 import jenkins.plugins.nodejs.configfiles.NPMConfig;
 import jenkins.plugins.nodejs.configfiles.NPMConfig.NPMConfigProvider;
 import jenkins.plugins.nodejs.configfiles.NPMRegistry;
+import jenkins.plugins.nodejs.tools.DetectionFailedException;
 import jenkins.plugins.nodejs.tools.NodeJSInstallation;
+import jenkins.plugins.nodejs.tools.Platform;
 
 public class NodeJSBuildWrapperTest {
 
@@ -41,7 +45,7 @@ public class NodeJSBuildWrapperTest {
 
         job.getBuildWrappersList().add(bw);
 
-        j.assertBuildStatus(Result.SUCCESS, job.scheduleBuild2(0));
+        j.assertBuildStatusSuccess(job.scheduleBuild2(0));
 
         verify(installation).forNode(any(Node.class), any(TaskListener.class));
         verify(installation).forEnvironment(any(EnvVars.class));
@@ -61,7 +65,7 @@ public class NodeJSBuildWrapperTest {
 
         job.getBuildersList().add(new FileVerifier());
 
-        j.assertBuildStatus(Result.SUCCESS, job.scheduleBuild2(0));
+        j.assertBuildStatusSuccess(job.scheduleBuild2(0));
     }
 
     @Test
@@ -70,16 +74,33 @@ public class NodeJSBuildWrapperTest {
 
         final Config config = createSetting("my-config-id", "", null);
 
-        NodeJSInstallation installation = new NodeJSInstallation("test", getTestHome(), null);
+        NodeJSInstallation installation = spy(new NodeJSInstallation("test", getTestHome(), null));
+        doReturn(getTestExecutable()).when(installation).getExecutable(any(Launcher.class));
+        doReturn(installation).when(installation).forNode(any(Node.class), any(TaskListener.class));
+        doReturn(installation).when(installation).forEnvironment(any(EnvVars.class));
+
         NodeJSBuildWrapper spy = mockWrapper(installation, config);
 
         job.getBuildWrappersList().add(spy);
 
         job.getBuildersList().add(new PathVerifier(installation));
 
-        j.assertBuildStatus(Result.SUCCESS, job.scheduleBuild2(0));
+        j.assertBuildStatusSuccess(job.scheduleBuild2(0));
     }
 
+    @Issue("JENKINS-45840")
+    @Test
+    public void test_check_no_executable_in_installation_folder() throws Exception {
+        FreeStyleProject job = j.createFreeStyleProject("free");
+
+        NodeJSInstallation installation = mockInstaller();
+        when(installation.getExecutable(any(Launcher.class))).thenReturn(null);
+        NodeJSBuildWrapper bw = mockWrapper(installation, mock(NPMConfig.class));
+
+        job.getBuildWrappersList().add(bw);
+
+        j.assertBuildStatus(Result.FAILURE, job.scheduleBuild2(0));
+    }
 
     private Config createSetting(String id, String content, List<NPMRegistry> registries) {
         String providerId = new NPMConfigProvider().getProviderId();
@@ -98,13 +119,19 @@ public class NodeJSBuildWrapperTest {
         return wrapper;
     }
 
-    private NodeJSInstallation mockInstaller() throws IOException, InterruptedException {
+    private NodeJSInstallation mockInstaller() throws Exception {
         NodeJSInstallation mock = mock(NodeJSInstallation.class);
         when(mock.forNode(any(Node.class), any(TaskListener.class))).then(RETURNS_SELF);
         when(mock.forEnvironment(any(EnvVars.class))).then(RETURNS_SELF);
         when(mock.getName()).thenReturn("mockNode");
         when(mock.getHome()).thenReturn(getTestHome());
+        when(mock.getExecutable(any(Launcher.class))).thenReturn(getTestExecutable());
         return mock;
+    }
+
+    private String getTestExecutable() throws Exception {
+    	Platform currentPlatform = Platform.current();
+		return new File(new File(getTestHome(), currentPlatform.binFolder), currentPlatform.nodeFileName).getAbsolutePath();
     }
 
     private String getTestHome() {
