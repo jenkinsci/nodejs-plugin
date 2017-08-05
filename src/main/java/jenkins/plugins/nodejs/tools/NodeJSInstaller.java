@@ -40,6 +40,13 @@ import java.util.concurrent.TimeUnit;
 import javax.annotation.Nonnull;
 
 import org.apache.commons.lang.StringUtils;
+import org.apache.log4j.lf5.viewer.configure.ConfigurationManager;
+import org.jenkinsci.lib.configprovider.model.Config;
+import org.jenkinsci.lib.configprovider.model.ConfigFile;
+import org.jenkinsci.lib.configprovider.model.ConfigFileManager;
+import org.jenkinsci.plugins.configfiles.ConfigFiles;
+import org.jenkinsci.plugins.configfiles.GlobalConfigFiles;
+import org.jenkinsci.plugins.configfiles.common.CleanTempFilesAction;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import com.google.common.base.Predicate;
@@ -61,6 +68,7 @@ import hudson.tools.ToolInstallation;
 import hudson.util.ArgumentListBuilder;
 import hudson.util.Secret;
 import jenkins.MasterToSlaveFileCallable;
+import jenkins.model.Jenkins;
 import jenkins.plugins.nodejs.Messages;
 import jenkins.plugins.nodejs.NodeJSConstants;
 import jenkins.plugins.tools.Installables;
@@ -119,13 +127,14 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
     public FilePath performInstallation(ToolInstallation tool, Node node, TaskListener log) throws IOException, InterruptedException {
         this.platform = getPlatform(node);
         this.cpu = getCPU(node);
+        NodeJSInstallation nodeJSTool = (NodeJSInstallation) tool;
 
         FilePath expected;
         Installable installable = getInstallable();
         if (installable == null || !installable.url.toLowerCase(Locale.ENGLISH).endsWith("msi")) {
-            expected = super.performInstallation(tool, node, log);
+            expected = super.performInstallation(nodeJSTool, node, log);
         } else {
-            expected = preferredLocation(tool, node);
+            expected = preferredLocation(nodeJSTool, node);
             if (!isUpToDate(expected, installable)) {
                 if (installIfNecessaryMSI(expected, new URL(installable.url), log, "Installing " + installable.url + " to " + expected + " on " + node.getDisplayName())) {
                     expected.child(".timestamp").delete(); // we don't use the timestamp
@@ -138,7 +147,7 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
             }
         }
 
-        refreshGlobalPackages(node, log, expected);
+        refreshGlobalPackages(nodeJSTool.getDefaultConfigId(), node, log, expected);
 
         return expected;
     }
@@ -154,7 +163,7 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
     /*
      * Installing npm packages if needed
      */
-    protected void refreshGlobalPackages(Node node, TaskListener log, FilePath expected) throws IOException, InterruptedException {
+    protected void refreshGlobalPackages(String configId, Node node, TaskListener log, FilePath expected) throws IOException, InterruptedException {
         String globalPackages = getNpmPackages();
 
         if (StringUtils.isNotBlank(globalPackages)) { // JENKINS-41876
@@ -180,6 +189,15 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
 
                 EnvVars env = new EnvVars();
                 env.put(NodeJSConstants.ENVVAR_NODEJS_PATH, binFolder.getRemote());
+                if (configId != null) {
+                    FilePath npmrc = expected.child(".npmrc");
+                    npmrc.delete();
+                    ConfigFile cf = new ConfigFile(configId, npmrc.getRemote(), false);
+                    Config config = GlobalConfigFiles.get().getById(configId);
+                    String supplyContent = config.getProvider().supplyContent(config, null, expected, log, new ArrayList<String>());
+//                    FilePath configFile = ConfigFileManager.provisionConfigFile(cf, env, Jenkins.getActiveInstance().getItemGroup(), expected, log, new ArrayList<String>());
+                    env.put(NodeJSConstants.NPM_USERCONFIG, npmrc.getRemote());
+                }
                 try {
                     buildProxyEnvVars(env, log);
                 } catch (URISyntaxException e) {

@@ -25,13 +25,19 @@ package jenkins.plugins.nodejs.tools;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
+import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 
 import org.jenkinsci.Symbol;
+import org.jenkinsci.lib.configprovider.model.Config;
+import org.jenkinsci.plugins.configfiles.GlobalConfigFiles;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
+import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -48,8 +54,12 @@ import hudson.tools.ToolDescriptor;
 import hudson.tools.ToolInstallation;
 import hudson.tools.ToolInstaller;
 import hudson.tools.ToolProperty;
+import hudson.util.FormValidation;
 import jenkins.plugins.nodejs.Messages;
 import jenkins.plugins.nodejs.NodeJSConstants;
+import jenkins.plugins.nodejs.configfiles.NPMConfig;
+import jenkins.plugins.nodejs.configfiles.VerifyConfigProviderException;
+import jenkins.plugins.nodejs.configfiles.NPMConfig.NPMConfigProvider;
 import jenkins.security.MasterToSlaveCallable;
 import net.sf.json.JSONObject;
 
@@ -65,10 +75,16 @@ public class NodeJSInstallation extends ToolInstallation implements EnvironmentS
 
     @SuppressFBWarnings(value = "SE_TRANSIENT_FIELD_NOT_RESTORED", justification = "calculate at runtime, its value depends on the OS where it run")
     private transient Platform platform;
+    private String defaultConfigId;
 
     @DataBoundConstructor
     public NodeJSInstallation(@Nonnull String name, @Nonnull String home, List<? extends ToolProperty<?>> properties) {
-        this(name, home, properties, null);
+        this(name, home, properties, (String) null);
+    }
+
+    public NodeJSInstallation(@Nonnull String name, @Nonnull String home, List<? extends ToolProperty<?>> properties, String defaultConfigId) {
+        this(name, home, properties, (Platform) null);
+        this.defaultConfigId = Util.fixEmptyAndTrim(defaultConfigId);
     }
 
     protected NodeJSInstallation(@Nonnull String name, @Nonnull String home, List<? extends ToolProperty<?>> properties, Platform platform) {
@@ -192,6 +208,16 @@ public class NodeJSInstallation extends ToolInstallation implements EnvironmentS
     }
 
 
+    public String getDefaultConfigId() {
+        return defaultConfigId;
+    }
+
+    @DataBoundSetter
+    public void setDefaultConfigId(String defaultConfigId) {
+        this.defaultConfigId = Util.fixEmptyAndTrim(defaultConfigId);
+    }
+
+
     @Symbol("nodejs")
     @Extension
     public static class DescriptorImpl extends ToolDescriptor<NodeJSInstallation> {
@@ -209,6 +235,28 @@ public class NodeJSInstallation extends ToolInstallation implements EnvironmentS
         @Override
         public List<? extends ToolInstaller> getDefaultInstallers() {
             return Collections.singletonList(new NodeJSInstaller(null, null, 72));
+        }
+
+        /**
+         * Gather all defined npmrc config files.
+         *
+         * @return a collection of user npmrc files or {@code empty} if no one
+         *         defined.
+         */
+        public Collection<Config> getConfigs() {
+            return GlobalConfigFiles.get().getConfigs(NPMConfigProvider.class);
+        }
+
+        public FormValidation doCheckDefaultConfigId(@CheckForNull @QueryParameter final String defaultConfigId) {
+            NPMConfig config = (NPMConfig) GlobalConfigFiles.get().getById(defaultConfigId);
+            if (config != null) {
+                try {
+                    config.doVerify();
+                } catch (VerifyConfigProviderException e) {
+                    return FormValidation.error(e.getMessage());
+                }
+            }
+            return FormValidation.ok();
         }
 
         /*

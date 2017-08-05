@@ -30,6 +30,8 @@ import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.tasks.BuildWrapperDescriptor;
 import hudson.util.FormValidation;
+import hudson.util.ListBoxModel;
+import hudson.util.ListBoxModel.Option;
 import jenkins.plugins.nodejs.configfiles.NPMConfig;
 import jenkins.plugins.nodejs.configfiles.NPMConfig.NPMConfigProvider;
 import jenkins.plugins.nodejs.configfiles.VerifyConfigProviderException;
@@ -161,6 +163,22 @@ public class NodeJSBuildWrapper extends SimpleBuildWrapper {
 
         public Collection<Config> getConfigs() {
             return GlobalConfigFiles.get().getConfigs(NPMConfigProvider.class);
+        }
+
+        public ListBoxModel doFillConfigIdItems(@QueryParameter final String nodeJSInstallationName) {
+            NodeJSInstallation nodeJS = NodeJSUtils.getNodeJS(nodeJSInstallationName);
+            String defaultConfigId = null;
+            if (nodeJS != null && defaultConfigId == null) {
+                defaultConfigId = nodeJS.getDefaultConfigId();
+            }
+
+            ListBoxModel result = new ListBoxModel(new Option("- use system default -", "", defaultConfigId == null));
+            for (Config config : getConfigs()) {
+                Option option = new Option(config.name, config.id);
+                option.selected = (defaultConfigId != null && defaultConfigId.equals(config.id));
+                result.add(option);
+            }
+            return result;
         }
 
         public FormValidation doCheckConfigId(@CheckForNull @QueryParameter final String configId) {
