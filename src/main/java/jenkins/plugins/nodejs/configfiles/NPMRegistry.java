@@ -7,34 +7,38 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.StringTokenizer;
+import java.util.regex.Pattern;
 
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
+import org.acegisecurity.Authentication;
 import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
 import com.cloudbees.plugins.credentials.CredentialsMatchers;
+import com.cloudbees.plugins.credentials.CredentialsProvider;
+import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
 import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
-import com.cloudbees.plugins.credentials.common.StandardUsernameListBoxModel;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
-import com.cloudbees.plugins.credentials.domains.HostnameRequirement;
+import com.cloudbees.plugins.credentials.domains.URIRequirementBuilder;
 
 import hudson.Extension;
 import hudson.Util;
 import hudson.model.AbstractDescribableImpl;
-import hudson.model.Computer;
 import hudson.model.Descriptor;
-import hudson.model.ItemGroup;
+import hudson.model.Item;
+import hudson.model.Queue;
+import hudson.model.queue.Tasks;
 import hudson.security.ACL;
-import hudson.security.AccessControlled;
 import hudson.util.FormValidation;
 import hudson.util.FormValidation.Kind;
 import hudson.util.ListBoxModel;
 import jenkins.model.Jenkins;
+import jenkins.plugins.nodejs.Messages;
 
 /**
  * Holder of all informations about a npm public/private registry.
@@ -175,22 +179,24 @@ public class NPMRegistry extends AbstractDescribableImpl<NPMRegistry> implements
 
     @Extension
     public static class DescriptorImpl extends Descriptor<NPMRegistry> {
+        
+        private Pattern variableRegExp = Pattern.compile ( "\\$\\{.*\\}" );
 
         public FormValidation doCheckScopes(@CheckForNull @QueryParameter final boolean hasScopes,
                                             @CheckForNull @QueryParameter String scopes) {
             scopes = Util.fixEmptyAndTrim(scopes);
             if (hasScopes) {
                 if (scopes == null) {
-                    return FormValidation.error("Scopes is empty");
+                    return FormValidation.error(Messages.NPMRegistry_DescriptorImpl_emptyScopes());
                 }
                 StringTokenizer st = new StringTokenizer(scopes);
                 while (st.hasMoreTokens()) {
                     String aScope = st.nextToken();
                     if (aScope.startsWith("@")) {
                         if (aScope.length() == 1) {
-                            return FormValidation.error("Invalid scope");
+                            return FormValidation.error(Messages.NPMRegistry_DescriptorImpl_invalidScopes());
                         }
-                        return FormValidation.warning("Remove the '@' character from scope");
+                        return FormValidation.warning(Messages.NPMRegistry_DescriptorImpl_invalidCharInScopes());
                     }
                 }
             }
@@ -200,40 +206,58 @@ public class NPMRegistry extends AbstractDescribableImpl<NPMRegistry> implements
 
         public FormValidation doCheckUrl(@CheckForNull @QueryParameter final String url) {
             if (StringUtils.isBlank(url)) {
-                return FormValidation.error("Empty URL");
+                return FormValidation.error(Messages.NPMRegistry_DescriptorImpl_emptyRegistryURL());
             }
 
             // test malformed URL
-            if (url.indexOf('$') == -1 && toURL(url) == null) {
-                return FormValidation.error("Invalid URL, should start with https://");
+            if (!variableRegExp.matcher(url).find() && toURL(url) == null) {
+                return FormValidation.error(Messages.NPMRegistry_DescriptorImpl_invalidRegistryURL());
             }
 
             return FormValidation.ok();
         }
 
-        public ListBoxModel doFillCredentialsIdItems(@AncestorInPath final ItemGroup<?> context,
-                                                     @Nonnull @QueryParameter final String credentialsId,
-                                                     @Nonnull @QueryParameter final String url) {
-            if (!hasPermission(context)) {
-                return new StandardUsernameListBoxModel().includeCurrentValue(credentialsId);
+        public FormValidation doCheckCredentialsId(@CheckForNull @AncestorInPath Item item,
+                @QueryParameter String credentialsId, @QueryParameter String serverUrl) {
+            if (item == null) {
+                if (!Jenkins.getActiveInstance().hasPermission(Jenkins.ADMINISTER)) {
+                    return FormValidation.ok();
+                }
+            } else if (!item.hasPermission(Item.EXTENDED_READ) && !item.hasPermission(CredentialsProvider.USE_ITEM)) {
+                return FormValidation.ok();
+            }
+            if (StringUtils.isBlank(credentialsId)) {
+                return FormValidation.warning(Messages.NPMRegistry_DescriptorImpl_emptyCredentialsId());
             }
 
-            List<DomainRequirement> domainRequirements;
-            URL registryURL = toURL(url);
-            if (registryURL != null) {
-                domainRequirements = Collections.<DomainRequirement> singletonList(new HostnameRequirement(registryURL.getHost()));
+            List<DomainRequirement> domainRequirement = URIRequirementBuilder.fromUri(serverUrl).build();
+            if (CredentialsProvider.listCredentials(StandardUsernameCredentials.class, item, getAuthentication(item),
+                    domainRequirement, CredentialsMatchers.withId(credentialsId)).isEmpty()) {
+                return FormValidation.error(Messages.NPMRegistry_DescriptorImpl_invalidCredentialsId());
+            }
+            return FormValidation.ok();
+        }
+
+        public ListBoxModel doFillCredentialsIdItems(@AncestorInPath Item item, @QueryParameter String credentialsId, @QueryParameter String url) {
+            StandardListBoxModel result = new StandardListBoxModel();
+            if (item == null) {
+                if (!Jenkins.getActiveInstance().hasPermission(Jenkins.ADMINISTER)) {
+                    return result.includeCurrentValue(credentialsId);
+                }
             } else {
-                domainRequirements = Collections.emptyList();
+                if (!item.hasPermission(Item.EXTENDED_READ) && !item.hasPermission(CredentialsProvider.USE_ITEM)) {
+                    return result.includeCurrentValue(credentialsId);
+                }
             }
 
-            return new StandardUsernameListBoxModel()
-                    .includeMatchingAs(ACL.SYSTEM, context, StandardUsernameCredentials.class, domainRequirements, CredentialsMatchers.always())
+            return result.includeEmptyValue() //
+                    .includeMatchingAs(getAuthentication(item), item, StandardUsernameCredentials.class,
+                            URIRequirementBuilder.fromUri(url).build(), CredentialsMatchers.always()) //
                     .includeCurrentValue(credentialsId);
         }
 
-        private boolean hasPermission(final ItemGroup<?> context) {
-            AccessControlled controller = context instanceof AccessControlled ? (AccessControlled) context : Jenkins.getInstance();
-            return controller != null && controller.hasPermission(Computer.CONFIGURE);
+        protected Authentication getAuthentication(Item item) {
+            return item instanceof Queue.Task ? Tasks.getAuthenticationOf((Queue.Task) item) : ACL.SYSTEM;
         }
 
         @Override
