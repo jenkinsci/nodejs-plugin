@@ -59,8 +59,7 @@ public class NodeJSInstallerProxyTest {
     @Issue("JENKINS-29266")
     @Test
     public void test_proxy_settings() throws Exception {
-        ProxyConfiguration proxycfg = new ProxyConfiguration(host, port, username, password);
-        proxycfg.save();
+        r.getInstance().proxy = new ProxyConfiguration(host, port, username, password);
 
         NodeJSInstaller installer = new NodeJSInstaller("test-id", "grunt", NodeJSInstaller.DEFAULT_NPM_PACKAGES_REFRESH_HOURS);
         EnvVars env = new EnvVars();
@@ -74,8 +73,7 @@ public class NodeJSInstallerProxyTest {
 
     @Test
     public void test_no_proxy_settings() throws Exception {
-        ProxyConfiguration proxycfg = new ProxyConfiguration(host, port, username, password, noProxy);
-        proxycfg.save();
+        r.getInstance().proxy = new ProxyConfiguration(host, port, username, password, noProxy);
 
         NodeJSInstaller installer = new NodeJSInstaller("test-id", "grunt", NodeJSInstaller.DEFAULT_NPM_PACKAGES_REFRESH_HOURS);
         EnvVars env = new EnvVars();

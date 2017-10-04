@@ -61,6 +61,7 @@ import hudson.tools.ToolInstallation;
 import hudson.util.ArgumentListBuilder;
 import hudson.util.Secret;
 import jenkins.MasterToSlaveFileCallable;
+import jenkins.model.Jenkins;
 import jenkins.plugins.nodejs.Messages;
 import jenkins.plugins.nodejs.NodeJSConstants;
 import jenkins.plugins.tools.Installables;
@@ -199,13 +200,13 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
     }
 
     private void buildProxyEnvVars(EnvVars env, TaskListener log) throws IOException, URISyntaxException {
-        ProxyConfiguration proxycfg = ProxyConfiguration.load();
+        ProxyConfiguration proxycfg = Jenkins.getActiveInstance().proxy;
         if (proxycfg == null) {
             // no proxy configured
             return;
         }
 
-        String userInfo = proxycfg.getUserName() != null ? proxycfg.getUserName() : null;
+        String userInfo = proxycfg.getUserName();
         // append password only if userName if is defined
         if (userInfo != null && proxycfg.getEncryptedPassword() != null) {
             userInfo += ":" + Secret.decrypt(proxycfg.getEncryptedPassword());
