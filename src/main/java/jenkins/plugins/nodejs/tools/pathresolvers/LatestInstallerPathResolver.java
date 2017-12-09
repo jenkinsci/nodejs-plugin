@@ -53,19 +53,27 @@ public class LatestInstallerPathResolver implements InstallerPathResolver {
             os = "darwin";
             extension = EXTENSION;
             break;
+        case SUNOS:
+            os = "sunos";
+            extension = EXTENSION;
+            break;
         default:
             throw new IllegalArgumentException("Unresolvable nodeJS installer for version=" + version + ", platform=" + platform.name());
         }
 
+        NodeJSVersion nodeVersion = NodeJSVersion.parseVersion(version);
         switch (cpu) {
         case i386:
-            if (platform == Platform.OSX && NodeJSVersion.parseVersion(version).compareTo(new NodeJSVersion(4, 0, 0)) >= 0) {
+            if (platform == Platform.OSX && nodeVersion.compareTo(new NodeJSVersion(4, 0, 0)) >= 0) {
             	throw new IllegalArgumentException("Unresolvable nodeJS installer for version=" + version + ", cpu=" + cpu.name() + ", platform=" + platform.name());
             }
             arch = "x86";
             break;
         case amd64:
-            if (isMSI && NodeJSVersion.parseVersion(version).compareTo(new NodeJSVersion(4, 0, 0)) < 0) {
+            if (platform == Platform.SUNOS && new NodeJSVersionRange("[7, 7.5)").includes(nodeVersion)) {
+                throw new IllegalArgumentException("Unresolvable nodeJS installer for version=" + version + ", cpu=" + cpu.name() + ", platform=" + platform.name());
+            }
+            if (isMSI && nodeVersion.compareTo(new NodeJSVersion(4, 0, 0)) < 0) {
                 path = "x64/";
             }
             arch = "x64";
@@ -73,7 +81,7 @@ public class LatestInstallerPathResolver implements InstallerPathResolver {
         case arm64:
         case armv6l:
         case armv7l:
-            if (NodeJSVersion.parseVersion(version).compareTo(new NodeJSVersion(4, 0, 0)) < 0) {
+            if (nodeVersion.compareTo(new NodeJSVersion(4, 0, 0)) < 0) {
                 throw new IllegalArgumentException("Unresolvable nodeJS installer for version=" + version + ", cpu=" + cpu.name() + ", platform=" + platform.name());
             }
             arch = cpu.name();
