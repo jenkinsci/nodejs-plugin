@@ -57,6 +57,10 @@ public class LatestInstallerPathResolver implements InstallerPathResolver {
             os = "sunos";
             extension = EXTENSION;
             break;
+        case BSD:
+            os = "bsd";
+            extension = EXTENSION;
+            break;
         default:
             throw new IllegalArgumentException("Unresolvable nodeJS installer for version=" + version + ", platform=" + platform.name());
         }

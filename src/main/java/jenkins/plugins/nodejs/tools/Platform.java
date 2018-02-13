@@ -11,7 +11,11 @@ import hudson.model.Node;
  * Supported platform.
  */
 public enum Platform {
-    LINUX("node", "npm", "bin"), WINDOWS("node.exe", "npm.cmd", ""), OSX("node", "npm", "bin"), SUNOS("node", "npm", "bin");
+    LINUX("node", "npm", "bin"),
+    WINDOWS("node.exe", "npm.cmd", ""),
+    OSX("node", "npm", "bin"),
+    SUNOS("node", "npm", "bin"),
+    BSD("node", "npm", "bin");
 
     /**
      * Choose the file name suitable for the downloaded Node bundle.
@@ -74,6 +78,9 @@ public enum Platform {
         }
         if (arch.contains("sunos")) {
             return SUNOS;
+        }
+        if (arch.contains("bsd")) {
+            return BSD;
         }
         throw new DetectionFailedException("Unknown OS name: " + arch);
     }
