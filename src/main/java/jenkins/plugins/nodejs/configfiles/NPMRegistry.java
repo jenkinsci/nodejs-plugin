@@ -19,18 +19,23 @@ import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
+import com.cloudbees.plugins.credentials.CredentialsMatcher;
 import com.cloudbees.plugins.credentials.CredentialsMatchers;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
+import com.cloudbees.plugins.credentials.common.IdCredentials;
+import com.cloudbees.plugins.credentials.common.StandardCredentials;
 import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
 import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.cloudbees.plugins.credentials.domains.URIRequirementBuilder;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
 import hudson.Util;
 import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
 import hudson.model.Item;
+import hudson.model.ItemGroup;
 import hudson.model.Queue;
 import hudson.model.queue.Tasks;
 import hudson.security.ACL;
@@ -238,8 +243,10 @@ public class NPMRegistry extends AbstractDescribableImpl<NPMRegistry> implements
             return FormValidation.ok();
         }
 
-        public ListBoxModel doFillCredentialsIdItems(@AncestorInPath Item item, @QueryParameter String credentialsId, @QueryParameter String url) {
+        public ListBoxModel doFillCredentialsIdItems(final @AncestorInPath Item item, @QueryParameter String credentialsId, final @QueryParameter String url) {
             StandardListBoxModel result = new StandardListBoxModel();
+
+            credentialsId = StringUtils.trimToEmpty(credentialsId);
             if (item == null) {
                 if (!Jenkins.getActiveInstance().hasPermission(Jenkins.ADMINISTER)) {
                     return result.includeCurrentValue(credentialsId);
@@ -250,12 +257,22 @@ public class NPMRegistry extends AbstractDescribableImpl<NPMRegistry> implements
                 }
             }
 
-            return result.includeEmptyValue() //
-                    .includeMatchingAs(getAuthentication(item), item, StandardUsernameCredentials.class,
-                            URIRequirementBuilder.fromUri(url).build(), CredentialsMatchers.always()) //
-                    .includeCurrentValue(credentialsId);
+            Authentication authentication = getAuthentication(item);
+            List<DomainRequirement> build = URIRequirementBuilder.fromUri(url).build();
+            CredentialsMatcher always = CredentialsMatchers.always();
+            Class<StandardUsernameCredentials> type = StandardUsernameCredentials.class;
+
+            result.includeEmptyValue().includeCurrentValue(credentialsId);
+            if (item != null) {
+                result.includeMatchingAs(authentication, item, type, build, always);
+            } else {
+                result.includeMatchingAs(authentication, Jenkins.getActiveInstance(), type, build, always);
+            }
+            return result;
         }
 
+        @NonNull
+        @Nonnull
         protected Authentication getAuthentication(Item item) {
             return item instanceof Queue.Task ? Tasks.getAuthenticationOf((Queue.Task) item) : ACL.SYSTEM;
         }
