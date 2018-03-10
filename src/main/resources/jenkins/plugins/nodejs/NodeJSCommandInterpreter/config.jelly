@@ -22,7 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 -->
 <?jelly escape-by-default='true'?>
-<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form" xmlns:cf="/lib/nodejs">
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
     <f:entry title="${%nodeJSInstallationName.title}" description="${%nodeJSInstallationName.description}">
         <select class="setting-input" name="_.nodeJSInstallationName">
         	<f:option value="">${%nodeJSInstallationName.emptyValue}</f:option>
@@ -35,9 +35,8 @@ THE SOFTWARE.
     <f:entry title="${%command.title}" description="See &lt;a href='${rootURL}/env-vars.html' target=_new>the list of available environment variables&lt;/a> accessible by process.env.ENV_VARIABLE.">
         <f:textarea field="command" />
     </f:entry>
-    
-        
+
     <f:entry title="${%configId.title}">
-    	<cf:select field="configId" configs="${descriptor.configs}" allowsEmpty="true" emptyValue="" emptyLabel="${%configId.emptyValue}" />
+        <f:select field="configId" />
     </f:entry>
 </j:jelly>

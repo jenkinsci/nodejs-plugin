@@ -2,15 +2,15 @@ package jenkins.plugins.nodejs;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
+
 import javax.annotation.CheckForNull;
+import javax.annotation.Nullable;
 
 import org.jenkinsci.Symbol;
-import org.jenkinsci.lib.configprovider.model.Config;
 import org.jenkinsci.lib.configprovider.model.ConfigFile;
 import org.jenkinsci.lib.configprovider.model.ConfigFileManager;
-import org.jenkinsci.plugins.configfiles.GlobalConfigFiles;
 import org.jenkinsci.plugins.configfiles.common.CleanTempFilesAction;
+import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
@@ -24,6 +24,7 @@ import hudson.Util;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.Environment;
+import hudson.model.ItemGroup;
 import hudson.model.Node;
 import hudson.model.TaskListener;
 import hudson.tasks.BuildStepDescriptor;
@@ -31,9 +32,7 @@ import hudson.tasks.Builder;
 import hudson.tasks.CommandInterpreter;
 import hudson.util.ArgumentListBuilder;
 import hudson.util.FormValidation;
-import jenkins.plugins.nodejs.configfiles.NPMConfig;
-import jenkins.plugins.nodejs.configfiles.NPMConfig.NPMConfigProvider;
-import jenkins.plugins.nodejs.configfiles.VerifyConfigProviderException;
+import hudson.util.ListBoxModel;
 import jenkins.plugins.nodejs.tools.NodeJSInstallation;
 import jenkins.plugins.nodejs.tools.Platform;
 
@@ -199,6 +198,12 @@ public class NodeJSCommandInterpreter extends CommandInterpreter {
     @Symbol("nodejsci")
     @Extension
     public static final class NodeJsDescriptor extends BuildStepDescriptor<Builder> {
+
+        @Override
+        public boolean isApplicable(@SuppressWarnings("rawtypes") Class<? extends AbstractProject> jobType) {
+            return true;
+        }
+
         /**
          * Customise the name of this job step.
          *
@@ -225,29 +230,23 @@ public class NodeJSCommandInterpreter extends CommandInterpreter {
 
         /**
          * Gather all defined npmrc config files.
-         *
-         * @return a collection of user npmrc files or {@code empty} if no one
-         *         defined.
+         * 
+         * @param context where loopup
+         * @return a collection of user npmrc files.
          */
-        public Collection<Config> getConfigs() {
-            return GlobalConfigFiles.get().getConfigs(NPMConfigProvider.class);
+        public ListBoxModel doFillConfigIdItems(@AncestorInPath ItemGroup<?> context) {
+            return NodeJSDescriptorUtils.getConfigs(context);
         }
 
-        public FormValidation doCheckConfigId(@CheckForNull @QueryParameter final String configId) {
-            NPMConfig config = (NPMConfig) GlobalConfigFiles.get().getById(configId);
-            if (config != null) {
-                try {
-                    config.doVerify();
-                } catch (VerifyConfigProviderException e) {
-                    return FormValidation.error(e.getMessage());
-                }
-            }
-            return FormValidation.ok();
-        }
-
-        @Override
-        public boolean isApplicable(@SuppressWarnings("rawtypes") Class<? extends AbstractProject> jobType) {
-            return true;
+        /**
+         * Verify that the given configId exists in the given context.
+         * 
+         * @param context where lookup
+         * @param configId the identifier of an npmrc file
+         * @return an validation form for the given npmrc file identifier.
+         */
+        public FormValidation doCheckConfigId(@Nullable @AncestorInPath ItemGroup<?> context, @CheckForNull @QueryParameter final String configId) {
+            return NodeJSDescriptorUtils.checkConfig(context, configId);
         }
 
     }

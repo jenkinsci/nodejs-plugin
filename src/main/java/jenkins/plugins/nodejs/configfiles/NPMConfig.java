@@ -11,7 +11,6 @@ import javax.annotation.Nonnull;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.lib.configprovider.AbstractConfigProviderImpl;
-import org.jenkinsci.lib.configprovider.ConfigProvider;
 import org.jenkinsci.lib.configprovider.model.Config;
 import org.jenkinsci.lib.configprovider.model.ContentType;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -24,7 +23,6 @@ import hudson.FilePath;
 import hudson.Util;
 import hudson.model.Run;
 import hudson.model.TaskListener;
-import jenkins.model.Jenkins;
 import jenkins.plugins.nodejs.Messages;
 
 /**
@@ -73,19 +71,9 @@ public class NPMConfig extends Config {
         }
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.jenkinsci.lib.configprovider.model.Config#getDescriptor()
-     */
-    @Override
-    public ConfigProvider getDescriptor() {
-        // boilerplate template
-        return (ConfigProvider) Jenkins.getActiveInstance().getDescriptorOrDie(getClass());
-    }
-
     @Extension
     public static class NPMConfigProvider extends AbstractConfigProviderImpl {
-
+        
         public NPMConfigProvider() {
             load();
         }

@@ -2,17 +2,16 @@ package jenkins.plugins.nodejs;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
 
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 import org.jenkinsci.Symbol;
-import org.jenkinsci.lib.configprovider.model.Config;
 import org.jenkinsci.lib.configprovider.model.ConfigFile;
 import org.jenkinsci.lib.configprovider.model.ConfigFileManager;
-import org.jenkinsci.plugins.configfiles.GlobalConfigFiles;
 import org.jenkinsci.plugins.configfiles.common.CleanTempFilesAction;
+import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
@@ -25,14 +24,13 @@ import hudson.Launcher;
 import hudson.Util;
 import hudson.model.AbstractProject;
 import hudson.model.Computer;
+import hudson.model.ItemGroup;
 import hudson.model.Node;
 import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.tasks.BuildWrapperDescriptor;
 import hudson.util.FormValidation;
-import jenkins.plugins.nodejs.configfiles.NPMConfig;
-import jenkins.plugins.nodejs.configfiles.NPMConfig.NPMConfigProvider;
-import jenkins.plugins.nodejs.configfiles.VerifyConfigProviderException;
+import hudson.util.ListBoxModel;
 import jenkins.plugins.nodejs.tools.NodeJSInstallation;
 import jenkins.tasks.SimpleBuildWrapper;
 
@@ -159,20 +157,25 @@ public class NodeJSBuildWrapper extends SimpleBuildWrapper {
             return NodeJSUtils.getInstallations();
         }
 
-        public Collection<Config> getConfigs() {
-            return GlobalConfigFiles.get().getConfigs(NPMConfigProvider.class);
+        /**
+         * Gather all defined npmrc config files.
+         *
+         * @param context where lookup
+         * @return a collection of user npmrc files.
+         */
+        public ListBoxModel doFillConfigIdItems(@AncestorInPath ItemGroup<?> context) {
+        	return NodeJSDescriptorUtils.getConfigs(context);
         }
 
-        public FormValidation doCheckConfigId(@CheckForNull @QueryParameter final String configId) {
-            NPMConfig config = (NPMConfig) GlobalConfigFiles.get().getById(configId);
-            if (config != null) {
-                try {
-                    config.doVerify();
-                } catch (VerifyConfigProviderException e) { // NOSONAR I need only message
-                    return FormValidation.error(e.getMessage());
-                }
-            }
-            return FormValidation.ok();
+        /**
+         * Verify that the given configId exists in the given context.
+         * 
+         * @param context where lookup
+         * @param configId the identifier of an npmrc file
+         * @return an validation form for the given npmrc file identifier.
+         */
+        public FormValidation doCheckConfigId(@Nullable @AncestorInPath ItemGroup<?> context, @CheckForNull @QueryParameter final String configId) {
+            return NodeJSDescriptorUtils.checkConfig(context, configId);
         }
 
     }

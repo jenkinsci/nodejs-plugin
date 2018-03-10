@@ -5,7 +5,6 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.List;
 
 import org.hamcrest.CoreMatchers;
@@ -27,7 +26,6 @@ import jenkins.plugins.nodejs.VerifyEnvVariableBuilder.FileVerifier;
 import jenkins.plugins.nodejs.configfiles.NPMConfig;
 import jenkins.plugins.nodejs.configfiles.NPMConfig.NPMConfigProvider;
 import jenkins.plugins.nodejs.configfiles.NPMRegistry;
-import jenkins.plugins.nodejs.tools.DetectionFailedException;
 import jenkins.plugins.nodejs.tools.NodeJSInstallation;
 import jenkins.plugins.nodejs.tools.Platform;
 
