@@ -40,6 +40,10 @@ THE SOFTWARE.
 		</j:choose>
 	</f:entry>
 
+    <f:entry title="${%force32Bit.title}" description="${%force32Bit.description}">
+        <f:checkbox field="force32Bit" />
+    </f:entry>
+
     <f:entry title="${%npmPackages.title}" description="${%npmPackages.description}">
         <f:textbox field="npmPackages" />
     </f:entry>

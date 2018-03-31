@@ -42,7 +42,7 @@
     </licenses>
 
     <properties>
-        <powermock.version>1.7.0</powermock.version>
+        <powermock.version>1.7.3</powermock.version>
         <jenkins.version>1.651.3</jenkins.version>
     </properties>
 

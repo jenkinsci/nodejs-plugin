@@ -20,6 +20,7 @@ import hudson.model.Node;
 import hudson.remoting.VirtualChannel;
 import hudson.util.StreamTaskListener;
 import jenkins.MasterToSlaveFileCallable;
+import jenkins.plugins.nodejs.Messages;
 
 /**
  * CPU type.
@@ -32,16 +33,20 @@ public enum CPU {
      *
      * @param node
      *            the computer node
-     * @return a CPU value of the cpu of the given node
-     * @throws IOException in case of IO issues with the remote Node
-     * @throws InterruptedException in case the job is interrupted by user
+     * @return a CPU value of the architecture of the given node
+     * @throws DetectionFailedException
+     *             when the current CPU node is not supported.
      */
-    public static CPU of(@Nonnull Node node) throws IOException, InterruptedException {
-        Computer computer = node.toComputer();
-        if (computer == null) {
-            throw new DetectionFailedException("Node offline");
+    public static CPU of(@Nonnull Node node) throws DetectionFailedException {
+        try {
+            Computer computer = node.toComputer();
+            if (computer == null) {
+                throw new DetectionFailedException(Messages.SystemTools_nodeNotAvailable(node.getDisplayName()));
+            }
+            return detect(computer, computer.getSystemProperties());
+        } catch (IOException | InterruptedException e) {
+            throw new DetectionFailedException(Messages.SystemTools_failureOnProperties(), e);
         }
-        return detect(computer, computer.getSystemProperties());
     }
 
     /**
@@ -69,7 +74,7 @@ public enum CPU {
                 FilePath rootPath = new FilePath((computer != null ? computer.getChannel() : null), "/");
                 arch = rootPath.act(new ArchitectureCallable());
             } catch (IOException | InterruptedException e) {
-                throw new DetectionFailedException("Unknown CPU architecture: " + arch, e);
+                throw new DetectionFailedException(Messages.CPU_unknown(arch), e);
             }
             switch (arch) {
             case "armv7l":
@@ -80,7 +85,7 @@ public enum CPU {
                 return arm64;
             }
         }
-        throw new DetectionFailedException("Unknown CPU architecture: " + arch);
+        throw new DetectionFailedException(Messages.CPU_unknown(arch));
     }
 
     /**

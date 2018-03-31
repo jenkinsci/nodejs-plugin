@@ -41,6 +41,7 @@ import javax.annotation.Nonnull;
 
 import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
 
 import com.google.common.base.Predicate;
 import com.google.common.collect.Collections2;
@@ -88,18 +89,24 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
     private final Long npmPackagesRefreshHours;
     private Platform platform;
     private CPU cpu;
+    private boolean force32Bit;
 
     @DataBoundConstructor
-    public NodeJSInstaller(String id, String npmPackages, long npmPackagesRefreshHours)    {
+    public NodeJSInstaller(String id, String npmPackages, long npmPackagesRefreshHours) {
         super(id);
         this.npmPackages = Util.fixEmptyAndTrim(npmPackages);
         this.npmPackagesRefreshHours = npmPackagesRefreshHours;
     }
 
+    public NodeJSInstaller(String id, String npmPackages, long npmPackagesRefreshHours, boolean force32bit) {
+        this(id, npmPackages, npmPackagesRefreshHours);
+        this.force32Bit = force32bit;
+    }
+
     @Override
     public Installable getInstallable() throws IOException {
         Installable installable = super.getInstallable();
-        if(installable==null) {
+        if (installable == null) {
             return null;
         }
 
@@ -118,8 +125,8 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
     // implementation
     @Override
     public FilePath performInstallation(ToolInstallation tool, Node node, TaskListener log) throws IOException, InterruptedException {
-        this.platform = getPlatform(node);
-        this.cpu = getCPU(node);
+        this.platform = ToolsUtils.getPlatform(node);
+        this.cpu = ToolsUtils.getCPU(node, force32Bit);
 
         FilePath expected;
         Installable installable = getInstallable();
@@ -142,14 +149,6 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
         refreshGlobalPackages(node, log, expected);
 
         return expected;
-    }
-
-    private CPU getCPU(Node node) throws IOException, InterruptedException {
-        return CPU.of(node);
-    }
-
-    private Platform getPlatform(Node node) throws DetectionFailedException {
-        return Platform.of(node);
     }
 
     /*
@@ -330,6 +329,15 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
 
     public Long getNpmPackagesRefreshHours() {
         return npmPackagesRefreshHours;
+    }
+
+    public boolean isForce32Bit() {
+        return force32Bit;
+    }
+
+    @DataBoundSetter
+    public void setForce32Bit(boolean force32Bit) {
+        this.force32Bit = force32Bit;
     }
 
     @Extension

@@ -9,13 +9,13 @@ import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
+import hudson.FilePath;
 import hudson.model.Node;
 import hudson.model.TaskListener;
 import hudson.tools.DownloadFromUrlInstaller;
 import hudson.tools.ToolInstallation;
 
 @RunWith(PowerMockRunner.class)
-@PrepareForTest(NodeJSInstaller.class)
 public class NodeJSInstallerTest {
 
     /**
@@ -29,25 +29,26 @@ public class NodeJSInstallerTest {
      */
     @Issue("JENKINS-41876")
     @Test
+    @PrepareForTest({ NodeJSInstaller.class, ToolsUtils.class })
     public void test_skip_install_global_packages_when_empty() throws Exception {
         String expectedPackages = " ";
         int expectedRefreshHours = NodeJSInstaller.DEFAULT_NPM_PACKAGES_REFRESH_HOURS;
         Node currentNode = mock(Node.class);
-
-        // mock all the static methods in the class
-        PowerMockito.mockStatic(NodeJSInstaller.class);
 
         // create partial mock
         NodeJSInstaller installer = new NodeJSInstaller("test-id", expectedPackages, expectedRefreshHours);
         NodeJSInstaller spy = PowerMockito.spy(installer);
 
         // use Mockito to set up your expectation
-        when(NodeJSInstaller.areNpmPackagesUpToDate(null, expectedPackages, expectedRefreshHours)).thenThrow(new AssertionError());
+        PowerMockito.stub(PowerMockito.method(NodeJSInstaller.class, "areNpmPackagesUpToDate", FilePath.class, String.class, long.class)) //
+            .toThrow(new AssertionError("global package should skip install if is an empty string"));
         PowerMockito.suppress(PowerMockito.methodsDeclaredIn(DownloadFromUrlInstaller.class));
         PowerMockito.doReturn(null).when(spy).getInstallable();
-        PowerMockito.doReturn(Platform.LINUX).when(spy, "getPlatform", currentNode);
-        PowerMockito.doReturn(CPU.amd64).when(spy, "getCPU", currentNode);
         when(spy.getNpmPackages()).thenReturn(expectedPackages);
+
+        PowerMockito.mockStatic(ToolsUtils.class);
+        when(ToolsUtils.getCPU(currentNode)).thenReturn(CPU.amd64);
+        when(ToolsUtils.getPlatform(currentNode)).thenReturn(Platform.LINUX);
 
         // execute test
         spy.performInstallation(mock(ToolInstallation.class), currentNode, mock(TaskListener.class));
