@@ -259,7 +259,7 @@ public class NPMRegistry extends AbstractDescribableImpl<NPMRegistry> implements
             CredentialsMatcher always = CredentialsMatchers.always();
             Class<StandardUsernameCredentials> type = StandardUsernameCredentials.class;
 
-            result.includeEmptyValue().includeCurrentValue(credentialsId);
+            result.includeEmptyValue();
             if (item != null) {
                 result.includeMatchingAs(authentication, item, type, build, always);
             } else {
