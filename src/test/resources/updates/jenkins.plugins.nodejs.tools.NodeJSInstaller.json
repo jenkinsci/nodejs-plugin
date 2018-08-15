@@ -15,6 +15,11 @@
     "url": "https://nodejs.org/dist/v9.0.0/"
   },
     {
+    "id": "8.11.3",
+    "name": "NodeJS 8.11.3",
+    "url": "https://nodejs.org/dist/v8.11.3/"
+  },
+    {
     "id": "8.9.2",
     "name": "NodeJS 8.9.2",
     "url": "https://nodejs.org/dist/v8.9.2/"
