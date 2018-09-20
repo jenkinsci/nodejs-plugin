@@ -120,19 +120,7 @@ public class NodeJSInstallation extends ToolInstallation implements EnvironmentS
     public String getExecutable(final Launcher launcher) throws InterruptedException, IOException {
         // DO NOT REMOVE this callable otherwise paths constructed by File
         // and similar API will be based on the master node O.S.
-        return launcher.getChannel().call(new MasterToSlaveCallable<String, IOException>() {
-            private static final long serialVersionUID = -8509941141741046422L;
-
-            @Override
-            public String call() throws IOException {
-                Platform currentPlatform = getPlatform();
-                File exe = new File(getBin(), currentPlatform.nodeFileName);
-                if (exe.exists()) {
-                    return exe.getPath();
-                }
-                return null;
-            }
-        });
+        return launcher.getChannel().call(new DetectPlatformCallable());
     }
 
     /**
@@ -191,6 +179,19 @@ public class NodeJSInstallation extends ToolInstallation implements EnvironmentS
         return currentPlatform;
     }
 
+    private final class DetectPlatformCallable extends MasterToSlaveCallable<String, IOException> {
+        private static final long serialVersionUID = -8509941141741046422L;
+
+        @Override
+        public String call() throws IOException {
+            Platform currentPlatform = getPlatform();
+            File exe = new File(getBin(), currentPlatform.nodeFileName);
+            if (exe.exists()) {
+                return exe.getPath();
+            }
+            return null;
+        }
+    }
 
     @Symbol("nodejs")
     @Extension
