@@ -169,7 +169,7 @@ public class NodeJSCommandInterpreter extends CommandInterpreter {
             return false;
         } catch (IOException e) {
             Util.displayIOException(e, listener);
-            e.printStackTrace(listener.fatalError(hudson.tasks.Messages.CommandInterpreter_CommandFailed()));
+            e.printStackTrace(listener.fatalError(Messages.NodeJSCommandInterpreter_commandFailed()));
         }
 
         return internalPerform(build, launcher, listener);
