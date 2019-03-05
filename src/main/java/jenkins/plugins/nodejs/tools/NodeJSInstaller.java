@@ -93,7 +93,7 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
     private final Map<Node, NodeEnvironment> nodeEnvironments = new ConcurrentHashMap<>();
     private boolean force32Bit;
 
-    class NodeEnvironment {
+    private static class NodeEnvironment {
 
         private Platform platform;
         private CPU cpu;
@@ -123,7 +123,20 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
             return null;
         }
 
-        NodeEnvironment environment = nodeEnvironments.get(Computer.currentComputer().getNode());
+        Computer currentComputer = Computer.currentComputer();
+        if (currentComputer == null) {
+            return null;
+        }
+
+        Node node = currentComputer.getNode();
+        if (node == null) {
+            return null;
+        }
+
+        NodeEnvironment environment = nodeEnvironments.get(node);
+        if (environment == null) {
+            return null;
+        }
 
         // Cloning the installable since we're going to update its url (not cloning it wouldn't be threadsafe)
         installable = Installables.clone(installable);
