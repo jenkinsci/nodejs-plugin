@@ -57,8 +57,11 @@ import hudson.Util;
 import hudson.model.Node;
 import hudson.model.TaskListener;
 import hudson.remoting.VirtualChannel;
+import hudson.slaves.NodeSpecific;
 import hudson.tools.DownloadFromUrlInstaller;
 import hudson.tools.ToolInstallation;
+import hudson.tools.ZipExtractionInstaller;
+import hudson.tools.DownloadFromUrlInstaller.Installable;
 import hudson.util.ArgumentListBuilder;
 import hudson.util.Secret;
 import jenkins.MasterToSlaveFileCallable;
@@ -87,8 +90,6 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
 
     private final String npmPackages;
     private final Long npmPackagesRefreshHours;
-    private Platform platform;
-    private CPU cpu;
     private boolean force32Bit;
 
     @DataBoundConstructor
@@ -103,9 +104,8 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
         this.force32Bit = force32bit;
     }
 
-    @Override
-    public Installable getInstallable() throws IOException {
-        Installable installable = super.getInstallable();
+    public Installable getInstallable(Node node) throws IOException {
+        Installable installable = getInstallable();
         if (installable == null) {
             return null;
         }
@@ -114,36 +114,44 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
         installable = Installables.clone(installable);
 
         InstallerPathResolver installerPathResolver = InstallerPathResolver.Factory.findResolverFor(installable);
-        String relativeDownloadPath = installerPathResolver.resolvePathFor(installable.id, platform, cpu);
+        String relativeDownloadPath = installerPathResolver.resolvePathFor(installable.id, ToolsUtils.getPlatform(node), ToolsUtils.getCPU(node));
         installable.url += relativeDownloadPath;
         return installable;
     }
 
-    // Overriden performInstallation() in order to provide a custom
-    // url (installable.url should be platform+cpu dependant)
-    // + pullUp directory impl should differ from DownloadFromUrlInstaller
-    // implementation
     @Override
     public FilePath performInstallation(ToolInstallation tool, Node node, TaskListener log) throws IOException, InterruptedException {
-        this.platform = ToolsUtils.getPlatform(node);
-        this.cpu = ToolsUtils.getCPU(node, force32Bit);
+        FilePath expected = preferredLocation(tool, node);
 
-        FilePath expected;
-        Installable installable = getInstallable();
-        if (installable == null || !installable.url.toLowerCase(Locale.ENGLISH).endsWith("msi")) {
-            expected = super.performInstallation(tool, node, log);
-        } else {
-            expected = preferredLocation(tool, node);
-            if (!isUpToDate(expected, installable)) {
-                if (installIfNecessaryMSI(expected, new URL(installable.url), log, "Installing " + installable.url + " to " + expected + " on " + node.getDisplayName())) {
-                    expected.child(".timestamp").delete(); // we don't use the timestamp
-                    FilePath base = findPullUpDirectory(expected);
-                    if (base != null && base != expected)
-                        base.moveAllChildrenTo(expected);
-                    // leave a record for the next up-to-date check
-                    expected.child(".installedFrom").write(installable.url, "UTF-8");
-                }
+        Installable installable = getInstallable(node);
+        if (installable == null) {
+            log.getLogger().println("Invalid tool ID " + id);
+            return expected;
+        }
+
+        if (installable instanceof NodeSpecific) {
+            installable = (Installable) ((NodeSpecific) installable).forNode(node, log);
+        }
+
+        if (isUpToDate(expected, installable)) {
+            return expected;
+        }
+
+        String message = installable.url + " to " + expected + " on " + node.getDisplayName();
+        boolean isMSI = installable.url.toLowerCase(Locale.ENGLISH).endsWith("msi");
+        URL installableURL = new URL(installable.url);
+
+        if (isMSI && installIfNecessaryMSI(expected, installableURL, log, "Installing " + message)
+                || expected.installIfNecessaryFrom(installableURL, log, "Unpacking " + message)) {
+
+            expected.child(".timestamp").delete(); // we don't use the
+            // timestamp
+            FilePath base = findPullUpDirectory(expected);
+            if (base != null && base != expected) {
+                base.moveAllChildrenTo(expected);
             }
+            // leave a record for the next up-to-date check
+            expected.child(".installedFrom").write(installable.url, "UTF-8");
         }
 
         refreshGlobalPackages(node, log, expected);
@@ -161,6 +169,8 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
             boolean skipNpmPackageInstallation = areNpmPackagesUpToDate(expected, globalPackages, getNpmPackagesRefreshHours());
             if (!skipNpmPackageInstallation) {
                 expected.child(NPM_PACKAGES_RECORD_FILENAME).delete();
+
+                Platform platform = ToolsUtils.getPlatform(node);
 
                 ArgumentListBuilder npmScriptArgs = new ArgumentListBuilder();
                 if (platform == Platform.WINDOWS) {
@@ -187,7 +197,7 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
                 }
 
                 hudson.Launcher launcher = node.createLauncher(log);
-				int returnCode = launcher.launch().envs(env).cmds(npmScriptArgs).stdout(log).join();
+                int returnCode = launcher.launch().envs(env).cmds(npmScriptArgs).stdout(log).join();
 
                 if (returnCode == 0) {
                     // leave a record for the next up-to-date check
@@ -253,7 +263,7 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
 
             if (expected.exists()) {
                 if (timestamp.exists() && sourceTimestamp == timestamp.lastModified()) {
-                    return false;   // already up to date
+                    return false; // already up to date
                 }
                 expected.deleteContents();
             } else {
@@ -291,7 +301,7 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
                     duplicatedMSI.delete();
                 }
             } catch (IOException e) {
-                throw new IOException("Failed to install "+ archive, e);
+                throw new IOException("Failed to install " + archive, e);
             }
             timestamp.touch(sourceTimestamp);
             return true;
@@ -301,14 +311,16 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
     }
 
     // update code from ZipExtractionInstaller
-    static class /*ZipExtractionInstaller*/ChmodRecAPlusX extends MasterToSlaveFileCallable<Void> {
+    static class /* ZipExtractionInstaller */ ChmodRecAPlusX extends MasterToSlaveFileCallable<Void> {
         private static final long serialVersionUID = 1L;
+
         @Override
         public Void invoke(File d, VirtualChannel channel) throws IOException {
-            if(!Functions.isWindows())
+            if (!Functions.isWindows())
                 process(d);
             return null;
         }
+
         private void process(File f) {
             if (f.isFile()) {
                 f.setExecutable(true, false);
@@ -350,14 +362,14 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
         @Nonnull
         @Override
         public List<? extends Installable> getInstallables() throws IOException {
-            // Filtering non blacklisted installables + sorting installables by version number
-            Collection<? extends Installable> filteredInstallables = Collections2.filter(super.getInstallables(),
-                    new Predicate<Installable>() {
-                        @Override
-                        public boolean apply(Installable input) {
-                            return !InstallerPathResolver.Factory.isVersionBlacklisted(input.id);
-                        }
-                    });
+            // Filtering non blacklisted installables + sorting installables by
+            // version number
+            Collection<? extends Installable> filteredInstallables = Collections2.filter(super.getInstallables(), new Predicate<Installable>() {
+                @Override
+                public boolean apply(Installable input) {
+                    return !InstallerPathResolver.Factory.isVersionBlacklisted(input.id);
+                }
+            });
             TreeSet<Installable> sortedInstallables = new TreeSet<>(new Comparator<Installable>() {
                 @Override
                 public int compare(Installable o1, Installable o2) {

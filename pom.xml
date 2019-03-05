@@ -42,7 +42,7 @@
     </licenses>
 
     <properties>
-        <powermock.version>1.7.3</powermock.version>
+        <powermock.version>2.0.0</powermock.version>
         <jenkins.version>2.60.3</jenkins.version>
         <java.level>7</java.level>
     </properties>
@@ -138,4 +138,13 @@
             </build>
         </profile>
     </profiles>
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.objenesis</groupId>
+                <artifactId>objenesis</artifactId>
+                <version>3.0.1</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 </project>
