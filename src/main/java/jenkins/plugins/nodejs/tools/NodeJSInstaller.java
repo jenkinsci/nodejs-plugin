@@ -34,7 +34,9 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.TreeSet;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 import javax.annotation.Nonnull;
@@ -54,6 +56,7 @@ import hudson.Launcher;
 import hudson.Launcher.ProcStarter;
 import hudson.ProxyConfiguration;
 import hudson.Util;
+import hudson.model.Computer;
 import hudson.model.Node;
 import hudson.model.TaskListener;
 import hudson.remoting.VirtualChannel;
@@ -87,9 +90,19 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
 
     private final String npmPackages;
     private final Long npmPackagesRefreshHours;
-    private Platform platform;
-    private CPU cpu;
+    private final Map<Node, NodeEnvironment> nodeEnvironments = new ConcurrentHashMap<>();
     private boolean force32Bit;
+
+    class NodeEnvironment {
+
+        private Platform platform;
+        private CPU cpu;
+
+        public NodeEnvironment(Platform platform, CPU cpu) {
+            this.platform = platform;
+            this.cpu = cpu;
+        }
+    }
 
     @DataBoundConstructor
     public NodeJSInstaller(String id, String npmPackages, long npmPackagesRefreshHours) {
@@ -110,11 +123,13 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
             return null;
         }
 
+        NodeEnvironment environment = nodeEnvironments.get(Computer.currentComputer().getNode());
+
         // Cloning the installable since we're going to update its url (not cloning it wouldn't be threadsafe)
         installable = Installables.clone(installable);
 
         InstallerPathResolver installerPathResolver = InstallerPathResolver.Factory.findResolverFor(installable);
-        String relativeDownloadPath = installerPathResolver.resolvePathFor(installable.id, platform, cpu);
+        String relativeDownloadPath = installerPathResolver.resolvePathFor(installable.id, environment.platform, environment.cpu);
         installable.url += relativeDownloadPath;
         return installable;
     }
@@ -125,8 +140,10 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
     // implementation
     @Override
     public FilePath performInstallation(ToolInstallation tool, Node node, TaskListener log) throws IOException, InterruptedException {
-        this.platform = ToolsUtils.getPlatform(node);
-        this.cpu = ToolsUtils.getCPU(node, force32Bit);
+        Platform platform = ToolsUtils.getPlatform(node);
+        CPU cpu = ToolsUtils.getCPU(node, force32Bit);
+
+        nodeEnvironments.put(node, new NodeEnvironment(platform, cpu));
 
         FilePath expected;
         Installable installable = getInstallable();
@@ -162,14 +179,16 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
             if (!skipNpmPackageInstallation) {
                 expected.child(NPM_PACKAGES_RECORD_FILENAME).delete();
 
+                NodeEnvironment environment = nodeEnvironments.get(node);
+
                 ArgumentListBuilder npmScriptArgs = new ArgumentListBuilder();
-                if (platform == Platform.WINDOWS) {
+                if (environment.platform == Platform.WINDOWS) {
                     npmScriptArgs.add("cmd");
                     npmScriptArgs.add("/c");
                 }
 
-                FilePath binFolder = expected.child(platform.binFolder);
-                FilePath npmExe = binFolder.child(platform.npmFileName);
+                FilePath binFolder = expected.child(environment.platform.binFolder);
+                FilePath npmExe = binFolder.child(environment.platform.npmFileName);
                 npmScriptArgs.add(npmExe);
 
                 npmScriptArgs.add("install");
