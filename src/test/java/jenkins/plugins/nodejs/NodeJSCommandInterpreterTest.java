@@ -150,8 +150,7 @@ public class NodeJSCommandInterpreterTest {
     }
 
     private Config createSetting(String id, String content, List<NPMRegistry> registries) {
-        String providerId = new NPMConfigProvider().getProviderId();
-        Config config = new NPMConfig(id, null, null, content, providerId, registries);
+        Config config = new NPMConfig(id, null, null, content, registries);
 
         GlobalConfigFiles globalConfigFiles = j.jenkins.getExtensionList(GlobalConfigFiles.class)
                 .get(GlobalConfigFiles.class);

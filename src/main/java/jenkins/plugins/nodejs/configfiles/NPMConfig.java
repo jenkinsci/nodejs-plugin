@@ -60,8 +60,8 @@ public class NPMConfig extends Config {
     private final List<NPMRegistry> registries;
 
     @DataBoundConstructor
-    public NPMConfig(@Nonnull String id, String name, String comment, String content, @Nonnull String providerId, List<NPMRegistry> registries) {
-        super(id, Util.fixEmptyAndTrim(name), Util.fixEmptyAndTrim(comment), Util.fixEmptyAndTrim(content), providerId);
+    public NPMConfig(@Nonnull String id, String name, String comment, String content, List<NPMRegistry> registries) {
+        super(id, Util.fixEmptyAndTrim(name), Util.fixEmptyAndTrim(comment), Util.fixEmptyAndTrim(content));
         this.registries = registries == null ? new ArrayList<NPMRegistry>(3) : registries;
     }
 
@@ -113,7 +113,7 @@ public class NPMConfig extends Config {
 
         @Override
         public Config newConfig(@Nonnull String configId) {
-            return new NPMConfig(configId, "MyNpmrcConfig", "user config", loadTemplateContent(), getProviderId(), null);
+            return new NPMConfig(configId, "MyNpmrcConfig", "user config", loadTemplateContent(), null);
         }
 
         protected String loadTemplateContent() {

@@ -39,7 +39,7 @@ public class NPMConfigValidationTest {
     @Test
     public void test_new_config() {
         String id = "test_id";
-        NPMConfig config = new NPMConfig(id, "", "", "", "myprovider", null);
+        NPMConfig config = new NPMConfig(id, "", "", "", null);
         assertEquals(id, config.id);
         assertNull(config.name);
         assertNull(config.comment);
@@ -54,7 +54,7 @@ public class NPMConfigValidationTest {
 
         thrown.expect(VerifyConfigProviderException.class);
 
-        NPMConfig config = new NPMConfig("too_many_registry", null, null, null, "myprovider", Arrays.asList(privateRegistry, officalRegistry));
+        NPMConfig config = new NPMConfig("too_many_registry", null, null, null, Arrays.asList(privateRegistry, officalRegistry));
         config.doVerify();
     }
 
@@ -64,7 +64,7 @@ public class NPMConfigValidationTest {
 
         thrown.expect(VerifyConfigProviderException.class);
 
-        NPMConfig config = new NPMConfig("empty_URL", null, null, null, "myprovider", Arrays.asList(registry));
+        NPMConfig config = new NPMConfig("empty_URL", null, null, null, Arrays.asList(registry));
         config.doVerify();
     }
 
@@ -72,7 +72,7 @@ public class NPMConfigValidationTest {
     public void test_no_exception_if_URL_has_variable() throws Exception {
         NPMRegistry registry = new NPMRegistry("${URL}", null, null);
 
-        NPMConfig config = new NPMConfig("no_exception_if_URL_has_variable", null, null, null, "myprovider", Arrays.asList(registry));
+        NPMConfig config = new NPMConfig("no_exception_if_URL_has_variable", null, null, null, Arrays.asList(registry));
         config.doVerify();
     }
 

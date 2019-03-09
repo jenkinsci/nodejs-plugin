@@ -44,7 +44,7 @@
     <properties>
         <powermock.version>2.0.0</powermock.version>
         <jenkins.version>2.60.3</jenkins.version>
-        <java.level>7</java.level>
+        <java.level>8</java.level>
     </properties>
 
     <dependencies>
@@ -56,7 +56,7 @@
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>config-file-provider</artifactId>
-            <version>2.16.4</version>
+            <version>3.5</version>
         </dependency>
         <dependency>
             <groupId>org.powermock</groupId>
