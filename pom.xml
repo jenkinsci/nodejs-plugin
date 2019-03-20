@@ -3,7 +3,7 @@
     <parent>
         <groupId>org.jenkins-ci.plugins</groupId>
         <artifactId>plugin</artifactId>
-        <version>3.23</version>
+        <version>3.40</version>
     </parent>
 
     <artifactId>nodejs</artifactId>
@@ -42,7 +42,6 @@
     </licenses>
 
     <properties>
-        <powermock.version>2.0.0</powermock.version>
         <jenkins.version>2.60.3</jenkins.version>
         <java.level>8</java.level>
     </properties>
@@ -61,15 +60,20 @@
         <dependency>
             <groupId>org.powermock</groupId>
             <artifactId>powermock-module-junit4</artifactId>
-            <version>${powermock.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.powermock</groupId>
             <artifactId>powermock-api-mockito2</artifactId>
-            <version>${powermock.version}</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>net.bytebuddy</groupId>
+            <artifactId>byte-buddy</artifactId>
+            <version>1.9.7</version> <!-- need to force this https://github.com/mockito/mockito/issues/1606#issuecomment-473371126 -->
+            <scope>test</scope>
+        </dependency>
+
     </dependencies>
 
     <repositories>
@@ -138,13 +142,4 @@
             </build>
         </profile>
     </profiles>
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>org.objenesis</groupId>
-                <artifactId>objenesis</artifactId>
-                <version>3.0.1</version>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
 </project>
