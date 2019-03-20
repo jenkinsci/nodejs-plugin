@@ -43,6 +43,7 @@ import hudson.model.Computer;
 import hudson.model.EnvironmentSpecific;
 import hudson.model.Node;
 import hudson.model.TaskListener;
+import hudson.remoting.VirtualChannel;
 import hudson.slaves.NodeSpecific;
 import hudson.tools.ToolDescriptor;
 import hudson.tools.ToolInstallation;
@@ -120,7 +121,11 @@ public class NodeJSInstallation extends ToolInstallation implements EnvironmentS
     public String getExecutable(final Launcher launcher) throws InterruptedException, IOException {
         // DO NOT REMOVE this callable otherwise paths constructed by File
         // and similar API will be based on the master node O.S.
-        return launcher.getChannel().call(new DetectPlatformCallable());
+        final VirtualChannel channel = launcher.getChannel();
+        if (channel == null) {
+            throw new IOException("Unable to get a channel for the launcher");
+        }
+        return channel.call(new DetectPlatformCallable());
     }
 
     /**
