@@ -60,8 +60,6 @@ import hudson.remoting.VirtualChannel;
 import hudson.slaves.NodeSpecific;
 import hudson.tools.DownloadFromUrlInstaller;
 import hudson.tools.ToolInstallation;
-import hudson.tools.ZipExtractionInstaller;
-import hudson.tools.DownloadFromUrlInstaller.Installable;
 import hudson.util.ArgumentListBuilder;
 import hudson.util.Secret;
 import jenkins.MasterToSlaveFileCallable;
@@ -133,25 +131,23 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
             installable = (Installable) ((NodeSpecific) installable).forNode(node, log);
         }
 
-        if (isUpToDate(expected, installable)) {
-            return expected;
-        }
+        if (!isUpToDate(expected, installable)) {
+            String message = installable.url + " to " + expected + " on " + node.getDisplayName();
+            boolean isMSI = installable.url.toLowerCase(Locale.ENGLISH).endsWith("msi");
+            URL installableURL = new URL(installable.url);
 
-        String message = installable.url + " to " + expected + " on " + node.getDisplayName();
-        boolean isMSI = installable.url.toLowerCase(Locale.ENGLISH).endsWith("msi");
-        URL installableURL = new URL(installable.url);
+            if (isMSI && installIfNecessaryMSI(expected, installableURL, log, "Installing " + message)
+                    || expected.installIfNecessaryFrom(installableURL, log, "Unpacking " + message)) {
 
-        if (isMSI && installIfNecessaryMSI(expected, installableURL, log, "Installing " + message)
-                || expected.installIfNecessaryFrom(installableURL, log, "Unpacking " + message)) {
-
-            expected.child(".timestamp").delete(); // we don't use the
-            // timestamp
-            FilePath base = findPullUpDirectory(expected);
-            if (base != null && base != expected) {
-                base.moveAllChildrenTo(expected);
+                expected.child(".timestamp").delete(); // we don't use the
+                // timestamp
+                FilePath base = findPullUpDirectory(expected);
+                if (base != null && base != expected) {
+                    base.moveAllChildrenTo(expected);
+                }
+                // leave a record for the next up-to-date check
+                expected.child(".installedFrom").write(installable.url, "UTF-8");
             }
-            // leave a record for the next up-to-date check
-            expected.child(".installedFrom").write(installable.url, "UTF-8");
         }
 
         refreshGlobalPackages(node, log, expected);
@@ -209,7 +205,7 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
     }
 
     private void buildProxyEnvVars(EnvVars env, TaskListener log) throws IOException, URISyntaxException {
-        ProxyConfiguration proxycfg = Jenkins.getActiveInstance().proxy;
+        ProxyConfiguration proxycfg = Jenkins.getInstance().proxy;
         if (proxycfg == null) {
             // no proxy configured
             return;

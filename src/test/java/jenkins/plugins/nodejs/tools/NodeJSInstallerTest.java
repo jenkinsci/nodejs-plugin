@@ -26,6 +26,7 @@ package jenkins.plugins.nodejs.tools;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import java.io.IOException;
 import java.net.URL;
 
 import org.junit.Rule;
@@ -33,6 +34,7 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.jvnet.hudson.test.Issue;
+import org.mockito.Mockito;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
@@ -66,8 +68,6 @@ public class NodeJSInstallerTest {
         int expectedRefreshHours = NodeJSInstaller.DEFAULT_NPM_PACKAGES_REFRESH_HOURS;
         Node currentNode = mock(Node.class);
         when(currentNode.getRootPath()).thenReturn(new FilePath(fileRule.newFile()));
-        // when(ToolsUtils.getCPU(node1)).thenReturn(CPU.amd64);
-        // when(ToolsUtils.getPlatform(node1)).thenReturn(Platform.LINUX);
 
         // create partial mock
         NodeJSInstaller installer = new NodeJSInstaller("test-id", expectedPackages, expectedRefreshHours);
@@ -92,66 +92,42 @@ public class NodeJSInstallerTest {
 
         spy.performInstallation(toolInstallation, currentNode, mock(TaskListener.class));
     }
-    //
-    // @Issue("JENKINS-55961")
-    // @Test
-    // @PrepareForTest({ NodeJSInstaller.class, ToolsUtils.class, FilePath.class
-    // })
-    // public void test_parallel_installer() throws Exception {
-    //
-    // // create partial mock
-    // NodeJSInstaller installer = new NodeJSInstaller("test-id", null,
-    // NodeJSInstaller.DEFAULT_NPM_PACKAGES_REFRESH_HOURS) {
-    // @Override
-    // public Installable getInstallable() throws IOException {
-    // Installable installable = new Installable();
-    // installable.id = "8.0.0";
-    // installable.url = fileRule.newFile().toURI().toString();
-    // installable.name = "name";
-    // return installable;
-    // }
-    // };
-    // NodeJSInstaller spy = PowerMockito.spy(installer);
-    //
-    // PowerMockito.mockStatic(ToolsUtils.class);
-    //
-    // Node node1 = mock(Node.class);
-    // when(node1.getRootPath()).thenReturn(new FilePath(fileRule.newFile()));
-    // when(ToolsUtils.getCPU(node1)).thenReturn(CPU.amd64);
-    // when(ToolsUtils.getPlatform(node1)).thenReturn(Platform.LINUX);
-    //
-    // Node node2 = mock(Node.class);
-    // when(node2.getRootPath()).thenReturn(new FilePath(fileRule.newFile()));
-    // when(ToolsUtils.getCPU(node2)).thenReturn(CPU.i386);
-    // when(ToolsUtils.getPlatform(node2)).thenReturn(Platform.WINDOWS);
-    //
-    // Node node3 = mock(Node.class);
-    // when(node3.getRootPath()).thenReturn(new FilePath(fileRule.newFile()));
-    // when(ToolsUtils.getCPU(node3)).thenReturn(CPU.amd64);
-    // when(ToolsUtils.getPlatform(node3)).thenReturn(Platform.OSX);
-    //
-    // ToolInstallation toolDefinition = mock(ToolInstallation.class);
-    // when(toolDefinition.getHome()).thenReturn("nodejs");
-    //
-    // PowerMockito.replace(PowerMockito.method(FilePath.class,
-    // "installIfNecessaryFrom", URL.class, TaskListener.class,
-    // String.class)).with(new InvocationHandler() {
-    // @Override
-    // public Object invoke(Object proxy, Method method, Object[] args) throws
-    // Throwable {
-    // return false;
-    // }
-    // });
-    // new
-    // FilePath(fileRule.newFile()).installIfNecessaryFrom(fileRule.newFile().toURI().toURL(),
-    // null, null);
-    //
-    // // execute test
-    // TaskListener log = mock(TaskListener.class);
-    // spy.performInstallation(toolDefinition, node1, log);
-    // verify(spy).getInstallable(node1);
-    // spy.performInstallation(toolDefinition, node2, log);
-    // spy.performInstallation(toolDefinition, node3, log);
-    // }
+
+    @Issue("JENKINS-56895")
+    @Test
+    @PrepareForTest({ NodeJSInstaller.class, ToolsUtils.class, FilePath.class })
+    public void verify_global_packages_are_refreshed_also_if_nodejs_installation_is_uptodate() throws Exception {
+        String expectedPackages = "npm@6.7.0";
+        int expectedRefreshHours = NodeJSInstaller.DEFAULT_NPM_PACKAGES_REFRESH_HOURS;
+        Node currentNode = mock(Node.class);
+        when(currentNode.getRootPath()).thenReturn(new FilePath(fileRule.newFile()));
+
+        // create partial mock
+        NodeJSInstaller installer = new NodeJSInstaller("test-id", expectedPackages, expectedRefreshHours) {
+            @Override
+            public Installable getInstallable(Node node) throws IOException {
+                Installable installable = new Installable();
+                installable.url = fileRule.newFile().toURI().toString();
+                return installable;
+            }
+
+            @Override
+            protected boolean isUpToDate(FilePath expectedLocation, Installable i) throws IOException, InterruptedException {
+                return true;
+            }
+        };
+        NodeJSInstaller spy = PowerMockito.spy(installer);
+
+        // use Mockito to set up your expectation
+        Mockito.doNothing().when(spy).refreshGlobalPackages(Mockito.any(Node.class), Mockito.any(TaskListener.class), Mockito.any(FilePath.class));
+
+        ToolInstallation toolInstallation = mock(ToolInstallation.class);
+        when(toolInstallation.getHome()).thenReturn("nodejs");
+
+        // execute test
+        spy.performInstallation(toolInstallation, currentNode, mock(TaskListener.class));
+
+        Mockito.verify(spy).refreshGlobalPackages(Mockito.any(Node.class), Mockito.any(TaskListener.class), Mockito.any(FilePath.class));
+    }
 
 }
