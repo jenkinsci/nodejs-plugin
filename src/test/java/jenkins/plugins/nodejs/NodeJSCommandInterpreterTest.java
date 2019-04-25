@@ -49,6 +49,7 @@ import hudson.model.Node;
 import hudson.model.Result;
 import hudson.model.TaskListener;
 import jenkins.plugins.nodejs.CIBuilderHelper.Verifier;
+import jenkins.plugins.nodejs.VerifyEnvVariableBuilder.EnvVarVerifier;
 import jenkins.plugins.nodejs.CIBuilderHelper;
 import jenkins.plugins.nodejs.configfiles.NPMConfig;
 import jenkins.plugins.nodejs.configfiles.NPMConfig.NPMConfigProvider;
@@ -147,6 +148,20 @@ public class NodeJSCommandInterpreterTest {
         FreeStyleProject job = j.createFreeStyleProject("free");
         job.getBuildersList().add(builder);
         j.assertBuildStatus(Result.FAILURE, job.scheduleBuild2(0));
+    }
+
+    @Test
+    public void test_set_of_cache_location() throws Exception {
+        final File cacheFolder = folder.newFolder();
+
+        NodeJSInstallation installation = mockInstaller();
+        NodeJSCommandInterpreter builder = CIBuilderHelper.createMock("test_creation_of_config", installation);
+        builder.setCacheLocationStrategy(new TestCacheLocationLocator(new FilePath(cacheFolder)));
+
+        FreeStyleProject job = j.createFreeStyleProject("cache");
+        job.getBuildersList().add(builder);
+        job.getBuildersList().add(new EnvVarVerifier(NodeJSConstants.NPM_CACHE_LOCATION, cacheFolder.getAbsolutePath()));
+        j.assertBuildStatusSuccess(job.scheduleBuild2(0));
     }
 
     private Config createSetting(String id, String content, List<NPMRegistry> registries) {

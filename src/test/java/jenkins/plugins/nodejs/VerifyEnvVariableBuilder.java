@@ -55,4 +55,23 @@ abstract class VerifyEnvVariableBuilder extends Builder {
             assertTrue("file of variable " + var + " does not exists or is not a file", new File(value).isFile());
         }
     }
+
+    public static final class EnvVarVerifier extends VerifyEnvVariableBuilder {
+
+        private final String name;
+        private final String value;
+
+        public EnvVarVerifier(String name, String value) {
+            this.name = name;
+            this.value = value;
+        }
+
+        @Override
+        public void verify(EnvVars env) {
+            String envValue = env.get(name);
+
+            assertTrue("variable " + name + " not set", env.containsKey(name));
+            assertEquals(value, envValue);
+        }
+    }
 }

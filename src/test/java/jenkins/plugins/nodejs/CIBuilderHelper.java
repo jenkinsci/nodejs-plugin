@@ -38,6 +38,10 @@ import jenkins.plugins.nodejs.tools.NodeJSInstallation;
         void verify(AbstractBuild<?, ?> build, Launcher launcher, TaskListener listener) throws Exception;
     }
 
+    public static NodeJSCommandInterpreter createMock(String command, NodeJSInstallation installation) {
+        return createMock(command, installation, null, null);
+    }
+
     public static NodeJSCommandInterpreter createMock(String command, NodeJSInstallation installation, String configId) {
         return createMock(command, installation, configId, null);
     }

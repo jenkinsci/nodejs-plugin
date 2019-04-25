@@ -44,7 +44,42 @@
     <properties>
         <jenkins.version>2.60.3</jenkins.version>
         <java.level>8</java.level>
+        <config-file-provider-plugin.version>3.6</config-file-provider-plugin.version>
+        <byte-buddy.version>1.9.10</byte-buddy.version>
+
+        <workflow-api-plugin.version>2.22</workflow-api-plugin.version>
+        <workflow-cps-plugin.version>2.42</workflow-cps-plugin.version>
+        <workflow-job-plugin.version>2.11.2</workflow-job-plugin.version>
+        <workflow-step-api-plugin.version>2.13</workflow-step-api-plugin.version>
+        <workflow-basic-steps-plugin.version>2.5</workflow-basic-steps-plugin.version>
+        <workflow-support-plugin.version>2.16</workflow-support-plugin.version>
     </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <!-- need to force this https://github.com/mockito/mockito/issues/1606#issuecomment-473371126 -->
+            <dependency>
+                <groupId>net.bytebuddy</groupId>
+                <artifactId>byte-buddy</artifactId>
+                <version>${byte-buddy.version}</version> 
+            </dependency>
+            <dependency>
+                <groupId>org.jenkins-ci.plugins.workflow</groupId>
+                <artifactId>workflow-api</artifactId>
+                <version>${workflow-api-plugin.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.jenkins-ci.plugins.workflow</groupId>
+                <artifactId>workflow-step-api</artifactId>
+                <version>${workflow-step-api-plugin.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.jenkins-ci.plugins.workflow</groupId>
+                <artifactId>workflow-support</artifactId>
+                <version>${workflow-support-plugin.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <dependencies>
         <dependency>
@@ -55,7 +90,7 @@
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>config-file-provider</artifactId>
-            <version>3.5</version>
+            <version>${config-file-provider-plugin.version}</version>
         </dependency>
         <dependency>
             <groupId>org.powermock</groupId>
@@ -68,19 +103,30 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>net.bytebuddy</groupId>
-            <artifactId>byte-buddy</artifactId>
-            <version>1.9.7</version> <!-- need to force this https://github.com/mockito/mockito/issues/1606#issuecomment-473371126 -->
+            <groupId>org.jenkins-ci.plugins.workflow</groupId>
+            <artifactId>workflow-job</artifactId>
+            <version>${workflow-job-plugin.version}</version>
             <scope>test</scope>
         </dependency>
-
+        <dependency>
+            <groupId>org.jenkins-ci.plugins.workflow</groupId>
+            <artifactId>workflow-basic-steps</artifactId>
+            <version>${workflow-basic-steps-plugin.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jenkins-ci.plugins.workflow</groupId>
+            <artifactId>workflow-cps</artifactId>
+            <version>${workflow-cps-plugin.version}</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <repositories>
         <repository>
             <id>repo.jenkins-ci.org</id>
             <url>http://repo.jenkins-ci.org/public/</url>
-            <releases>  
+            <releases>
                 <enabled>true</enabled>
             </releases>
             <snapshots>

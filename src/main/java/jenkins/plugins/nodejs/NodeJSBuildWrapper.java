@@ -23,22 +23,6 @@
  */
 package jenkins.plugins.nodejs;
 
-import java.io.IOException;
-import java.util.ArrayList;
-
-import javax.annotation.CheckForNull;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-
-import org.jenkinsci.Symbol;
-import org.jenkinsci.lib.configprovider.model.ConfigFile;
-import org.jenkinsci.lib.configprovider.model.ConfigFileManager;
-import org.jenkinsci.plugins.configfiles.common.CleanTempFilesAction;
-import org.kohsuke.stapler.AncestorInPath;
-import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.DataBoundSetter;
-import org.kohsuke.stapler.QueryParameter;
-
 import hudson.AbortException;
 import hudson.EnvVars;
 import hudson.Extension;
@@ -54,8 +38,23 @@ import hudson.model.TaskListener;
 import hudson.tasks.BuildWrapperDescriptor;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
+import java.io.IOException;
+import java.util.ArrayList;
+import javax.annotation.CheckForNull;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import jenkins.plugins.nodejs.cache.CacheLocationLocator;
+import jenkins.plugins.nodejs.cache.DefaultCacheLocationLocator;
 import jenkins.plugins.nodejs.tools.NodeJSInstallation;
 import jenkins.tasks.SimpleBuildWrapper;
+import org.jenkinsci.Symbol;
+import org.jenkinsci.lib.configprovider.model.ConfigFile;
+import org.jenkinsci.lib.configprovider.model.ConfigFileManager;
+import org.jenkinsci.plugins.configfiles.common.CleanTempFilesAction;
+import org.kohsuke.stapler.AncestorInPath;
+import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
+import org.kohsuke.stapler.QueryParameter;
 
 /**
  * A simple build wrapper that contribute the NodeJS bin path to the PATH
@@ -90,6 +89,7 @@ public class NodeJSBuildWrapper extends SimpleBuildWrapper {
 
     private final String nodeJSInstallationName;
     private String configId;
+    private CacheLocationLocator cacheLocationStrategy;
 
     @DataBoundConstructor
     public NodeJSBuildWrapper(String nodeJSInstallationName) {
@@ -99,6 +99,7 @@ public class NodeJSBuildWrapper extends SimpleBuildWrapper {
     public NodeJSBuildWrapper(String nodeJSInstallationName, String configId) {
         this.nodeJSInstallationName = Util.fixEmpty(nodeJSInstallationName);
         this.configId = Util.fixEmpty(configId);
+        this.cacheLocationStrategy = new DefaultCacheLocationLocator();
     }
 
     /**
@@ -121,6 +122,15 @@ public class NodeJSBuildWrapper extends SimpleBuildWrapper {
     @DataBoundSetter
     public void setConfigId(String configId) {
         this.configId = Util.fixEmpty(configId);
+    }
+
+    public CacheLocationLocator getCacheLocationStrategy() {
+        return cacheLocationStrategy;
+    }
+
+    @DataBoundSetter
+    public void setCacheLocationStrategy(CacheLocationLocator cacheLocationStrategy) {
+        this.cacheLocationStrategy = cacheLocationStrategy == null ? new DefaultCacheLocationLocator() : cacheLocationStrategy;
     }
 
     /*
@@ -152,6 +162,12 @@ public class NodeJSBuildWrapper extends SimpleBuildWrapper {
 
         EnvVars env = initialEnvironment.overrideAll(context.getEnv());
 
+        // configure cache location
+        FilePath cacheLocation = cacheLocationStrategy.locate(workspace);
+        if (cacheLocation != null) {
+            context.env(NodeJSConstants.NPM_CACHE_LOCATION, cacheLocation.getRemote());
+        }
+
         // add npmrc config
         if (configId != null) {
             ConfigFile cf = new ConfigFile(configId, null, true);
@@ -160,7 +176,6 @@ public class NodeJSBuildWrapper extends SimpleBuildWrapper {
             build.addAction(new CleanTempFilesAction(configFile.getRemote()));
         }
     }
-
 
     @Symbol("nodejs")
     @Extension
@@ -192,7 +207,7 @@ public class NodeJSBuildWrapper extends SimpleBuildWrapper {
 
         /**
          * Verify that the given configId exists in the given context.
-         * 
+         *
          * @param context where lookup
          * @param configId the identifier of an npmrc file
          * @return an validation form for the given npmrc file identifier.

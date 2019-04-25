@@ -23,39 +23,42 @@
  */
 package jenkins.plugins.nodejs;
 
-import static org.junit.Assert.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
-
-import java.io.File;
-import java.util.List;
-
-import org.hamcrest.CoreMatchers;
-import org.jenkinsci.lib.configprovider.model.Config;
-import org.jenkinsci.plugins.configfiles.GlobalConfigFiles;
-import org.junit.Rule;
-import org.junit.Test;
-import org.jvnet.hudson.test.Issue;
-import org.jvnet.hudson.test.JenkinsRule;
-import org.powermock.api.mockito.PowerMockito;
-
 import hudson.EnvVars;
+import hudson.FilePath;
 import hudson.Launcher;
 import hudson.model.FreeStyleProject;
 import hudson.model.Node;
 import hudson.model.Result;
 import hudson.model.TaskListener;
+import java.io.File;
+import java.util.List;
+import jenkins.plugins.nodejs.VerifyEnvVariableBuilder.EnvVarVerifier;
 import jenkins.plugins.nodejs.VerifyEnvVariableBuilder.FileVerifier;
+import jenkins.plugins.nodejs.cache.CacheLocationLocator;
 import jenkins.plugins.nodejs.configfiles.NPMConfig;
-import jenkins.plugins.nodejs.configfiles.NPMConfig.NPMConfigProvider;
 import jenkins.plugins.nodejs.configfiles.NPMRegistry;
 import jenkins.plugins.nodejs.tools.NodeJSInstallation;
 import jenkins.plugins.nodejs.tools.Platform;
+import org.hamcrest.CoreMatchers;
+import org.jenkinsci.lib.configprovider.model.Config;
+import org.jenkinsci.plugins.configfiles.GlobalConfigFiles;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
+import org.jvnet.hudson.test.Issue;
+import org.jvnet.hudson.test.JenkinsRule;
+import org.powermock.api.mockito.PowerMockito;
+
+import static org.junit.Assert.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 public class NodeJSBuildWrapperTest {
 
     @Rule
     public JenkinsRule j = new JenkinsRule();
+    @Rule
+    public TemporaryFolder fileRule = new TemporaryFolder();
 
     @Test
     public void test_calls_sequence_of_installer() throws Exception {
@@ -123,6 +126,20 @@ public class NodeJSBuildWrapperTest {
         j.assertBuildStatus(Result.FAILURE, job.scheduleBuild2(0));
     }
 
+    @Test
+    public void test_set_of_cache_location() throws Exception {
+        FreeStyleProject job = j.createFreeStyleProject("cache");
+
+        final File cacheFolder = fileRule.newFolder();
+
+        NodeJSBuildWrapper bw = mockWrapper(mockInstaller());
+        bw.setCacheLocationStrategy(new TestCacheLocationLocator(new FilePath(cacheFolder)));
+        job.getBuildWrappersList().add(bw);
+        job.getBuildersList().add(new EnvVarVerifier(NodeJSConstants.NPM_CACHE_LOCATION, cacheFolder.getAbsolutePath()));
+
+        j.assertBuildStatusSuccess(job.scheduleBuild2(0));
+    }
+
     private Config createSetting(String id, String content, List<NPMRegistry> registries) {
         Config config = new NPMConfig(id, null, null, content, registries);
 
@@ -133,10 +150,19 @@ public class NodeJSBuildWrapperTest {
     }
 
     private NodeJSBuildWrapper mockWrapper(NodeJSInstallation installation, Config config) {
-        NodeJSBuildWrapper wrapper = PowerMockito.spy(new NodeJSBuildWrapper("mock", config.id));
+        NodeJSBuildWrapper wrapper;
+        if (config != null) {
+            wrapper = PowerMockito.spy(new NodeJSBuildWrapper("mock", config.id));
+        } else {
+            wrapper = PowerMockito.spy(new NodeJSBuildWrapper("mock"));
+        }
         doReturn(installation).when(wrapper).getNodeJS();
         doReturn(new NodeJSBuildWrapper.DescriptorImpl()).when(wrapper).getDescriptor();
         return wrapper;
+    }
+
+    private NodeJSBuildWrapper mockWrapper(NodeJSInstallation installation) {
+        return mockWrapper(installation, null);
     }
 
     private NodeJSInstallation mockInstaller() throws Exception {

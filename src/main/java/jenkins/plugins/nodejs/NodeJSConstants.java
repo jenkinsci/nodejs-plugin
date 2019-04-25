@@ -51,6 +51,11 @@ public final class NodeJSConstants {
     public static final String ENVVAR_NODEJS_PATH = "PATH+NODEJS";
 
     /**
+     * The location of NPM cache.
+     */
+    public static final String NPM_CACHE_LOCATION = "npm_config_cache";
+
+    /**
      * The location of user-level configuration settings.
      */
     public static final String NPM_USERCONFIG = "npm_config_userconfig";

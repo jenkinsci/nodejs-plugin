@@ -56,6 +56,8 @@ import hudson.tasks.CommandInterpreter;
 import hudson.util.ArgumentListBuilder;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
+import jenkins.plugins.nodejs.cache.CacheLocationLocator;
+import jenkins.plugins.nodejs.cache.DefaultCacheLocationLocator;
 import jenkins.plugins.nodejs.tools.NodeJSInstallation;
 import jenkins.plugins.nodejs.tools.Platform;
 
@@ -70,6 +72,7 @@ public class NodeJSCommandInterpreter extends CommandInterpreter {
 
     private final String nodeJSInstallationName;
     private String configId;
+    private CacheLocationLocator cacheLocationStrategy;
 
     private transient String nodeExec; // NOSONAR
 
@@ -100,6 +103,7 @@ public class NodeJSCommandInterpreter extends CommandInterpreter {
         super(command);
         this.nodeJSInstallationName = Util.fixEmpty(nodeJSInstallationName);
         this.configId = Util.fixEmpty(configId);
+        this.cacheLocationStrategy = new DefaultCacheLocationLocator();
     }
 
     /**
@@ -153,10 +157,18 @@ public class NodeJSCommandInterpreter extends CommandInterpreter {
                 }
             }
 
+            FilePath workspace = build.getWorkspace();
+
+            // configure cache location
+            FilePath cacheLocation = getCacheLocationStrategy().locate(workspace);
+            if (cacheLocation != null) {
+                newEnv.put(NodeJSConstants.NPM_CACHE_LOCATION, cacheLocation.getRemote());
+            }
+
             if (configId != null) {
                 // add npmrc config
                 ConfigFile cf = new ConfigFile(configId, null, true);
-                FilePath configFile = ConfigFileManager.provisionConfigFile(cf, env, build, build.getWorkspace(), listener, new ArrayList<String>());
+                FilePath configFile = ConfigFileManager.provisionConfigFile(cf, env, build, workspace, listener, new ArrayList<String>());
                 newEnv.put(NodeJSConstants.NPM_USERCONFIG, configFile.getRemote());
                 build.addAction(new CleanTempFilesAction(configFile.getRemote()));
             }
@@ -212,6 +224,15 @@ public class NodeJSCommandInterpreter extends CommandInterpreter {
         this.configId = Util.fixEmpty(configId);
     }
 
+    public CacheLocationLocator getCacheLocationStrategy() {
+        return cacheLocationStrategy;
+    }
+
+    @DataBoundSetter
+    public void setCacheLocationStrategy(CacheLocationLocator cacheLocationStrategy) {
+        this.cacheLocationStrategy = cacheLocationStrategy == null ? new DefaultCacheLocationLocator() : cacheLocationStrategy;
+    }
+
     /**
      * Provides builder details for the job configuration page.
      *
@@ -253,7 +274,7 @@ public class NodeJSCommandInterpreter extends CommandInterpreter {
 
         /**
          * Gather all defined npmrc config files.
-         * 
+         *
          * @param context where loopup
          * @return a collection of user npmrc files.
          */
@@ -263,7 +284,7 @@ public class NodeJSCommandInterpreter extends CommandInterpreter {
 
         /**
          * Verify that the given configId exists in the given context.
-         * 
+         *
          * @param context where lookup
          * @param configId the identifier of an npmrc file
          * @return an validation form for the given npmrc file identifier.
