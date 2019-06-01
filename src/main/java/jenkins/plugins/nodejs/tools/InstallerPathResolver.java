@@ -58,9 +58,9 @@ public interface InstallerPathResolver {
 		 * @throws IllegalArgumentException
 		 *             in case the given installable is not supported.
 		 */
-        public static InstallerPathResolver findResolverFor(DownloadFromUrlInstaller.Installable installable){
-            if(isVersionBlacklisted(installable.id)){
-                throw new IllegalArgumentException("Provided version ("+installable.id+") installer structure not (yet) supported !");
+        public static InstallerPathResolver findResolverFor(DownloadFromUrlInstaller.Installable installable) {
+            if (isVersionBlacklisted(installable.id)) {
+                throw new IllegalArgumentException("Provided version (" + installable.id + ") installer structure not (yet) supported !");
             } else {
                 return new LatestInstallerPathResolver();
             }

@@ -54,9 +54,9 @@ public class InstallerPathResolversTest {
     private final Platform platform;
     private final CPU cpu;
     private final boolean testDownload = false;
+    private final boolean showDownloadURL = false;
 
-    public InstallerPathResolversTest(DownloadFromUrlInstaller.Installable installable, Platform platform, CPU cpu,
-            String testName) {
+    public InstallerPathResolversTest(DownloadFromUrlInstaller.Installable installable, Platform platform, CPU cpu, String testName) {
         this.installable = installable;
         this.platform = platform;
         this.cpu = cpu;
@@ -70,14 +70,13 @@ public class InstallerPathResolversTest {
             expectedURLs = new TreeSet<>(IOUtils.readLines(is));
         }
 
-        String installablesJSONStr = Resources.toString(
-                Resources.getResource("updates/jenkins.plugins.nodejs.tools.NodeJSInstaller.json"), Charsets.UTF_8);
+        String installablesJSONStr = Resources.toString(Resources.getResource("updates/jenkins.plugins.nodejs.tools.NodeJSInstaller.json"), Charsets.UTF_8);
         JSONArray installables = JSONObject.fromObject(installablesJSONStr).getJSONArray("list");
         for (int i = 0; i < installables.size(); i++) {
-            DownloadFromUrlInstaller.Installable installable = (DownloadFromUrlInstaller.Installable) installables
-                    .getJSONObject(i).toBean(DownloadFromUrlInstaller.Installable.class);
+            DownloadFromUrlInstaller.Installable installable = (DownloadFromUrlInstaller.Installable) installables.getJSONObject(i).toBean(DownloadFromUrlInstaller.Installable.class);
 
-            // Not testing pre-0.8.6 version because at the moment, installer structure is not handled
+            // Not testing pre-0.8.6 version because at the moment, installer
+            // structure is not handled
             if (InstallerPathResolver.Factory.isVersionBlacklisted(installable.id)) {
                 continue;
             }
@@ -100,14 +99,18 @@ public class InstallerPathResolversTest {
     @Test
     public void shouldNodeJSInstallerResolvedPathExist() throws IOException {
         InstallerPathResolver installerPathResolver = InstallerPathResolver.Factory.findResolverFor(this.installable);
-        String path;
         try {
-            path = installerPathResolver.resolvePathFor(installable.id, this.platform, this.cpu);
+            String path = installerPathResolver.resolvePathFor(installable.id, this.platform, this.cpu);
             URL url = new URL(installable.url + path);
+
             if (testDownload) {
                 assertDownload(url);
             } else {
                 assertThat(expectedURLs, hasItem(url.toString()));
+            }
+
+            if (showDownloadURL) {
+                System.out.println(url);
             }
         } catch (IllegalArgumentException e) {
             // some combo of platform and cpu are not supported by nodejs

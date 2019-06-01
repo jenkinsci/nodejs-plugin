@@ -1,4 +1,4 @@
-package DefaultCacheLocationLocator;
+package jenkins.plugins.nodejs.cache;
 
 import hudson.FilePath;
 import hudson.model.Computer;

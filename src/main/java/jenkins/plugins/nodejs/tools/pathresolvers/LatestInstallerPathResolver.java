@@ -23,6 +23,7 @@
  */
 package jenkins.plugins.nodejs.tools.pathresolvers;
 
+import jenkins.plugins.nodejs.Messages;
 import java.text.MessageFormat;
 
 import jenkins.plugins.nodejs.tools.CPU;
@@ -44,11 +45,15 @@ public class LatestInstallerPathResolver implements InstallerPathResolver {
     private static final String EXTENSION_MSI = "msi";
 
     private static final NodeJSVersionRange[] MSI_RANGES = new NodeJSVersionRange[] { new NodeJSVersionRange("[0, 4.5)"),
-                                                                                     new NodeJSVersionRange("[5, 6.2]") };
+                                                                                      new NodeJSVersionRange("[5, 6.2]") };
 
     /*
      * (non-Javadoc)
-     * @see jenkins.plugins.nodejs.tools.InstallerPathResolver#resolvePathFor(java.lang.String, jenkins.plugins.nodejs.tools.Platform, jenkins.plugins.nodejs.tools.CPU)
+     *
+     * @see
+     * jenkins.plugins.nodejs.tools.InstallerPathResolver#resolvePathFor(java.
+     * lang.String, jenkins.plugins.nodejs.tools.Platform,
+     * jenkins.plugins.nodejs.tools.CPU)
      */
     @Override
     public String resolvePathFor(String version, Platform platform, CPU cpu) {
@@ -60,7 +65,7 @@ public class LatestInstallerPathResolver implements InstallerPathResolver {
 
         switch (platform) {
         case WINDOWS:
-        	isMSI = isMSI(version);
+            isMSI = isMSI(version);
             if (!isMSI) {
                 os = "win";
                 extension = EXTENSION_ZIP;
@@ -81,20 +86,23 @@ public class LatestInstallerPathResolver implements InstallerPathResolver {
             extension = EXTENSION;
             break;
         default:
-            throw new IllegalArgumentException("Unresolvable nodeJS installer for version=" + version + ", platform=" + platform.name());
+            throw new IllegalArgumentException(Messages.InstallerPathResolver_unsupportedOS(version, platform.name()));
         }
 
         NodeJSVersion nodeVersion = NodeJSVersion.parseVersion(version);
         switch (cpu) {
         case i386:
-            if (platform == Platform.OSX && nodeVersion.compareTo(new NodeJSVersion(4, 0, 0)) >= 0) {
-            	throw new IllegalArgumentException("Unresolvable nodeJS installer for version=" + version + ", cpu=" + cpu.name() + ", platform=" + platform.name());
+            if (platform == Platform.OSX && nodeVersion.compareTo(new NodeJSVersion(4, 0, 0)) >= 0 //
+                    || ((platform == Platform.SUNOS || platform == Platform.LINUX)
+                            && nodeVersion.compareTo(new NodeJSVersion(10, 0, 0)) >= 0)) {
+                throw new IllegalArgumentException(Messages.InstallerPathResolver_unsupportedArch(version, cpu.name(), platform.name()));
             }
             arch = "x86";
             break;
         case amd64:
-            if (platform == Platform.SUNOS && new NodeJSVersionRange("[7, 7.5)").includes(nodeVersion)) {
-                throw new IllegalArgumentException("Unresolvable nodeJS installer for version=" + version + ", cpu=" + cpu.name() + ", platform=" + platform.name());
+            if (platform == Platform.SUNOS && //
+                    (new NodeJSVersionRange("[7, 7.5)").includes(nodeVersion) || nodeVersion.compareTo(new NodeJSVersion(0, 12, 18)) == 0)) {
+                throw new IllegalArgumentException(Messages.InstallerPathResolver_unsupportedArch(version, cpu.name(), platform.name()));
             }
             if (isMSI && nodeVersion.compareTo(new NodeJSVersion(4, 0, 0)) < 0) {
                 path = "x64/";
@@ -103,14 +111,17 @@ public class LatestInstallerPathResolver implements InstallerPathResolver {
             break;
         case arm64:
         case armv6l:
+            if (nodeVersion.compareTo(new NodeJSVersion(12, 0, 0)) >= 0 || nodeVersion.compareTo(new NodeJSVersion(8, 6, 0)) == 0) {
+                throw new IllegalArgumentException(Messages.InstallerPathResolver_unsupportedArch(version, cpu.name(), platform.name()));
+            }
         case armv7l:
             if (nodeVersion.compareTo(new NodeJSVersion(4, 0, 0)) < 0) {
-                throw new IllegalArgumentException("Unresolvable nodeJS installer for version=" + version + ", cpu=" + cpu.name() + ", platform=" + platform.name());
+                throw new IllegalArgumentException(Messages.InstallerPathResolver_unsupportedArch(version, cpu.name(), platform.name()));
             }
             arch = cpu.name();
             break;
         default:
-            throw new IllegalArgumentException("Unresolvable nodeJS installer for version=" + version + ", cpu=" + cpu.name());
+            throw new IllegalArgumentException(Messages.InstallerPathResolver_unsupportedArch(version, cpu.name(), "unknown"));
         }
 
         if (os == null) {
