@@ -45,7 +45,7 @@
         <jenkins.version>2.60.3</jenkins.version>
         <java.level>8</java.level>
         <config-file-provider-plugin.version>3.6</config-file-provider-plugin.version>
-        <byte-buddy.version>1.9.10</byte-buddy.version>
+        <byte-buddy.version>1.9.10 1.9.13</byte-buddy.version>
 
         <workflow-api-plugin.version>2.22</workflow-api-plugin.version>
         <workflow-cps-plugin.version>2.42</workflow-cps-plugin.version>
