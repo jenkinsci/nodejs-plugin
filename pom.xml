@@ -7,7 +7,7 @@
     </parent>
 
     <artifactId>nodejs</artifactId>
-    <version>1.2.10-SNAPSHOT</version>
+    <version>1.3.0</version>
     <name>NodeJS Plugin</name>
     <description>Executes NodeJS script as a build step.</description>
     <url>http://wiki.jenkins-ci.org/display/JENKINS/NodeJS+Plugin</url>
@@ -139,7 +139,7 @@
         <connection>scm:git:git://github.com/jenkinsci/nodejs-plugin.git</connection>
         <developerConnection>scm:git:git@github.com:jenkinsci/nodejs-plugin.git</developerConnection>
         <url>https://github.com/jenkinsci/nodejs-plugin</url>
-        <tag>HEAD</tag>
+        <tag>nodejs-1.3.0</tag>
     </scm>
 
     <pluginRepositories>
