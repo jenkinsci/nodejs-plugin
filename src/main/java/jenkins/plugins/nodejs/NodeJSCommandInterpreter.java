@@ -158,11 +158,12 @@ public class NodeJSCommandInterpreter extends CommandInterpreter {
             }
 
             FilePath workspace = build.getWorkspace();
-
-            // configure cache location
-            FilePath cacheLocation = getCacheLocationStrategy().locate(workspace);
-            if (cacheLocation != null) {
-                newEnv.put(NodeJSConstants.NPM_CACHE_LOCATION, cacheLocation.getRemote());
+            if (workspace != null) {
+                // configure cache location
+                FilePath cacheLocation = getCacheLocationStrategy().locate(workspace);
+                if (cacheLocation != null) {
+                    newEnv.put(NodeJSConstants.NPM_CACHE_LOCATION, cacheLocation.getRemote());
+                }
             }
 
             if (configId != null) {

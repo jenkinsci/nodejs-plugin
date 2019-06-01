@@ -53,7 +53,7 @@ public class PerExecutorCacheLocationLocator extends CacheLocationLocator {
         if (node == null) {
             throw new IllegalStateException(Messages.NodeJSBuilders_nodeOffline());
         }
-        final FilePath rootPath = node != null ? node.getRootPath() : null;
+        final FilePath rootPath = node.getRootPath();
         final Executor executor = Executor.currentExecutor();
         if (rootPath == null || executor == null) {
             return null;
