@@ -177,6 +177,21 @@ public class NodeJSBuildWrapper extends SimpleBuildWrapper {
         }
     }
 
+    /**
+     * Migrate old data, set cacheLocationStrategy
+     *
+     * @see
+     *      <a href="https://wiki.jenkins-ci.org/display/JENKINS/Hint+on+retaining+backward+compatibility">
+     *          Jenkins wiki entry on the subject</a>
+     *
+     * @return
+     *      must be always 'this'
+     */
+    protected Object readResolve() {
+        this.setCacheLocationStrategy(this.cacheLocationStrategy);
+        return this;
+    }
+
     @Symbol("nodejs")
     @Extension
     public static final class DescriptorImpl extends BuildWrapperDescriptor {
