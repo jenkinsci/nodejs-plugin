@@ -27,7 +27,10 @@ import static org.junit.Assert.*;
 
 import java.io.File;
 import java.io.IOException;
-
+import java.util.List;
+import java.util.Optional;
+import org.apache.tools.ant.types.Assertions;
+import org.hamcrest.CoreMatchers;
 import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.Issue;
@@ -41,11 +44,15 @@ import com.gargoylesoftware.htmlunit.html.HtmlForm;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
 
 import hudson.model.Computer;
+import hudson.model.FreeStyleProject;
+import hudson.model.Project;
 import hudson.tools.InstallSourceProperty;
 import hudson.tools.ToolProperty;
 import hudson.tools.ToolPropertyDescriptor;
 import hudson.util.DescribableList;
 import jenkins.model.Jenkins;
+import jenkins.plugins.nodejs.NodeJSBuildWrapper;
+import jenkins.plugins.nodejs.cache.DefaultCacheLocationLocator;
 import jenkins.plugins.nodejs.tools.NodeJSInstallation.DescriptorImpl;
 
 public class NodeJSInstallationTest {
@@ -79,6 +86,22 @@ public class NodeJSInstallationTest {
 
         assertTrue("NodeJS installations file has not been copied",  installationsFile.exists());
         verify();
+    }
+
+    /**
+     * Verify that the serialisation is backward compatible.
+     */
+    @LocalData
+    @Test
+    @Issue("JENKINS-57844")
+    public void test_serialisation_is_compatible_with_version_1_2_x() throws Exception {
+        FreeStyleProject prj = r.jenkins.getAllItems(hudson.model.FreeStyleProject.class) //
+                .stream() //
+                .filter(p -> "test".equals(p.getName())) //
+                .findFirst().get();
+
+        NodeJSBuildWrapper step = prj.getBuildWrappersList().get(NodeJSBuildWrapper.class);
+        assertThat(step.getCacheLocationStrategy(), CoreMatchers.instanceOf(DefaultCacheLocationLocator.class));
     }
 
     /**
