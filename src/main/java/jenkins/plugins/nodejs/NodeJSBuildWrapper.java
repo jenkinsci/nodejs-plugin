@@ -187,7 +187,7 @@ public class NodeJSBuildWrapper extends SimpleBuildWrapper {
      * @return
      *      must be always 'this'
      */
-    protected Object readResolve() {
+    private Object readResolve() {
         this.setCacheLocationStrategy(null); // use default logic in the default setter method
         return this;
     }
