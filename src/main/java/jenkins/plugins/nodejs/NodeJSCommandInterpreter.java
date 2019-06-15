@@ -235,6 +235,22 @@ public class NodeJSCommandInterpreter extends CommandInterpreter {
     }
 
     /**
+     * Migrate old data, set cacheLocationStrategy
+     *
+     * @see <a href=
+     *      "https://wiki.jenkins-ci.org/display/JENKINS/Hint+on+retaining+backward+compatibility">
+     *      Jenkins wiki entry on the subject</a>
+     *
+     * @return must be always 'this'
+     */
+    private Object readResolve() {
+        if (cacheLocationStrategy == null) {
+            this.setCacheLocationStrategy(null); // use default logic in the default setter method
+        }
+        return this;
+    }
+
+    /**
      * Provides builder details for the job configuration page.
      *
      * @author cliffano

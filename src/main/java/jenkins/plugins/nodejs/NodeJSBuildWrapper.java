@@ -180,15 +180,16 @@ public class NodeJSBuildWrapper extends SimpleBuildWrapper {
     /**
      * Migrate old data, set cacheLocationStrategy
      *
-     * @see
-     *      <a href="https://wiki.jenkins-ci.org/display/JENKINS/Hint+on+retaining+backward+compatibility">
-     *          Jenkins wiki entry on the subject</a>
+     * @see <a href=
+     *      "https://wiki.jenkins-ci.org/display/JENKINS/Hint+on+retaining+backward+compatibility">
+     *      Jenkins wiki entry on the subject</a>
      *
-     * @return
-     *      must be always 'this'
+     * @return must be always 'this'
      */
     private Object readResolve() {
-        this.setCacheLocationStrategy(null); // use default logic in the default setter method
+        if (cacheLocationStrategy == null) {
+            this.setCacheLocationStrategy(null); // use default logic in the default setter method
+        }
         return this;
     }
 

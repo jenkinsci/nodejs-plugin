@@ -34,7 +34,8 @@ import java.io.File;
 import java.util.List;
 import jenkins.plugins.nodejs.VerifyEnvVariableBuilder.EnvVarVerifier;
 import jenkins.plugins.nodejs.VerifyEnvVariableBuilder.FileVerifier;
-import jenkins.plugins.nodejs.cache.CacheLocationLocator;
+import jenkins.plugins.nodejs.cache.DefaultCacheLocationLocator;
+import jenkins.plugins.nodejs.cache.PerJobCacheLocationLocator;
 import jenkins.plugins.nodejs.configfiles.NPMConfig;
 import jenkins.plugins.nodejs.configfiles.NPMRegistry;
 import jenkins.plugins.nodejs.tools.NodeJSInstallation;
@@ -47,6 +48,7 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.jvnet.hudson.test.Issue;
 import org.jvnet.hudson.test.JenkinsRule;
+import org.jvnet.hudson.test.recipes.LocalData;
 import org.powermock.api.mockito.PowerMockito;
 
 import static org.junit.Assert.*;
@@ -124,6 +126,38 @@ public class NodeJSBuildWrapperTest {
         job.getBuildWrappersList().add(bw);
 
         j.assertBuildStatus(Result.FAILURE, job.scheduleBuild2(0));
+    }
+
+    /**
+     * Verify that the serialisation is backward compatible.
+     */
+    @LocalData
+    @Test
+    @Issue("JENKINS-57844")
+    public void test_serialisation_is_compatible_with_version_1_2_x() throws Exception {
+        FreeStyleProject prj = j.jenkins.getAllItems(hudson.model.FreeStyleProject.class) //
+                .stream() //
+                .filter(p -> "test".equals(p.getName())) //
+                .findFirst().get();
+
+        NodeJSBuildWrapper step = prj.getBuildWrappersList().get(NodeJSBuildWrapper.class);
+        assertThat(step.getCacheLocationStrategy(), CoreMatchers.instanceOf(DefaultCacheLocationLocator.class));
+    }
+
+    /**
+     * Verify reloading jenkins job configuration use the saved cache strategy instead reset to default.
+     */
+    @LocalData
+    @Test
+    @Issue("JENKINS-58029")
+    public void test_reloading_job_configuration_contains_saved_cache_strategy() throws Exception {
+        FreeStyleProject prj = j.jenkins.getAllItems(hudson.model.FreeStyleProject.class) //
+                .stream() //
+                .filter(p -> "test".equals(p.getName())) //
+                .findFirst().get();
+
+        NodeJSBuildWrapper step = prj.getBuildWrappersList().get(NodeJSBuildWrapper.class);
+        assertThat(step.getCacheLocationStrategy(), CoreMatchers.instanceOf(PerJobCacheLocationLocator.class));
     }
 
     @Test

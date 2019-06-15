@@ -23,23 +23,6 @@
  */
 package jenkins.plugins.nodejs;
 
-import static org.junit.Assert.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.List;
-
-import org.hamcrest.CoreMatchers;
-import org.jenkinsci.lib.configprovider.model.Config;
-import org.jenkinsci.plugins.configfiles.GlobalConfigFiles;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-import org.jvnet.hudson.test.Issue;
-import org.jvnet.hudson.test.JenkinsRule;
-
 import hudson.EnvVars;
 import hudson.FilePath;
 import hudson.Launcher;
@@ -48,15 +31,31 @@ import hudson.model.FreeStyleProject;
 import hudson.model.Node;
 import hudson.model.Result;
 import hudson.model.TaskListener;
+import java.io.File;
+import java.io.IOException;
+import java.util.List;
 import jenkins.plugins.nodejs.CIBuilderHelper.Verifier;
 import jenkins.plugins.nodejs.VerifyEnvVariableBuilder.EnvVarVerifier;
-import jenkins.plugins.nodejs.CIBuilderHelper;
+import jenkins.plugins.nodejs.cache.DefaultCacheLocationLocator;
+import jenkins.plugins.nodejs.cache.PerJobCacheLocationLocator;
 import jenkins.plugins.nodejs.configfiles.NPMConfig;
-import jenkins.plugins.nodejs.configfiles.NPMConfig.NPMConfigProvider;
 import jenkins.plugins.nodejs.configfiles.NPMRegistry;
 import jenkins.plugins.nodejs.tools.DetectionFailedException;
 import jenkins.plugins.nodejs.tools.NodeJSInstallation;
 import jenkins.plugins.nodejs.tools.Platform;
+import org.hamcrest.CoreMatchers;
+import org.jenkinsci.lib.configprovider.model.Config;
+import org.jenkinsci.plugins.configfiles.GlobalConfigFiles;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
+import org.jvnet.hudson.test.Issue;
+import org.jvnet.hudson.test.JenkinsRule;
+import org.jvnet.hudson.test.recipes.LocalData;
+
+import static org.junit.Assert.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 public class NodeJSCommandInterpreterTest {
 
@@ -148,6 +147,38 @@ public class NodeJSCommandInterpreterTest {
         FreeStyleProject job = j.createFreeStyleProject("free");
         job.getBuildersList().add(builder);
         j.assertBuildStatus(Result.FAILURE, job.scheduleBuild2(0));
+    }
+
+    /**
+     * Verify that the serialisation is backward compatible.
+     */
+    @LocalData
+    @Test
+    @Issue("JENKINS-57844")
+    public void test_serialisation_is_compatible_with_version_1_2_x() throws Exception {
+        FreeStyleProject prj = j.jenkins.getAllItems(hudson.model.FreeStyleProject.class) //
+                .stream() //
+                .filter(p -> "test".equals(p.getName())) //
+                .findFirst().get();
+
+        NodeJSCommandInterpreter step = prj.getBuildersList().get(NodeJSCommandInterpreter.class);
+        assertThat(step.getCacheLocationStrategy(), CoreMatchers.instanceOf(DefaultCacheLocationLocator.class));
+    }
+
+    /**
+     * Verify reloading jenkins job configuration use the saved cache strategy instead reset to default.
+     */
+    @LocalData
+    @Test
+    @Issue("JENKINS-58029")
+    public void test_reloading_job_configuration_contains_saved_cache_strategy() throws Exception {
+        FreeStyleProject prj = j.jenkins.getAllItems(hudson.model.FreeStyleProject.class) //
+                .stream() //
+                .filter(p -> "test".equals(p.getName())) //
+                .findFirst().get();
+
+        NodeJSCommandInterpreter step = prj.getBuildersList().get(NodeJSCommandInterpreter.class);
+        assertThat(step.getCacheLocationStrategy(), CoreMatchers.instanceOf(PerJobCacheLocationLocator.class));
     }
 
     @Test
