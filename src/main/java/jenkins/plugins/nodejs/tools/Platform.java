@@ -87,7 +87,7 @@ public enum Platform {
 
     private static Platform detect(Map<Object, Object> systemProperties) throws DetectionFailedException {
         String arch = ((String) systemProperties.get("os.name")).toLowerCase(Locale.ENGLISH);
-        if (arch.contains("linux") || arch.contains("freebsd") {
+        if (arch.contains("linux") || arch.contains("freebsd")) {
             return LINUX;
         }
         if (arch.contains("windows")) {
