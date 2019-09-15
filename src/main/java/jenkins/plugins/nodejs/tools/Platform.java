@@ -39,7 +39,7 @@ public enum Platform {
     WINDOWS("node.exe", "npm.cmd", ""), 
     OSX("node", "npm", "bin"), 
     SUNOS("node", "npm", "bin"),
-    FREEBSD("node","npm","/usr/local/bin");
+    FREEBSD("node","npm","bin");
 
     /**
      * Choose the file name suitable for the downloaded Node bundle.
