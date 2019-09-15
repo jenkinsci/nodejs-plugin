@@ -35,7 +35,11 @@ import jenkins.plugins.nodejs.Messages;
  * Supported platform.
  */
 public enum Platform {
-    LINUX("node", "npm", "bin"), WINDOWS("node.exe", "npm.cmd", ""), OSX("node", "npm", "bin"), SUNOS("node", "npm", "bin");
+    LINUX("node", "npm", "bin"), 
+    WINDOWS("node.exe", "npm.cmd", ""), 
+    OSX("node", "npm", "bin"), 
+    SUNOS("node", "npm", "bin"),
+    FREEBSD("node","npm","/usr/local/bin");
 
     /**
      * Choose the file name suitable for the downloaded Node bundle.
@@ -87,7 +91,7 @@ public enum Platform {
 
     private static Platform detect(Map<Object, Object> systemProperties) throws DetectionFailedException {
         String arch = ((String) systemProperties.get("os.name")).toLowerCase(Locale.ENGLISH);
-        if (arch.contains("linux") || arch.contains("freebsd")) {
+        if (arch.contains("linux")) {
             return LINUX;
         }
         if (arch.contains("windows")) {
@@ -99,6 +103,8 @@ public enum Platform {
         if (arch.contains("sunos")) {
             return SUNOS;
         }
+        if (arch.contains("freebsd"))
+            return FREEBSD;
         throw new DetectionFailedException(Messages.Platform_unknown(arch));
     }
 
