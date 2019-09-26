@@ -9,6 +9,7 @@ Either automatically upon [Jenkins post-initialization](https://wiki.jenkins.io/
 ```groovy
 #!/usr/bin/env groovy
 import hudson.tools.InstallSourceProperty
+import jenkins.model.Jenkins
 import jenkins.plugins.nodejs.tools.NodeJSInstallation
 import jenkins.plugins.nodejs.tools.NodeJSInstaller
 import static jenkins.plugins.nodejs.tools.NodeJSInstaller.DEFAULT_NPM_PACKAGES_REFRESH_HOURS
