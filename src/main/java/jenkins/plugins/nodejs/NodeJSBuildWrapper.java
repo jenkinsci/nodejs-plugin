@@ -187,7 +187,9 @@ public class NodeJSBuildWrapper extends SimpleBuildWrapper {
      * @return must be always 'this'
      */
     private Object readResolve() {
-        this.setCacheLocationStrategy(this.cacheLocationStrategy); // use default logic in the default setter method
+        // this.cacheLocationStrategy is null if this plugin gets updated from 1.2.9 to 1.3.0 because it would be
+        // missing in the xml config in this case. Otherwise it equals the value from xml-config.
+        this.setCacheLocationStrategy(this.cacheLocationStrategy); // use null-check in the default setter method
         return this;
     }
 
