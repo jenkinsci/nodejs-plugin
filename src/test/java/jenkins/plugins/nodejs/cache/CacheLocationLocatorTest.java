@@ -39,7 +39,7 @@ public class CacheLocationLocatorTest {
 
     @Test
     public void test_per_job() throws Exception {
-        Assert.assertEquals("expect the same location path passes as input", workspace, new PerJobCacheLocationLocator().locate(workspace));
+        Assert.assertEquals("expect the same location path passes as input", workspace.child(".npm"), new PerJobCacheLocationLocator().locate(workspace));
     }
 
     @Test

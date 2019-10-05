@@ -42,7 +42,7 @@ public class PerJobCacheLocationLocator extends CacheLocationLocator {
 
     @Override
     public FilePath locate(@Nonnull FilePath workspace) {
-        return workspace;
+        return workspace.child(".npm");
     }
 
     @Extension
