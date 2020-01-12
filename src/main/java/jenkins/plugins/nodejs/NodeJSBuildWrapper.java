@@ -40,6 +40,10 @@ import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -50,7 +54,6 @@ import jenkins.tasks.SimpleBuildWrapper;
 import org.jenkinsci.Symbol;
 import org.jenkinsci.lib.configprovider.model.ConfigFile;
 import org.jenkinsci.lib.configprovider.model.ConfigFileManager;
-import org.jenkinsci.plugins.configfiles.common.CleanTempFilesAction;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
@@ -173,7 +176,7 @@ public class NodeJSBuildWrapper extends SimpleBuildWrapper {
             ConfigFile cf = new ConfigFile(configId, null, true);
             FilePath configFile = ConfigFileManager.provisionConfigFile(cf, env, build, workspace, listener, new ArrayList<String>());
             context.env(NodeJSConstants.NPM_USERCONFIG, configFile.getRemote());
-            build.addAction(new CleanTempFilesAction(configFile.getRemote()));
+            context.setDisposer(new TempFileCleaner(Arrays.asList(configFile.getRemote())));
         }
     }
 
@@ -191,6 +194,28 @@ public class NodeJSBuildWrapper extends SimpleBuildWrapper {
         // missing in the xml config in this case. Otherwise it equals the value from xml-config.
         this.setCacheLocationStrategy(this.cacheLocationStrategy); // use null-check in the default setter method
         return this;
+    }
+
+    private static class TempFileCleaner extends Disposer {
+        private final static Logger LOGGER = Logger.getLogger(TempFileCleaner.class.getName());
+
+        private static final long serialVersionUID = 1;
+
+        private final List<String> tempFiles;
+
+        TempFileCleaner(List<String> tempFiles) {
+            this.tempFiles = tempFiles;
+        }
+
+        @Override
+        public void tearDown(Run<?, ?> build, FilePath workspace, Launcher launcher, TaskListener listener) throws IOException, InterruptedException {
+            listener.getLogger().println("Deleting " + tempFiles.size() + " temporary files");
+            for (String tempFile : tempFiles) {
+                LOGGER.log(Level.FINE, "Delete: {0}", new Object[]{tempFile});
+                new FilePath(workspace, tempFile).delete();
+            }
+        }
+
     }
 
     @Symbol("nodejs")
