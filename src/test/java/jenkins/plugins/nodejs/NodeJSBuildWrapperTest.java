@@ -23,24 +23,19 @@
  */
 package jenkins.plugins.nodejs;
 
-import hudson.EnvVars;
-import hudson.FilePath;
-import hudson.Launcher;
-import hudson.model.FreeStyleProject;
-import hudson.model.Node;
-import hudson.model.Result;
-import hudson.model.TaskListener;
+import static org.junit.Assert.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.RETURNS_SELF;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import java.io.File;
 import java.util.List;
-import jenkins.plugins.nodejs.VerifyEnvVariableBuilder.EnvVarVerifier;
-import jenkins.plugins.nodejs.VerifyEnvVariableBuilder.FileVerifier;
-import jenkins.plugins.nodejs.cache.DefaultCacheLocationLocator;
-import jenkins.plugins.nodejs.cache.PerJobCacheLocationLocator;
-import jenkins.plugins.nodejs.configfiles.NPMConfig;
-import jenkins.plugins.nodejs.configfiles.NPMRegistry;
-import jenkins.plugins.nodejs.tools.NodeJSInstallation;
-import jenkins.plugins.nodejs.tools.Platform;
-import org.hamcrest.CoreMatchers;
+
+import org.assertj.core.api.Assertions;
 import org.jenkinsci.lib.configprovider.model.Config;
 import org.jenkinsci.plugins.configfiles.GlobalConfigFiles;
 import org.junit.Rule;
@@ -51,9 +46,21 @@ import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.recipes.LocalData;
 import org.powermock.api.mockito.PowerMockito;
 
-import static org.junit.Assert.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import hudson.EnvVars;
+import hudson.FilePath;
+import hudson.Launcher;
+import hudson.model.FreeStyleProject;
+import hudson.model.Node;
+import hudson.model.Result;
+import hudson.model.TaskListener;
+import jenkins.plugins.nodejs.VerifyEnvVariableBuilder.EnvVarVerifier;
+import jenkins.plugins.nodejs.VerifyEnvVariableBuilder.FileVerifier;
+import jenkins.plugins.nodejs.cache.DefaultCacheLocationLocator;
+import jenkins.plugins.nodejs.cache.PerJobCacheLocationLocator;
+import jenkins.plugins.nodejs.configfiles.NPMConfig;
+import jenkins.plugins.nodejs.configfiles.NPMRegistry;
+import jenkins.plugins.nodejs.tools.NodeJSInstallation;
+import jenkins.plugins.nodejs.tools.Platform;
 
 public class NodeJSBuildWrapperTest {
 
@@ -141,7 +148,7 @@ public class NodeJSBuildWrapperTest {
                 .findFirst().get();
 
         NodeJSBuildWrapper step = prj.getBuildWrappersList().get(NodeJSBuildWrapper.class);
-        assertThat(step.getCacheLocationStrategy(), CoreMatchers.instanceOf(DefaultCacheLocationLocator.class));
+        Assertions.assertThat(step.getCacheLocationStrategy()).isInstanceOf(DefaultCacheLocationLocator.class);
     }
 
     /**
@@ -157,7 +164,7 @@ public class NodeJSBuildWrapperTest {
                 .findFirst().get();
 
         NodeJSBuildWrapper step = prj.getBuildWrappersList().get(NodeJSBuildWrapper.class);
-        assertThat(step.getCacheLocationStrategy(), CoreMatchers.instanceOf(PerJobCacheLocationLocator.class));
+        Assertions.assertThat(step.getCacheLocationStrategy()).isInstanceOf(PerJobCacheLocationLocator.class);
     }
 
     @Test
@@ -229,9 +236,9 @@ public class NodeJSBuildWrapperTest {
         public void verify(EnvVars env) {
             String expectedValue = installation.getHome();
             assertEquals("Unexpected value for " + NodeJSConstants.ENVVAR_NODEJS_HOME, expectedValue, env.get(NodeJSConstants.ENVVAR_NODEJS_HOME));
-            assertThat(env.get("PATH"), CoreMatchers.containsString(expectedValue));
+            Assertions.assertThat(env.get("PATH")).contains(expectedValue);
             // check that PATH is not exact the NodeJS home otherwise means PATH was overridden
-            assertThat(env.get("PATH"), CoreMatchers.is(CoreMatchers.not(expectedValue))); // JENKINS-41947
+            Assertions.assertThat(env.get("PATH")).isNotEqualTo(expectedValue); // JENKINS-41947
         }
     }
 

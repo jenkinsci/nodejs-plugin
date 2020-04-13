@@ -23,27 +23,22 @@
  */
 package jenkins.plugins.nodejs;
 
-import hudson.EnvVars;
-import hudson.FilePath;
-import hudson.Launcher;
-import hudson.model.AbstractBuild;
-import hudson.model.FreeStyleProject;
-import hudson.model.Node;
-import hudson.model.Result;
-import hudson.model.TaskListener;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.RETURNS_SELF;
+import static org.mockito.Mockito.doCallRealMethod;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
-import jenkins.plugins.nodejs.CIBuilderHelper.Verifier;
-import jenkins.plugins.nodejs.VerifyEnvVariableBuilder.EnvVarVerifier;
-import jenkins.plugins.nodejs.cache.DefaultCacheLocationLocator;
-import jenkins.plugins.nodejs.cache.PerJobCacheLocationLocator;
-import jenkins.plugins.nodejs.configfiles.NPMConfig;
-import jenkins.plugins.nodejs.configfiles.NPMRegistry;
-import jenkins.plugins.nodejs.tools.DetectionFailedException;
-import jenkins.plugins.nodejs.tools.NodeJSInstallation;
-import jenkins.plugins.nodejs.tools.Platform;
-import org.hamcrest.CoreMatchers;
+
+import org.assertj.core.api.Assertions;
 import org.jenkinsci.lib.configprovider.model.Config;
 import org.jenkinsci.plugins.configfiles.GlobalConfigFiles;
 import org.junit.Rule;
@@ -53,9 +48,23 @@ import org.jvnet.hudson.test.Issue;
 import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.recipes.LocalData;
 
-import static org.junit.Assert.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import hudson.EnvVars;
+import hudson.FilePath;
+import hudson.Launcher;
+import hudson.model.AbstractBuild;
+import hudson.model.FreeStyleProject;
+import hudson.model.Node;
+import hudson.model.Result;
+import hudson.model.TaskListener;
+import jenkins.plugins.nodejs.CIBuilderHelper.Verifier;
+import jenkins.plugins.nodejs.VerifyEnvVariableBuilder.EnvVarVerifier;
+import jenkins.plugins.nodejs.cache.DefaultCacheLocationLocator;
+import jenkins.plugins.nodejs.cache.PerJobCacheLocationLocator;
+import jenkins.plugins.nodejs.configfiles.NPMConfig;
+import jenkins.plugins.nodejs.configfiles.NPMRegistry;
+import jenkins.plugins.nodejs.tools.DetectionFailedException;
+import jenkins.plugins.nodejs.tools.NodeJSInstallation;
+import jenkins.plugins.nodejs.tools.Platform;
 
 public class NodeJSCommandInterpreterTest {
 
@@ -74,7 +83,7 @@ public class NodeJSCommandInterpreterTest {
                 assertFalse("No Environments", build.getEnvironments().isEmpty());
 
                 EnvVars env = build.getEnvironment(listener);
-                assertThat(env.keySet(), CoreMatchers.hasItems(NodeJSConstants.ENVVAR_NODEJS_PATH, NodeJSConstants.ENVVAR_NODEJS_HOME));
+                Assertions.assertThat(env.keySet()).contains(NodeJSConstants.ENVVAR_NODEJS_PATH, NodeJSConstants.ENVVAR_NODEJS_HOME);
                 assertEquals(getTestHome(), env.get(NodeJSConstants.ENVVAR_NODEJS_HOME));
                 assertEquals(getTestBin(), env.get(NodeJSConstants.ENVVAR_NODEJS_PATH));
             }
@@ -162,7 +171,7 @@ public class NodeJSCommandInterpreterTest {
                 .findFirst().get();
 
         NodeJSCommandInterpreter step = prj.getBuildersList().get(NodeJSCommandInterpreter.class);
-        assertThat(step.getCacheLocationStrategy(), CoreMatchers.instanceOf(DefaultCacheLocationLocator.class));
+        Assertions.assertThat(step.getCacheLocationStrategy()).isInstanceOf(DefaultCacheLocationLocator.class);
     }
 
     /**
@@ -178,7 +187,7 @@ public class NodeJSCommandInterpreterTest {
                 .findFirst().get();
 
         NodeJSCommandInterpreter step = prj.getBuildersList().get(NodeJSCommandInterpreter.class);
-        assertThat(step.getCacheLocationStrategy(), CoreMatchers.instanceOf(PerJobCacheLocationLocator.class));
+        Assertions.assertThat(step.getCacheLocationStrategy()).isInstanceOf(PerJobCacheLocationLocator.class);
     }
 
     @Test

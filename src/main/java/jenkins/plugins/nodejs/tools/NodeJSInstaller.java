@@ -128,7 +128,7 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
         }
 
         if (installable instanceof NodeSpecific) {
-            installable = (Installable) ((NodeSpecific) installable).forNode(node, log);
+            installable = (Installable) ((NodeSpecific<?>) installable).forNode(node, log);
         }
 
         if (!isUpToDate(expected, installable)) {
@@ -205,7 +205,7 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
     }
 
     private void buildProxyEnvVars(EnvVars env, TaskListener log) throws IOException, URISyntaxException {
-        ProxyConfiguration proxycfg = Jenkins.getInstance().proxy;
+        ProxyConfiguration proxycfg = Jenkins.get().proxy;
         if (proxycfg == null) {
             // no proxy configured
             return;

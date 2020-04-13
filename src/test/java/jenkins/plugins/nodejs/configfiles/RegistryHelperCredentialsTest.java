@@ -23,9 +23,15 @@
  */
 package jenkins.plugins.nodejs.configfiles;
 
-import static jenkins.plugins.nodejs.NodeJSConstants.*;
-import static org.hamcrest.CoreMatchers.*;
-import static org.junit.Assert.*;
+import static jenkins.plugins.nodejs.NodeJSConstants.NPM_SETTINGS_ALWAYS_AUTH;
+import static jenkins.plugins.nodejs.NodeJSConstants.NPM_SETTINGS_AUTH;
+import static jenkins.plugins.nodejs.NodeJSConstants.NPM_SETTINGS_PASSWORD;
+import static jenkins.plugins.nodejs.NodeJSConstants.NPM_SETTINGS_REGISTRY;
+import static jenkins.plugins.nodejs.NodeJSConstants.NPM_SETTINGS_USER;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
@@ -35,6 +41,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.commons.codec.binary.Base64;
+import org.assertj.core.api.Assertions;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -145,7 +152,7 @@ public class RegistryHelperCredentialsTest {
             String auth = npmrc.get(NPM_SETTINGS_AUTH);
             assertNotNull("Unexpected value for " + NPM_SETTINGS_AUTH, npmrc);
             auth = new String(Base64.decodeBase64(auth));
-            assertThat(auth, allOf(startsWith(user.getUsername()), endsWith("mypassword")));
+            Assertions.assertThat(auth).startsWith(user.getUsername()).endsWith("mypassword");
         }
 
         // test registry URL entry

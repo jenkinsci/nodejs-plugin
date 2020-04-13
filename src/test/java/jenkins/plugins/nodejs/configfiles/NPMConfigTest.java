@@ -23,9 +23,9 @@
  */
 package jenkins.plugins.nodejs.configfiles;
 
-import static org.hamcrest.CoreMatchers.*;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertNotNull;
 
+import org.assertj.core.api.Assertions;
 import org.jenkinsci.lib.configprovider.model.Config;
 import org.junit.Rule;
 import org.junit.Test;
@@ -42,13 +42,13 @@ public class NPMConfigTest {
     @Test
     public void test_load_template() {
         Descriptor<?> descriptor = j.jenkins.getDescriptor(NPMConfig.class);
-        assertNotNull("NPMConfi descriptor not registered", descriptor);
-        assertThat("Unexpected descriptor class", descriptor, instanceOf(NPMConfigProvider.class));
+        assertNotNull("NPMConfig descriptor not registered", descriptor);
+        Assertions.assertThat(descriptor).isInstanceOf(NPMConfigProvider.class).describedAs("Unexpected descriptor class");
 
         NPMConfigProvider provider = (NPMConfigProvider) descriptor;
         Config config = provider.newConfig("testId");
-        assertThat("Unexpected config class", config, instanceOf(NPMConfig.class));
-        assertThat("Expected the default template, instead got empty", config.content, allOf(notNullValue(), is(not(""))));
+        Assertions.assertThat(config).isInstanceOf(NPMConfig.class).describedAs("Unexpected config class");
+        Assertions.assertThat(config.content).isNotBlank().describedAs("Expected the default template, instead got empty");
     }
 
 }

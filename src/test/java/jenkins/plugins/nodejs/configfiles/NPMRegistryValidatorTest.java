@@ -23,18 +23,18 @@
  */
 package jenkins.plugins.nodejs.configfiles;
 
-import static org.hamcrest.CoreMatchers.*;
-import static org.junit.Assert.*;
-import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.isA;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.assertj.core.api.Assertions;
 import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
@@ -68,8 +68,8 @@ public class NPMRegistryValidatorTest {
         DescriptorImpl descriptor = new DescriptorImpl();
 
         FormValidation result = descriptor.doCheckScopes(true, "");
-        assertThat(result.kind, is(Kind.ERROR));
-        assertThat(result.getMessage(), is(Messages.NPMRegistry_DescriptorImpl_emptyScopes()));
+        Assertions.assertThat(result.kind).isEqualTo(Kind.ERROR);
+        Assertions.assertThat(result.getMessage()).isEqualTo(Messages.NPMRegistry_DescriptorImpl_emptyScopes());
     }
 
     @Test
@@ -77,8 +77,8 @@ public class NPMRegistryValidatorTest {
         DescriptorImpl descriptor = new DescriptorImpl();
 
         FormValidation result = descriptor.doCheckScopes(true, "@scope1");
-        assertThat(result.kind, is(Kind.WARNING));
-        assertThat(result.getMessage(), is(Messages.NPMRegistry_DescriptorImpl_invalidCharInScopes()));
+        Assertions.assertThat(result.kind).isEqualTo(Kind.WARNING);
+        Assertions.assertThat(result.getMessage()).isEqualTo(Messages.NPMRegistry_DescriptorImpl_invalidCharInScopes());
     }
 
     @Test
@@ -86,8 +86,8 @@ public class NPMRegistryValidatorTest {
         DescriptorImpl descriptor = new DescriptorImpl();
 
         FormValidation result = descriptor.doCheckScopes(true, "@");
-        assertThat(result.kind, is(Kind.ERROR));
-        assertThat(result.getMessage(), is(Messages.NPMRegistry_DescriptorImpl_invalidScopes()));
+        Assertions.assertThat(result.kind).isEqualTo(Kind.ERROR);
+        Assertions.assertThat(result.getMessage()).isEqualTo(Messages.NPMRegistry_DescriptorImpl_invalidScopes());
     }
 
     @Test
@@ -95,7 +95,7 @@ public class NPMRegistryValidatorTest {
         DescriptorImpl descriptor = new DescriptorImpl();
 
         FormValidation result = descriptor.doCheckScopes(true, "scope1 scope2 scope3");
-        assertThat(result.kind, is(Kind.OK));
+        Assertions.assertThat(result.kind).isEqualTo(Kind.OK);
     }
 
     @Test
@@ -103,8 +103,8 @@ public class NPMRegistryValidatorTest {
         DescriptorImpl descriptor = new DescriptorImpl();
 
         FormValidation result = descriptor.doCheckUrl("");
-        assertThat(result.kind, is(Kind.ERROR));
-        assertThat(result.getMessage(), is(Messages.NPMRegistry_DescriptorImpl_emptyRegistryURL()));
+        Assertions.assertThat(result.kind).isEqualTo(Kind.ERROR);
+        Assertions.assertThat(result.getMessage()).isEqualTo(Messages.NPMRegistry_DescriptorImpl_emptyRegistryURL());
     }
 
     @Test
@@ -112,11 +112,11 @@ public class NPMRegistryValidatorTest {
         DescriptorImpl descriptor = new DescriptorImpl();
 
         FormValidation result = descriptor.doCheckUrl("${REGISTRY_URL}/root");
-        assertThat(result.kind, is(Kind.OK));
+        Assertions.assertThat(result.kind).isEqualTo(Kind.OK);
         result = descriptor.doCheckUrl("http://${SERVER_NAME}/root");
-        assertThat(result.kind, is(Kind.OK));
+        Assertions.assertThat(result.kind).isEqualTo(Kind.OK);
         result = descriptor.doCheckUrl("http://acme.com/${CONTEXT_ROOT}");
-        assertThat(result.kind, is(Kind.OK));
+        Assertions.assertThat(result.kind).isEqualTo(Kind.OK);
     }
 
     @Test
@@ -124,7 +124,7 @@ public class NPMRegistryValidatorTest {
         DescriptorImpl descriptor = new DescriptorImpl();
 
         FormValidation result = descriptor.doCheckUrl("http://acme.com");
-        assertThat(result.kind, is(Kind.OK));
+        Assertions.assertThat(result.kind).isEqualTo(Kind.OK);
     }
 
     @Test
@@ -132,8 +132,8 @@ public class NPMRegistryValidatorTest {
         DescriptorImpl descriptor = new DescriptorImpl();
 
         FormValidation result = descriptor.doCheckUrl("hpp://acme.com/root");
-        assertThat(result.kind, is(Kind.ERROR));
-        assertThat(result.getMessage(), is(Messages.NPMRegistry_DescriptorImpl_invalidRegistryURL()));
+        Assertions.assertThat(result.kind).isEqualTo(Kind.ERROR);
+        Assertions.assertThat(result.getMessage()).isEqualTo(Messages.NPMRegistry_DescriptorImpl_invalidRegistryURL());
     }
 
     @Test
@@ -148,12 +148,12 @@ public class NPMRegistryValidatorTest {
         String serverURL = "http://acme.com";
 
         FormValidation result = descriptor.doCheckCredentialsId(prj, credentialsId, serverURL);
-        assertThat(result.kind, is(Kind.ERROR));
-        assertThat(result.getMessage(), is(Messages.NPMRegistry_DescriptorImpl_invalidCredentialsId()));
+        Assertions.assertThat(result.kind).isEqualTo(Kind.ERROR);
+        Assertions.assertThat(result.getMessage()).isEqualTo(Messages.NPMRegistry_DescriptorImpl_invalidCredentialsId());
 
         when(prj.hasPermission(isA(Permission.class))).thenReturn(false);
         result = descriptor.doCheckCredentialsId(prj, credentialsId, serverURL);
-        assertThat(result.kind, is(Kind.OK));
+        Assertions.assertThat(result.kind).isEqualTo(Kind.OK);
     }
 
     @Test
@@ -167,11 +167,11 @@ public class NPMRegistryValidatorTest {
         String serverURL = "http://acme.com";
 
         FormValidation result = descriptor.doCheckCredentialsId(prj, "", serverURL);
-        assertThat(result.kind, is(Kind.WARNING));
-        assertThat(result.getMessage(), is(Messages.NPMRegistry_DescriptorImpl_emptyCredentialsId()));
+        Assertions.assertThat(result.kind).isEqualTo(Kind.WARNING);
+        Assertions.assertThat(result.getMessage()).isEqualTo(Messages.NPMRegistry_DescriptorImpl_emptyCredentialsId());
         result = descriptor.doCheckCredentialsId(prj, null, serverURL);
-        assertThat(result.kind, is(Kind.WARNING));
-        assertThat(result.getMessage(), is(Messages.NPMRegistry_DescriptorImpl_emptyCredentialsId()));
+        Assertions.assertThat(result.kind).isEqualTo(Kind.WARNING);
+        Assertions.assertThat(result.getMessage()).isEqualTo(Messages.NPMRegistry_DescriptorImpl_emptyCredentialsId());
     }
 
     @Test
@@ -191,7 +191,7 @@ public class NPMRegistryValidatorTest {
         String serverURL = "http://acme.com";
 
         FormValidation result = descriptor.doCheckCredentialsId(prj, credentialsId, serverURL);
-        assertThat(result.kind, is(Kind.OK));
+        Assertions.assertThat(result.kind).isEqualTo(Kind.OK);
     }
 
 }

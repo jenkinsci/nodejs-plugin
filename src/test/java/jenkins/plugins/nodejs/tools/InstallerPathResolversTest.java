@@ -23,8 +23,7 @@
  */
 package jenkins.plugins.nodejs.tools;
 
-import static org.hamcrest.CoreMatchers.*;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -35,6 +34,7 @@ import java.util.Collection;
 import java.util.TreeSet;
 
 import org.apache.commons.io.IOUtils;
+import org.assertj.core.api.Assertions;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -106,7 +106,7 @@ public class InstallerPathResolversTest {
             if (testDownload) {
                 assertDownload(url);
             } else {
-                assertThat(expectedURLs, hasItem(url.toString()));
+                Assertions.assertThat(expectedURLs).contains(url.toString());
             }
 
             if (showDownloadURL) {

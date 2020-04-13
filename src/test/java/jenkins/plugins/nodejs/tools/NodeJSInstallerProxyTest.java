@@ -23,13 +23,11 @@
  */
 package jenkins.plugins.nodejs.tools;
 
-import static org.hamcrest.CoreMatchers.*;
-import static org.junit.Assert.*;
-
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.Charset;
 
+import org.assertj.core.api.Assertions;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -88,10 +86,10 @@ public class NodeJSInstallerProxyTest {
         EnvVars env = new EnvVars();
         Whitebox.invokeMethod(installer, "buildProxyEnvVars", env, log);
 
-        assertThat(env.keySet(), hasItems("HTTP_PROXY", "HTTPS_PROXY"));
-        assertThat(env.get("HTTP_PROXY"), is(expectedURL));
-        assertThat(env.get("HTTPS_PROXY"), is(expectedURL));
-        assertThat(env.keySet(), not(hasItem("NO_PROXY")));
+        Assertions.assertThat(env.keySet()).contains("HTTP_PROXY", "HTTPS_PROXY");
+        Assertions.assertThat(env.get("HTTP_PROXY")).isEqualTo(expectedURL);
+        Assertions.assertThat(env.get("HTTPS_PROXY")).isEqualTo(expectedURL);
+        Assertions.assertThat(env.keySet()).doesNotContain("NO_PROXY");
     }
 
     @Test
@@ -102,8 +100,8 @@ public class NodeJSInstallerProxyTest {
         EnvVars env = new EnvVars();
         Whitebox.invokeMethod(installer, "buildProxyEnvVars", env, log);
 
-        assertThat(env.keySet(), hasItems("HTTP_PROXY", "HTTPS_PROXY"));
-        assertThat(env.get("NO_PROXY"), is("*.npm.org,registry.npm.org"));
+        Assertions.assertThat(env.keySet()).contains("HTTP_PROXY", "HTTPS_PROXY");
+        Assertions.assertThat(env.get("NO_PROXY")).isEqualTo("*.npm.org,registry.npm.org");
     }
 
 }

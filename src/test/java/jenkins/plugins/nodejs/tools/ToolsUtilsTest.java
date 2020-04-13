@@ -23,10 +23,10 @@
  */
 package jenkins.plugins.nodejs.tools;
 
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
-import org.hamcrest.CoreMatchers;
-import org.junit.Assert;
+import org.assertj.core.api.Assertions;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -60,10 +60,10 @@ public class ToolsUtilsTest {
         
         when(CPU.of(currentNode)).thenReturn(CPU.amd64);
         CPU cpu = ToolsUtils.getCPU(currentNode, true);
-        Assert.assertThat(cpu, CoreMatchers.is(CPU.i386));
+        Assertions.assertThat(cpu).isEqualTo(CPU.i386);
 
         cpu = ToolsUtils.getCPU(currentNode);
-        Assert.assertThat(cpu, CoreMatchers.is(CPU.amd64));
+        Assertions.assertThat(cpu).isEqualTo(CPU.amd64);
     }
 
     @Test(expected = DetectionFailedException.class)
@@ -80,11 +80,11 @@ public class ToolsUtilsTest {
 
         when(CPU.of(currentNode)).thenReturn(CPU.armv7l);
         CPU cpu = ToolsUtils.getCPU(currentNode, true);
-        Assert.assertThat(cpu, CoreMatchers.is(CPU.armv7l));
+        Assertions.assertThat(cpu).isEqualTo(CPU.armv7l);
 
         when(CPU.of(currentNode)).thenReturn(CPU.armv6l);
         cpu = ToolsUtils.getCPU(currentNode, true);
-        Assert.assertThat(cpu, CoreMatchers.is(CPU.armv6l));
+        Assertions.assertThat(cpu).isEqualTo(CPU.armv6l);
     }
 
 }

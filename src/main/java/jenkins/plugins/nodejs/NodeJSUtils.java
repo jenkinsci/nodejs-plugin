@@ -62,7 +62,7 @@ import jenkins.plugins.nodejs.tools.NodeJSInstallation.DescriptorImpl;
      */
     @Nonnull
     public static NodeJSInstallation[] getInstallations() {
-        DescriptorImpl descriptor = Jenkins.getActiveInstance().getDescriptorByType(NodeJSInstallation.DescriptorImpl.class);
+        DescriptorImpl descriptor = Jenkins.get().getDescriptorByType(NodeJSInstallation.DescriptorImpl.class);
         if (descriptor == null) {
             throw new IllegalStateException("Impossible retrieve NodeJSInstallation descriptor");
         }

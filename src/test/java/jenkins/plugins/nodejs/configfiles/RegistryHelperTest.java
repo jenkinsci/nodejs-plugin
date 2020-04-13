@@ -23,12 +23,13 @@
  */
 package jenkins.plugins.nodejs.configfiles;
 
-import static org.hamcrest.CoreMatchers.*;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 
 import java.util.Arrays;
 import java.util.Map;
 
+import org.assertj.core.api.Assertions;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -68,8 +69,8 @@ public class RegistryHelperTest {
         assertFalse(resolvedCredentials.isEmpty());
         assertEquals(1, resolvedCredentials.size());
 
-        assertThat(resolvedCredentials.keySet(), hasItem(privateRegistry.getUrl()));
-        assertThat(resolvedCredentials.get(privateRegistry.getUrl()), equalTo(user));
+        Assertions.assertThat(resolvedCredentials.keySet().contains(privateRegistry.getUrl()));
+        Assertions.assertThat(resolvedCredentials.get(privateRegistry.getUrl())).isEqualTo(user);
     }
 
 }

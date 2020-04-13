@@ -245,7 +245,7 @@ public class NPMRegistry extends AbstractDescribableImpl<NPMRegistry> implements
         public FormValidation doCheckCredentialsId(@CheckForNull @AncestorInPath Item item,
                 @QueryParameter String credentialsId, @QueryParameter String serverUrl) {
             if (item == null) {
-                if (!Jenkins.getActiveInstance().hasPermission(Jenkins.ADMINISTER)) {
+                if (!Jenkins.get().hasPermission(Jenkins.ADMINISTER)) {
                     return FormValidation.ok();
                 }
             } else if (!item.hasPermission(Item.EXTENDED_READ) && !item.hasPermission(CredentialsProvider.USE_ITEM)) {
@@ -268,7 +268,7 @@ public class NPMRegistry extends AbstractDescribableImpl<NPMRegistry> implements
 
             credentialsId = StringUtils.trimToEmpty(credentialsId);
             if (item == null) {
-                if (!Jenkins.getActiveInstance().hasPermission(Jenkins.ADMINISTER)) {
+                if (!Jenkins.get().hasPermission(Jenkins.ADMINISTER)) {
                     return result.includeCurrentValue(credentialsId);
                 }
             } else {
@@ -286,7 +286,7 @@ public class NPMRegistry extends AbstractDescribableImpl<NPMRegistry> implements
             if (item != null) {
                 result.includeMatchingAs(authentication, item, type, build, always);
             } else {
-                result.includeMatchingAs(authentication, Jenkins.getActiveInstance(), type, build, always);
+                result.includeMatchingAs(authentication, Jenkins.get(), type, build, always);
             }
             return result;
         }

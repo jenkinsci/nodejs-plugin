@@ -23,8 +23,9 @@
  */
 package jenkins.plugins.nodejs;
 
-import static org.junit.Assert.*;
-import static org.mockito.Mockito.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.doReturn;
 
 import java.io.File;
 import java.io.IOException;
@@ -53,7 +54,6 @@ import hudson.model.EnvironmentList;
 import hudson.model.FreeStyleBuild;
 import hudson.model.FreeStyleProject;
 import jenkins.plugins.nodejs.configfiles.NPMConfig;
-import jenkins.plugins.nodejs.configfiles.NPMConfig.NPMConfigProvider;
 import jenkins.plugins.nodejs.configfiles.NPMRegistry;
 import jenkins.plugins.nodejs.configfiles.Npmrc;
 
