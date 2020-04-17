@@ -25,7 +25,7 @@ THE SOFTWARE.
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
     <f:entry title="${%nodeJSInstallationName.title}" description="${%nodeJSInstallationName.description}">
         <select class="setting-input" name="_.nodeJSInstallationName">
-        	<f:option value="">${%nodeJSInstallationName.emptyValue}</f:option>
+            <f:option value="">${%nodeJSInstallationName.emptyValue}</f:option>
             <j:forEach var="inst" items="${descriptor.installations}">
                 <f:option selected="${inst.name==instance.nodeJSInstallationName}">${inst.name}</f:option>
             </j:forEach>
@@ -40,5 +40,5 @@ THE SOFTWARE.
         <f:select field="configId" />
     </f:entry>
 
-	<f:dropdownDescriptorSelector title="${%configId.cacheLocation}" field="cacheLocationStrategy" />
+    <f:dropdownDescriptorSelector title="${%configId.cacheLocation}" field="cacheLocationStrategy" />
 </j:jelly>

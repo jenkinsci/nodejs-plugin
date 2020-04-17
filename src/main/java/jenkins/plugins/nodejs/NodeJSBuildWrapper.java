@@ -159,7 +159,7 @@ public class NodeJSBuildWrapper extends SimpleBuildWrapper {
         ni = ni.forEnvironment(initialEnvironment);
         String exec = ni.getExecutable(launcher);
         if (exec == null) {
-        	throw new AbortException(Messages.NodeJSBuilders_noExecutableFound(ni.getHome()));
+            throw new AbortException(Messages.NodeJSBuilders_noExecutableFound(ni.getHome()));
         }
         ni.buildEnvVars(new EnvVarsAdapter(context));
 
@@ -243,7 +243,7 @@ public class NodeJSBuildWrapper extends SimpleBuildWrapper {
          * @return a collection of user npmrc files.
          */
         public ListBoxModel doFillConfigIdItems(@AncestorInPath ItemGroup<?> context) {
-        	return NodeJSDescriptorUtils.getConfigs(context);
+            return NodeJSDescriptorUtils.getConfigs(context);
         }
 
         /**

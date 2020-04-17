@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2018, Nikolas Falco
+ * Copyright (c) 2019, Nikolas Falco
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -217,8 +217,8 @@ public class NodeJSBuildWrapperTest {
     }
 
     private String getTestExecutable() throws Exception {
-    	Platform currentPlatform = Platform.current();
-		return new File(new File(getTestHome(), currentPlatform.binFolder), currentPlatform.nodeFileName).getAbsolutePath();
+        Platform currentPlatform = Platform.current();
+        return new File(new File(getTestHome(), currentPlatform.binFolder), currentPlatform.nodeFileName).getAbsolutePath();
     }
 
     private String getTestHome() {

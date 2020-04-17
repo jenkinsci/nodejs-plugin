@@ -35,5 +35,5 @@ THE SOFTWARE.
         <f:select field="configId" />
     </f:entry>
 
-	<f:dropdownDescriptorSelector title="${%configId.cacheLocation}" field="cacheLocationStrategy" />
+    <f:dropdownDescriptorSelector title="${%configId.cacheLocation}" field="cacheLocationStrategy" />
 </j:jelly>

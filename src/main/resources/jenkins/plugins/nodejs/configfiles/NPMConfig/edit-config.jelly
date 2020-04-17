@@ -23,19 +23,19 @@ THE SOFTWARE.
 -->
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
-	<!-- needed for repeatable properties -->
-	<j:set var="instance" value="${config}"/>
+    <!-- needed for repeatable properties -->
+    <j:set var="instance" value="${config}" />
 
-	<p>${%description}</p>
+    <p>${%description}</p>
 
-	<j:set var="descriptor" value="${config.descriptor}" />
-	<st:include page="id-name-and-comment" class="${descriptor.clazz}" />
+    <j:set var="descriptor" value="${config.descriptor}" />
+    <st:include page="id-name-and-comment" class="${descriptor.clazz}" />
 
-	<f:entry title="${%registry.title}">
-		<f:repeatableProperty field="registries" />
-	</f:entry>
+    <f:entry title="${%registry.title}">
+        <f:repeatableProperty field="registries" />
+    </f:entry>
 
-	<f:entry title="${%content.title}">
-		<f:textarea name="config.content" value="${it.content}" />
-	</f:entry>
+    <f:entry title="${%content.title}">
+        <f:textarea name="config.content" value="${it.content}" />
+    </f:entry>
 </j:jelly>

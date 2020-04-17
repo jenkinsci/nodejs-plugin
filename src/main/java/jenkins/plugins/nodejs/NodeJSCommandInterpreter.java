@@ -143,7 +143,7 @@ public class NodeJSCommandInterpreter extends CommandInterpreter {
                 ni = ni.forEnvironment(env);
                 String exec = ni.getExecutable(launcher);
                 if (exec == null) {
-                	listener.fatalError(Messages.NodeJSBuilders_noExecutableFound(ni.getHome()));
+                    listener.fatalError(Messages.NodeJSBuilders_noExecutableFound(ni.getHome()));
                     return false;
                 }
                 ni.buildEnvVars(newEnv);
