@@ -66,7 +66,6 @@ import jenkins.MasterToSlaveFileCallable;
 import jenkins.model.Jenkins;
 import jenkins.plugins.nodejs.Messages;
 import jenkins.plugins.nodejs.NodeJSConstants;
-import jenkins.plugins.tools.Installables;
 
 /**
  * Automatic NodeJS installer from nodejs.org
@@ -102,26 +101,11 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
         this.force32Bit = force32bit;
     }
 
-    public Installable getInstallable(Node node) throws IOException {
-        Installable installable = getInstallable();
-        if (installable == null) {
-            return null;
-        }
-
-        // Cloning the installable since we're going to update its url (not cloning it wouldn't be threadsafe)
-        installable = Installables.clone(installable);
-
-        InstallerPathResolver installerPathResolver = InstallerPathResolver.Factory.findResolverFor(installable);
-        String relativeDownloadPath = installerPathResolver.resolvePathFor(installable.id, ToolsUtils.getPlatform(node), ToolsUtils.getCPU(node));
-        installable.url += relativeDownloadPath;
-        return installable;
-    }
-
     @Override
     public FilePath performInstallation(ToolInstallation tool, Node node, TaskListener log) throws IOException, InterruptedException {
         FilePath expected = preferredLocation(tool, node);
 
-        Installable installable = getInstallable(node);
+        Installable installable = getInstallable();
         if (installable == null) {
             log.getLogger().println("Invalid tool ID " + id);
             return expected;
@@ -346,6 +330,22 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
     @DataBoundSetter
     public void setForce32Bit(boolean force32Bit) {
         this.force32Bit = force32Bit;
+    }
+
+    private final class NodeJSInstallable extends NodeSpecificInstallable {
+
+        public NodeJSInstallable(Installable inst) {
+            super(inst);
+        }
+
+        @Override
+        public NodeSpecificInstallable forNode(Node node, TaskListener log) throws IOException, InterruptedException {
+            InstallerPathResolver installerPathResolver = InstallerPathResolver.Factory.findResolverFor(id);
+            String relativeDownloadPath = installerPathResolver.resolvePathFor(id, ToolsUtils.getPlatform(node), ToolsUtils.getCPU(node));
+            url += relativeDownloadPath;
+            return this;
+        }
+
     }
 
     @Extension

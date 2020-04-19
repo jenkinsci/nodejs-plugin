@@ -98,7 +98,7 @@ public class InstallerPathResolversTest {
 
     @Test
     public void shouldNodeJSInstallerResolvedPathExist() throws IOException {
-        InstallerPathResolver installerPathResolver = InstallerPathResolver.Factory.findResolverFor(this.installable);
+        InstallerPathResolver installerPathResolver = InstallerPathResolver.Factory.findResolverFor(this.installable.id);
         try {
             String path = installerPathResolver.resolvePathFor(installable.id, this.platform, this.cpu);
             URL url = new URL(installable.url + path);

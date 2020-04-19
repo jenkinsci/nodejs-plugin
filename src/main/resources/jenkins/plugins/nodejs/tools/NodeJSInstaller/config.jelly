@@ -22,23 +22,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 -->
 <?jelly escape-by-default='true'?>
-<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form">
-    <f:entry title="${%id.title}" field="id">
-        <j:choose>
-            <j:set var="tools" value="${descriptor.installables}" />
-            <j:when test="${empty(tools)}">
-                <!-- if the list is not available, fall back to text box -->
-                <f:textbox />
-            </j:when>
-            <j:otherwise>
-                <select name="_.id">
-                    <j:forEach var="tool" items="${tools}">
-                        <f:option value="${tool.id}" selected="${tool.id==instance.id}">${tool.name}</f:option>
-                    </j:forEach>
-                </select>
-            </j:otherwise>
-        </j:choose>
-    </f:entry>
+<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form" xmlns:st="jelly:stapler">
+    <st:include page="/hudson/tools/DownloadFromUrlInstaller/config.jelly" />
 
     <f:entry title="${%force32Bit.title}" description="${%force32Bit.description}">
         <f:checkbox field="force32Bit" />

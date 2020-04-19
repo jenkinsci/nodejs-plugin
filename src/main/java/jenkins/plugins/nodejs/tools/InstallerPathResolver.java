@@ -24,7 +24,6 @@
 package jenkins.plugins.nodejs.tools;
 
 import jenkins.plugins.nodejs.tools.pathresolvers.LatestInstallerPathResolver;
-import hudson.tools.DownloadFromUrlInstaller;
 
 /**
  * Contract to resolve parts of an URL path given some specific inputs.
@@ -53,14 +52,14 @@ public interface InstallerPathResolver {
         /**
          * Return an implementation adapt for the given installable.
          *
-         * @param installable an installable
+         * @param id an installable
          * @return an instance of {@link InstallerPathResolver}
          * @throws IllegalArgumentException
          *             in case the given installable is not supported.
          */
-        public static InstallerPathResolver findResolverFor(DownloadFromUrlInstaller.Installable installable) {
-            if (isVersionBlacklisted(installable.id)) {
-                throw new IllegalArgumentException("Provided version (" + installable.id + ") installer structure not (yet) supported !");
+        public static InstallerPathResolver findResolverFor(String id) {
+            if (isVersionBlacklisted(id)) {
+                throw new IllegalArgumentException("Provided version (" + id + ") installer structure not (yet) supported !");
             } else {
                 return new LatestInstallerPathResolver();
             }

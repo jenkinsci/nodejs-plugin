@@ -79,7 +79,7 @@ public class NodeJSInstallerTest {
         PowerMockito.suppress(PowerMockito.method(FilePath.class, "installIfNecessaryFrom", URL.class, TaskListener.class, String.class));
         Installable installable = new Installable();
         installable.url = fileRule.newFile().toURI().toString();
-        PowerMockito.doReturn(installable).when(spy).getInstallable(currentNode);
+        PowerMockito.doReturn(installable).when(spy).getInstallable();
         when(spy.getNpmPackages()).thenReturn(expectedPackages);
 
         PowerMockito.mockStatic(ToolsUtils.class);
@@ -105,7 +105,7 @@ public class NodeJSInstallerTest {
         // create partial mock
         NodeJSInstaller installer = new NodeJSInstaller("test-id", expectedPackages, expectedRefreshHours) {
             @Override
-            public Installable getInstallable(Node node) throws IOException {
+            public Installable getInstallable() throws IOException {
                 Installable installable = new Installable();
                 installable.url = fileRule.newFile().toURI().toString();
                 return installable;
