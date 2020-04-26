@@ -19,7 +19,7 @@ Plugins Update Center.
 -   Provides NodeJS auto-installer, allowing to create as many NodeJS
     installations "profiles" as you want.  
     The auto-installer will automatically install a given version of
-    NodeJS, on every jenkins slave where it will be needed
+    NodeJS, on every jenkins agent where it will be needed
 -   Allows to install globally some npm packages inside each
     installations, these npm packages will be made available to the PATH
 -   Allows to execute some NodeJS script, under a given NodeJS
