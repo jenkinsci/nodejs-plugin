@@ -1,0 +1,39 @@
+unclassified:
+  globalConfigFiles:
+    configs:
+      - npm:
+          comment: "myComment"
+          content: "myContent"
+          id: "myconfigfile"
+          name: "myConfig"
+          providerId: "jenkins.plugins.nodejs.configfiles.NPMConfig"
+          registries:
+            - hasScopes: true
+              scopes: "myScope"
+              url: "registryUrl"
+tool:
+  nodejs:
+    installations:
+      - name: "myNode"
+        properties:
+          - installSource:
+              installers:
+                - nodeJSInstaller:
+                    force32Bit: true
+                    id: "14.4.0"
+                    npmPackages: "globalPackages"
+                    npmPackagesRefreshHours: 75
+                - command:
+                    command: "install npm"
+                    label: "npm command"
+                    toolHome: "/my/path/1"
+                - zip:
+                    label: "npm zip"
+                    subdir: "/my/path/2"
+                    url: "http://fake.com"
+                - batchFile:
+                    command: "run batch command"
+                    label: "npm batch"
+                    toolHome: "/my/path/3"
+      - home: "/onePath"
+        name: "anotherNodeWithNoInstall"
