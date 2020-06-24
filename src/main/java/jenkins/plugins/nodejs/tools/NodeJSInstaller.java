@@ -206,7 +206,7 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
         // refer to https://docs.npmjs.com/misc/config#https-proxy
         env.put("HTTP_PROXY", proxyURL);
         env.put("HTTPS_PROXY", proxyURL);
-        String noProxyHosts = proxycfg.noProxyHost;
+        String noProxyHosts = proxycfg.getNoProxyHost();
         if (noProxyHosts != null) {
             if (noProxyHosts.contains("*")) {
                 log.getLogger().println("INFO: npm doesn't support wild card in no_proxy configuration");
