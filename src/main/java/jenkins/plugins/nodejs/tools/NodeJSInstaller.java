@@ -23,29 +23,6 @@
  */
 package jenkins.plugins.nodejs.tools;
 
-import java.io.File;
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.net.URLConnection;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Locale;
-import java.util.TreeSet;
-import java.util.concurrent.TimeUnit;
-
-import javax.annotation.Nonnull;
-
-import org.apache.commons.lang.StringUtils;
-import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.DataBoundSetter;
-
-import com.google.common.base.Predicate;
-import com.google.common.collect.Collections2;
-
 import hudson.EnvVars;
 import hudson.Extension;
 import hudson.FilePath;
@@ -62,10 +39,27 @@ import hudson.tools.DownloadFromUrlInstaller;
 import hudson.tools.ToolInstallation;
 import hudson.util.ArgumentListBuilder;
 import hudson.util.Secret;
+import java.io.File;
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.net.URLConnection;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Locale;
+import java.util.TreeSet;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+import javax.annotation.Nonnull;
 import jenkins.MasterToSlaveFileCallable;
 import jenkins.model.Jenkins;
 import jenkins.plugins.nodejs.Messages;
 import jenkins.plugins.nodejs.NodeJSConstants;
+import org.apache.commons.lang.StringUtils;
+import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
 
 /**
  * Automatic NodeJS installer from nodejs.org
@@ -99,6 +93,12 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
     public NodeJSInstaller(String id, String npmPackages, long npmPackagesRefreshHours, boolean force32bit) {
         this(id, npmPackages, npmPackagesRefreshHours);
         this.force32Bit = force32bit;
+    }
+
+    @Override
+    public Installable getInstallable() throws IOException {
+        Installable installable = super.getInstallable();
+        return installable != null ? new NodeJSInstallable(installable) : installable;
     }
 
     @Override
@@ -189,7 +189,7 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
     }
 
     private void buildProxyEnvVars(EnvVars env, TaskListener log) throws IOException, URISyntaxException {
-        ProxyConfiguration proxycfg = Jenkins.get().proxy;
+        ProxyConfiguration proxycfg = Jenkins.get().getProxy();
         if (proxycfg == null) {
             // no proxy configured
             return;
@@ -197,8 +197,8 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
 
         String userInfo = proxycfg.getUserName();
         // append password only if userName if is defined
-        if (userInfo != null && proxycfg.getEncryptedPassword() != null) {
-            userInfo += ":" + Secret.decrypt(proxycfg.getEncryptedPassword());
+        if (userInfo != null && proxycfg.getSecretPassword() != null) {
+            userInfo += ":" + Secret.toString(proxycfg.getSecretPassword());
         }
 
         String proxyURL = new URI("http", userInfo, proxycfg.name, proxycfg.port, null, null, null).toString();
@@ -332,7 +332,7 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
         this.force32Bit = force32Bit;
     }
 
-    private final class NodeJSInstallable extends NodeSpecificInstallable {
+    protected final class NodeJSInstallable extends NodeSpecificInstallable {
 
         public NodeJSInstallable(Installable inst) {
             super(inst);
@@ -360,12 +360,9 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
         public List<? extends Installable> getInstallables() throws IOException {
             // Filtering non blacklisted installables + sorting installables by
             // version number
-            Collection<? extends Installable> filteredInstallables = Collections2.filter(super.getInstallables(), new Predicate<Installable>() {
-                @Override
-                public boolean apply(Installable input) {
-                    return !InstallerPathResolver.Factory.isVersionBlacklisted(input.id);
-                }
-            });
+            List<? extends Installable> filteredInstallables = super.getInstallables().stream() //
+                    .filter(i -> !InstallerPathResolver.Factory.isVersionBlacklisted(i.id)) //
+                    .collect(Collectors.toList());
             TreeSet<Installable> sortedInstallables = new TreeSet<>(new Comparator<Installable>() {
                 @Override
                 public int compare(Installable o1, Installable o2) {
