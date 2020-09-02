@@ -25,10 +25,8 @@ package jenkins.plugins.nodejs;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.doReturn;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -39,51 +37,22 @@ import org.jenkinsci.lib.configprovider.model.ConfigFileManager;
 import org.jenkinsci.plugins.configfiles.GlobalConfigFiles;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 import org.jvnet.hudson.test.JenkinsRule;
-import org.powermock.api.mockito.PowerMockito;
 
 import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
 import com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl;
 
-import hudson.EnvVars;
 import hudson.FilePath;
-import hudson.model.Environment;
-import hudson.model.EnvironmentList;
 import hudson.model.FreeStyleBuild;
-import hudson.model.FreeStyleProject;
 import jenkins.plugins.nodejs.configfiles.NPMConfig;
 import jenkins.plugins.nodejs.configfiles.NPMRegistry;
 import jenkins.plugins.nodejs.configfiles.Npmrc;
 
 public class NpmrcFileSupplyTest {
 
-    /* package */ static class MockBuild extends FreeStyleBuild {
-        public MockBuild(FreeStyleProject project, File workspace) throws IOException {
-            super(mock(project));
-            setWorkspace(new FilePath(workspace));
-        }
-
-        private static FreeStyleProject mock(FreeStyleProject project) {
-            FreeStyleProject spy = PowerMockito.spy(project);
-            doReturn(new EnvVars()).when(spy).getCharacteristicEnvVars();
-            return spy;
-        }
-
-        @Override
-        public EnvironmentList getEnvironments() {
-            if (buildEnvironments == null) {
-                buildEnvironments = new ArrayList<Environment>();
-            }
-            return new EnvironmentList(buildEnvironments);
-        }
-    }
-
     @Rule
     public JenkinsRule j = new JenkinsRule();
-    @Rule
-    public TemporaryFolder folder = new TemporaryFolder();
 
     @Test
     public void test_supply_npmrc_with_registry() throws Exception {
@@ -93,7 +62,7 @@ public class NpmrcFileSupplyTest {
 
         Config config = createSetting("mytest", "email=guest@example.com", Arrays.asList(privateRegistry, officalRegistry));
 
-        FreeStyleBuild build = new MockBuild(j.createFreeStyleProject(), folder.newFolder());
+        FreeStyleBuild build = j.buildAndAssertSuccess(j.createFreeStyleProject());
 
         FilePath npmrcFile = ConfigFileManager.provisionConfigFile(new ConfigFile(config.id, null, true), null, build, build.getWorkspace(), j.createTaskListener(), new ArrayList<String>(1));
         assertTrue(npmrcFile.exists());
