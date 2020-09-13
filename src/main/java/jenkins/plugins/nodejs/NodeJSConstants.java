@@ -83,6 +83,11 @@ public final class NodeJSConstants {
      */
     public static final String NPM_SETTINGS_AUTH = "_auth";
     /**
+     * The authentication token used to login to the global registry or scoped
+     * registry.
+     */
+    public static final String NPM_SETTINGS_AUTHTOKEN = "_authToken";
+    /**
      * The user name used to login to the scoped registry.
      */
     public static final String NPM_SETTINGS_USER = "username";
