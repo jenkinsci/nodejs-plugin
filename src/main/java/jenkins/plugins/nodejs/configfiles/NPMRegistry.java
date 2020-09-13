@@ -38,6 +38,7 @@ import javax.annotation.Nullable;
 
 import org.acegisecurity.Authentication;
 import org.apache.commons.lang.StringUtils;
+import org.jenkinsci.plugins.plaincredentials.StringCredentials;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
@@ -45,6 +46,7 @@ import org.kohsuke.stapler.QueryParameter;
 import com.cloudbees.plugins.credentials.CredentialsMatcher;
 import com.cloudbees.plugins.credentials.CredentialsMatchers;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
+import com.cloudbees.plugins.credentials.common.StandardCredentials;
 import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
 import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
@@ -257,6 +259,8 @@ public class NPMRegistry extends AbstractDescribableImpl<NPMRegistry> implements
 
             List<DomainRequirement> domainRequirement = URIRequirementBuilder.fromUri(serverUrl).build();
             if (CredentialsProvider.listCredentials(StandardUsernameCredentials.class, item, getAuthentication(item),
+                    domainRequirement, CredentialsMatchers.withId(credentialsId)).isEmpty()
+                    && CredentialsProvider.listCredentials(StringCredentials.class, item, getAuthentication(item),
                     domainRequirement, CredentialsMatchers.withId(credentialsId)).isEmpty()) {
                 return FormValidation.error(Messages.NPMRegistry_DescriptorImpl_invalidCredentialsId());
             }
@@ -279,14 +283,14 @@ public class NPMRegistry extends AbstractDescribableImpl<NPMRegistry> implements
 
             Authentication authentication = getAuthentication(item);
             List<DomainRequirement> build = URIRequirementBuilder.fromUri(url).build();
-            CredentialsMatcher always = CredentialsMatchers.always();
-            Class<StandardUsernameCredentials> type = StandardUsernameCredentials.class;
+            CredentialsMatcher either = CredentialsMatchers.either(CredentialsMatchers.instanceOf(StandardUsernameCredentials.class), CredentialsMatchers.instanceOf(StringCredentials.class));
+            Class<StandardCredentials> type = StandardCredentials.class;
 
             result.includeEmptyValue();
             if (item != null) {
-                result.includeMatchingAs(authentication, item, type, build, always);
+                result.includeMatchingAs(authentication, item, type, build, either);
             } else {
-                result.includeMatchingAs(authentication, Jenkins.get(), type, build, always);
+                result.includeMatchingAs(authentication, Jenkins.get(), type, build, either);
             }
             return result;
         }

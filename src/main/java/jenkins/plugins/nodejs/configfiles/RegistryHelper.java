@@ -38,9 +38,10 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 import org.apache.commons.codec.binary.Base64;
+import org.jenkinsci.plugins.plaincredentials.StringCredentials;
 
 import com.cloudbees.plugins.credentials.CredentialsProvider;
-import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
+import com.cloudbees.plugins.credentials.common.StandardCredentials;
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.cloudbees.plugins.credentials.domains.HostnameRequirement;
@@ -71,8 +72,8 @@ public final class RegistryHelper {
      * @param build a build being run
      * @return map of registry URL - credential
      */
-    public Map<String, StandardUsernameCredentials> resolveCredentials(Run<?, ?> build) {
-        Map<String, StandardUsernameCredentials> registry2credential = new HashMap<>();
+    public Map<String, StandardCredentials> resolveCredentials(Run<?, ?> build) {
+        Map<String, StandardCredentials> registry2credential = new HashMap<>();
         for (NPMRegistry registry : registries) {
             String credentialsId = registry.getCredentialsId();
             if (credentialsId != null) {
@@ -84,7 +85,7 @@ public final class RegistryHelper {
                     domainRequirements = Collections.<DomainRequirement> singletonList(new HostnameRequirement(registryURL.getHost()));
                 }
 
-                StandardUsernameCredentials c = CredentialsProvider.findCredentialById(credentialsId, StandardUsernameCredentials.class, build, domainRequirements);
+                StandardCredentials c = CredentialsProvider.findCredentialById(credentialsId, StandardCredentials.class, build, domainRequirements);
                 if (c != null) {
                     registry2credential.put(registry.getUrl(), c);
                 }
@@ -103,14 +104,14 @@ public final class RegistryHelper {
      *         credentials added
      */
     @SuppressFBWarnings(value = "DM_DEFAULT_ENCODING", justification = "npm auth_token could not support base64 UTF-8 char encoding")
-    public String fillRegistry(String npmrcContent, Map<String, StandardUsernameCredentials> registry2Credentials) {
+    public String fillRegistry(String npmrcContent, Map<String, StandardCredentials> registry2Credentials) {
         Npmrc npmrc = new Npmrc();
         npmrc.from(npmrcContent);
 
         for (NPMRegistry registry : registries) {
-            StandardUsernamePasswordCredentials credentials = null;
+            StandardCredentials credentials = null;
             if (registry2Credentials.containsKey(registry.getUrl())) {
-                credentials = (StandardUsernamePasswordCredentials) registry2Credentials.get(registry.getUrl());
+                credentials = registry2Credentials.get(registry.getUrl());
             }
 
             if (registry.isHasScopes()) {
@@ -126,9 +127,14 @@ public final class RegistryHelper {
                     if (credentials != null) { // NOSONAR
                         // the _auth directive seems not be considered for scoped registry
                         // only authToken or username/password works
-                        String passwordValue = Base64.encodeBase64String(Secret.toString(credentials.getPassword()).getBytes());
-                        npmrc.set(compose(registryPrefix, NPM_SETTINGS_USER), credentials.getUsername());
-                        npmrc.set(compose(registryPrefix, NPM_SETTINGS_PASSWORD), passwordValue);
+                        if (credentials instanceof StandardUsernamePasswordCredentials) {
+                            String passwordValue = Base64.encodeBase64String(Secret.toString(((StandardUsernamePasswordCredentials)credentials).getPassword()).getBytes());
+                            npmrc.set(compose(registryPrefix, NPM_SETTINGS_USER), ((StandardUsernamePasswordCredentials)credentials).getUsername());
+                            npmrc.set(compose(registryPrefix, NPM_SETTINGS_PASSWORD), passwordValue);
+                        } else if (credentials instanceof StringCredentials) {
+                            String tokenValue = Secret.toString(((StringCredentials)credentials).getSecret());
+                            npmrc.set(compose(registryPrefix, NPM_SETTINGS_AUTHTOKEN), tokenValue);
+                        }
                     }
                 }
             } else {
@@ -136,9 +142,14 @@ public final class RegistryHelper {
                 npmrc.set(NPM_SETTINGS_REGISTRY, registry.getUrl());
                 npmrc.set(NPM_SETTINGS_ALWAYS_AUTH, credentials != null);
                 if (credentials != null) {
-                    String authValue = credentials.getUsername() + ':' + Secret.toString(credentials.getPassword());
-                    authValue = Base64.encodeBase64String(authValue.getBytes());
-                    npmrc.set(NPM_SETTINGS_AUTH, authValue);
+                    if (credentials instanceof StandardUsernamePasswordCredentials) {
+                        String authValue = ((StandardUsernamePasswordCredentials)credentials).getUsername() + ':' + Secret.toString(((StandardUsernamePasswordCredentials)credentials).getPassword());
+                        authValue = Base64.encodeBase64String(authValue.getBytes());
+                        npmrc.set(NPM_SETTINGS_AUTH, authValue);
+                    } else if (credentials instanceof StringCredentials) {
+                        String tokenValue = Secret.toString(((StringCredentials)credentials).getSecret());
+                        npmrc.set(NPM_SETTINGS_AUTHTOKEN, tokenValue);
+                    }
                 }
             }
         }

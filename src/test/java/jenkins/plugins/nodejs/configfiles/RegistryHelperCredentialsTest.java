@@ -40,6 +40,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.cloudbees.plugins.credentials.common.StandardCredentials;
 import org.apache.commons.codec.binary.Base64;
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
@@ -86,7 +87,7 @@ public class RegistryHelperCredentialsTest {
 
     private static StandardUsernameCredentials user;
     private NPMRegistry[] registries;
-    private Map<String, StandardUsernameCredentials> resolvedCredentials;
+    private Map<String, StandardCredentials> resolvedCredentials;
 
     public RegistryHelperCredentialsTest(String testName, NPMRegistry[] registries) {
         this.registries = registries;

@@ -38,7 +38,7 @@ import org.jenkinsci.lib.configprovider.model.Config;
 import org.jenkinsci.lib.configprovider.model.ContentType;
 import org.kohsuke.stapler.DataBoundConstructor;
 
-import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
+import com.cloudbees.plugins.credentials.common.StandardCredentials;
 
 import hudson.AbortException;
 import hudson.Extension;
@@ -134,7 +134,7 @@ public class NPMConfig extends Config {
                 RegistryHelper helper = new RegistryHelper(registries);
                 if (!registries.isEmpty()) {
                     listener.getLogger().println("Adding all registry entries");
-                    Map<String, StandardUsernameCredentials> registry2Credentials = helper.resolveCredentials(build);
+                    Map<String, StandardCredentials> registry2Credentials = helper.resolveCredentials(build);
                     fileContent = helper.fillRegistry(fileContent, registry2Credentials);
                 }
 

@@ -48,6 +48,7 @@
         <gitHubRepo>jenkinsci/nodejs-plugin</gitHubRepo>
         <java.level>8</java.level>
         <config-file-provider-plugin.version>3.6.3</config-file-provider-plugin.version>
+        <plain-credentials-plugin.version>1.7</plain-credentials-plugin.version>
         <byte-buddy.version>1.9.10</byte-buddy.version>
         <assertj.version>3.15.0</assertj.version>
         <jenkins.version>2.222.4</jenkins.version>
@@ -86,6 +87,11 @@
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>config-file-provider</artifactId>
             <version>${config-file-provider-plugin.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jenkins-ci.plugins</groupId>
+            <artifactId>plain-credentials</artifactId>
+            <version>${plain-credentials-plugin.version}</version>
         </dependency>
         <dependency>
             <groupId>org.assertj</groupId>
