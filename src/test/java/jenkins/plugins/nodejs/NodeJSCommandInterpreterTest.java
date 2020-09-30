@@ -196,7 +196,7 @@ public class NodeJSCommandInterpreterTest {
 
         NodeJSInstallation installation = mockInstaller();
         NodeJSCommandInterpreter builder = CIBuilderHelper.createMock("test_creation_of_config", installation);
-        builder.setCacheLocationStrategy(new TestCacheLocationLocator(new FilePath(cacheFolder)));
+        builder.setCacheLocationStrategy(new TestCacheLocationLocator(cacheFolder));
 
         FreeStyleProject job = j.createFreeStyleProject("cache");
         job.getBuildersList().add(builder);

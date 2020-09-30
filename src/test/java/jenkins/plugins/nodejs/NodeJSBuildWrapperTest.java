@@ -47,7 +47,6 @@ import org.jvnet.hudson.test.recipes.LocalData;
 
 import hudson.EnvVars;
 import hudson.ExtensionList;
-import hudson.FilePath;
 import hudson.Launcher;
 import hudson.model.FreeStyleProject;
 import hudson.model.Node;
@@ -174,7 +173,7 @@ public class NodeJSBuildWrapperTest {
         final File cacheFolder = fileRule.newFolder();
 
         NodeJSBuildWrapper bw = mockWrapper(mockInstaller());
-        bw.setCacheLocationStrategy(new TestCacheLocationLocator(new FilePath(cacheFolder)));
+        bw.setCacheLocationStrategy(new TestCacheLocationLocator(cacheFolder));
         job.getBuildWrappersList().add(bw);
         job.getBuildersList().add(new EnvVarVerifier(NodeJSConstants.NPM_CACHE_LOCATION, cacheFolder.getAbsolutePath()));
 
