@@ -23,13 +23,13 @@
  */
 package jenkins.plugins.nodejs;
 
-import static org.mockito.Mockito.*;
-
-import org.powermock.api.mockito.PowerMockito;
+import hudson.ExtensionList;
 
 import hudson.Launcher;
 import hudson.model.AbstractBuild;
+import hudson.model.Descriptor;
 import hudson.model.TaskListener;
+import hudson.tasks.Builder;
 import jenkins.plugins.nodejs.tools.NodeJSInstallation;
 
 /* package */ final class CIBuilderHelper {
@@ -48,9 +48,8 @@ import jenkins.plugins.nodejs.tools.NodeJSInstallation;
 
     public static NodeJSCommandInterpreter createMock(String command, NodeJSInstallation installation, String configId,
             Verifier verifier) {
-        MockCommandInterpreterBuilder spy = PowerMockito.spy(new MockCommandInterpreterBuilder(command, installation.getName(), configId));
-        doReturn(installation).when(spy).getNodeJS();
-        doReturn(new NodeJSCommandInterpreter.NodeJsDescriptor()).when(spy).getDescriptor();
+        MockCommandInterpreterBuilder spy = new MockCommandInterpreterBuilder(command, installation.getName(), configId);
+        ExtensionList.lookupSingleton(NodeJSInstallation.DescriptorImpl.class).setInstallations(installation);
         spy.setVerifier(verifier);
         return spy;
     }
@@ -79,5 +78,11 @@ import jenkins.plugins.nodejs.tools.NodeJSInstallation;
         private void setVerifier(Verifier verifier) {
             this.verifier = verifier;
         }
+
+        @Override
+        public Descriptor<Builder> getDescriptor() {
+            return ExtensionList.lookupSingleton(NodeJSCommandInterpreter.NodeJsDescriptor.class);
+        }
+
     }
 }
