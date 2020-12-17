@@ -105,6 +105,7 @@ public enum CPU {
             case "armv6l":
                 return armv6l;
             case "arm64":
+            case "aarch64":
                 return arm64;
             }
         }
