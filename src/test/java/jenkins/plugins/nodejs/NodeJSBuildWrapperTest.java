@@ -44,10 +44,9 @@ import org.junit.rules.TemporaryFolder;
 import org.jvnet.hudson.test.Issue;
 import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.recipes.LocalData;
-import org.powermock.api.mockito.PowerMockito;
 
 import hudson.EnvVars;
-import hudson.FilePath;
+import hudson.ExtensionList;
 import hudson.Launcher;
 import hudson.model.FreeStyleProject;
 import hudson.model.Node;
@@ -174,7 +173,7 @@ public class NodeJSBuildWrapperTest {
         final File cacheFolder = fileRule.newFolder();
 
         NodeJSBuildWrapper bw = mockWrapper(mockInstaller());
-        bw.setCacheLocationStrategy(new TestCacheLocationLocator(new FilePath(cacheFolder)));
+        bw.setCacheLocationStrategy(new TestCacheLocationLocator(cacheFolder));
         job.getBuildWrappersList().add(bw);
         job.getBuildersList().add(new EnvVarVerifier(NodeJSConstants.NPM_CACHE_LOCATION, cacheFolder.getAbsolutePath()));
 
@@ -193,12 +192,11 @@ public class NodeJSBuildWrapperTest {
     private NodeJSBuildWrapper mockWrapper(NodeJSInstallation installation, Config config) {
         NodeJSBuildWrapper wrapper;
         if (config != null) {
-            wrapper = PowerMockito.spy(new NodeJSBuildWrapper("mock", config.id));
+            wrapper = new NodeJSBuildWrapper(installation.getName(), config.id);
         } else {
-            wrapper = PowerMockito.spy(new NodeJSBuildWrapper("mock"));
+            wrapper = new NodeJSBuildWrapper(installation.getName());
         }
-        doReturn(installation).when(wrapper).getNodeJS();
-        doReturn(new NodeJSBuildWrapper.DescriptorImpl()).when(wrapper).getDescriptor();
+        ExtensionList.lookupSingleton(NodeJSInstallation.DescriptorImpl.class).setInstallations(installation);
         return wrapper;
     }
 

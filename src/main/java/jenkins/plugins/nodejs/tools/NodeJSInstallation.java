@@ -125,7 +125,7 @@ public class NodeJSInstallation extends ToolInstallation implements EnvironmentS
         if (channel == null) {
             throw new IOException("Unable to get a channel for the launcher");
         }
-        return channel.call(new DetectPlatformCallable());
+        return channel.call(new DetectPlatformCallable(getHome()));
     }
 
     /**
@@ -143,8 +143,11 @@ public class NodeJSInstallation extends ToolInstallation implements EnvironmentS
         } catch (DetectionFailedException e) {
             throw new RuntimeException(e);  // NOSONAR
         }
+        return getBin(currentPlatform, getHome());
+    }
 
-        String bin = getHome();
+    private static String getBin(Platform currentPlatform, String home) {
+        String bin = home;
         if (!"".equals(currentPlatform.binFolder)) {
             switch (currentPlatform) {
             case WINDOWS:
@@ -184,13 +187,15 @@ public class NodeJSInstallation extends ToolInstallation implements EnvironmentS
         return currentPlatform;
     }
 
-    private final class DetectPlatformCallable extends MasterToSlaveCallable<String, IOException> {
-        private static final long serialVersionUID = -8509941141741046422L;
-
+    private static final class DetectPlatformCallable extends MasterToSlaveCallable<String, IOException> {
+        private final String home;
+        DetectPlatformCallable(String home) {
+            this.home = home;
+        }
         @Override
         public String call() throws IOException {
-            Platform currentPlatform = getPlatform();
-            File exe = new File(getBin(), currentPlatform.nodeFileName);
+            Platform currentPlatform = Platform.current();
+            File exe = new File(getBin(currentPlatform, home), currentPlatform.nodeFileName);
             if (exe.exists()) {
                 return exe.getPath();
             }
