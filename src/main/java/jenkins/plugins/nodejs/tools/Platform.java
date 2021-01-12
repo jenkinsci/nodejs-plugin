@@ -35,7 +35,7 @@ import jenkins.plugins.nodejs.Messages;
  * Supported platform.
  */
 public enum Platform {
-    LINUX("node", "npm", "bin"), WINDOWS("node.exe", "npm.cmd", ""), OSX("node", "npm", "bin"), SUNOS("node", "npm", "bin");
+    LINUX("node", "npm", "bin"), WINDOWS("node.exe", "npm.cmd", ""), OSX("node", "npm", "bin"), SUNOS("node", "npm", "bin"), AIX("node", "npm", "bin");
 
     /**
      * Choose the file name suitable for the downloaded Node bundle.
@@ -98,6 +98,9 @@ public enum Platform {
         }
         if (arch.contains("sunos")) {
             return SUNOS;
+        }
+        if (arch.contains("aix")) {
+            return AIX;
         }
         throw new DetectionFailedException(Messages.Platform_unknown(arch));
     }

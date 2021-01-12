@@ -199,6 +199,7 @@ untill the JENKINS-26583 will not be fixed.
     -   OSX (intel) 64 bit
     -   Arm 6l/7l/64
     -   SunOS
+    -   AIX
 
 ## Releases Notes
 
