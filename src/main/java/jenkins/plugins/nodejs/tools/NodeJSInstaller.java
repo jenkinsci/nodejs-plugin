@@ -82,7 +82,6 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
     private final String npmPackages;
     private final Long npmPackagesRefreshHours;
     private boolean force32Bit;
-    private String mirrorRepo;
 
     @DataBoundConstructor
     public NodeJSInstaller(String id, String npmPackages, long npmPackagesRefreshHours) {
@@ -94,16 +93,6 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
     public NodeJSInstaller(String id, String npmPackages, long npmPackagesRefreshHours, boolean force32bit) {
         this(id, npmPackages, npmPackagesRefreshHours);
         this.force32Bit = force32bit;
-    }
-
-    public NodeJSInstaller(String id, String npmPackages, long npmPackagesRefreshHours, String mirrorRepo) {
-        this(id, npmPackages, npmPackagesRefreshHours);
-        this.mirrorRepo = mirrorRepo;
-    }
-
-    public NodeJSInstaller(String id, String npmPackages, long npmPackagesRefreshHours, boolean force32bit, String mirrorRepo) {
-        this(id, npmPackages, npmPackagesRefreshHours, force32bit);
-        this.mirrorRepo = mirrorRepo;
     }
 
     @Override
@@ -343,15 +332,6 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
         this.force32Bit = force32Bit;
     }
 
-    @DataBoundSetter
-    public void setMirrorRepo(String mirrorRepo) {
-        this.mirrorRepo = mirrorRepo;
-    }
-
-    public String getmirrorRepo() {
-        return this.mirrorRepo;
-    }
-
     protected final class NodeJSInstallable extends NodeSpecificInstallable {
 
         public NodeJSInstallable(Installable inst) {
@@ -362,9 +342,7 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
         public NodeSpecificInstallable forNode(Node node, TaskListener log) throws IOException {
             InstallerPathResolver installerPathResolver = InstallerPathResolver.Factory.findResolverFor(id);
             String relativeDownloadPath = installerPathResolver.resolvePathFor(id, ToolsUtils.getPlatform(node), ToolsUtils.getCPU(node));
-            boolean useMirror = !mirrorRepo.isEmpty();
-            String baseURL = useMirror ? url.replace("https://nodejs.org/dist", mirrorRepo) : url;
-            url = baseURL + relativeDownloadPath;
+            url += relativeDownloadPath;
             return this;
         }
 

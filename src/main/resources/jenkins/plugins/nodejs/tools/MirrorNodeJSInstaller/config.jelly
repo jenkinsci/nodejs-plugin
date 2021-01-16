@@ -1,7 +1,7 @@
 <!--
 The MIT License
 
-Copyright (c) 2013, Frédéric Camblor
+Copyright (c) 2021, Riain Condon
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -23,17 +23,14 @@ THE SOFTWARE.
 -->
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form" xmlns:st="jelly:stapler">
-    <st:include page="/hudson/tools/DownloadFromUrlInstaller/config.jelly" />
 
-    <f:entry title="${%force32Bit.title}" description="${%force32Bit.description}">
-        <f:checkbox field="force32Bit" />
+    <f:entry title="${%mirrorUrl.title}" description="${%mirrorUrl.description}">
+        <f:textbox field="mirrorUrl" />
     </f:entry>
 
-    <f:entry title="${%npmPackages.title}" description="${%npmPackages.description}">
-        <f:textbox field="npmPackages" />
+    <f:entry title="${%ignoreTlsErrors.title}" description="${%ignoreTlsErrors.description}">
+        <f:checkbox field="ignoreTlsErrors" />
     </f:entry>
 
-    <f:entry title="${%npmPackagesRefreshHours.title}" description="${%npmPackagesRefreshHours.description}">
-        <f:textbox field="npmPackagesRefreshHours" default="72" />
-    </f:entry>
+    <st:include page="/jenkins/plugins/nodejs/tools/NodeJSInstaller/config.jelly" />
 </j:jelly>
