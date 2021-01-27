@@ -49,7 +49,7 @@ import jenkins.plugins.nodejs.Messages;
  * CPU type.
  */
 public enum CPU {
-    i386, amd64, armv7l, armv6l, arm64;
+    i386, amd64, armv7l, armv6l, arm64, ppc64;
 
     /**
      * Determines the CPU of the given node.
@@ -108,6 +108,9 @@ public enum CPU {
             case "aarch64":
                 return arm64;
             }
+        }
+        if (arch.contains("ppc")) {
+            return ppc64;
         }
         throw new DetectionFailedException(Messages.CPU_unknown(arch));
     }

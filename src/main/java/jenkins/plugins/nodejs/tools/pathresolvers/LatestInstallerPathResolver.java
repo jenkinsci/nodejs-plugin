@@ -85,6 +85,10 @@ public class LatestInstallerPathResolver implements InstallerPathResolver {
             os = "sunos";
             extension = EXTENSION;
             break;
+        case AIX:
+            os = "aix";
+            extension = EXTENSION;
+            break;
         default:
             throw new IllegalArgumentException(Messages.InstallerPathResolver_unsupportedOS(version, platform.name()));
         }
@@ -116,6 +120,12 @@ public class LatestInstallerPathResolver implements InstallerPathResolver {
             }
         case armv7l:
             if (nodeVersion.compareTo(new NodeJSVersion(4, 0, 0)) < 0) {
+                throw new IllegalArgumentException(Messages.InstallerPathResolver_unsupportedArch(version, cpu.name(), platform.name()));
+            }
+            arch = cpu.name();
+            break;
+        case ppc64:
+            if (platform != Platform.AIX || nodeVersion.compareTo(new NodeJSVersion(6, 7, 0)) < 0) {
                 throw new IllegalArgumentException(Messages.InstallerPathResolver_unsupportedArch(version, cpu.name(), platform.name()));
             }
             arch = cpu.name();

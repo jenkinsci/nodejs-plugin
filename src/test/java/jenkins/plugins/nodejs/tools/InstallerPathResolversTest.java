@@ -87,6 +87,10 @@ public class InstallerPathResolversTest {
                         // arm are only supported on linux
                         continue;
                     }
+                    if (platform == Platform.AIX && !cpu.name().equals("ppc64")) {
+                        // AIX only supports ppc64
+                        continue;
+                    }
                     String testName = String.format("version=%s,cpu=%s,platform=%s", installable.id, cpu.name(), platform.name());
                     testPossibleParams.add(new Object[] { installable, platform, cpu, testName });
                 }
