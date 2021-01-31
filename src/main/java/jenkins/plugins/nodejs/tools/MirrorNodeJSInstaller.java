@@ -1,56 +1,132 @@
+/*
+ * The MIT License
+ *
+ * Copyright (c) 2021, Riain Condon
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ */
 package jenkins.plugins.nodejs.tools;
 
+import com.cloudbees.plugins.credentials.Credentials;
+import com.cloudbees.plugins.credentials.CredentialsProvider;
 import hudson.Extension;
+import hudson.FilePath;
 import hudson.model.Node;
 import hudson.model.TaskListener;
-import hudson.tools.DownloadFromUrlInstaller;
 import hudson.tools.ToolInstallation;
+import hudson.util.FormValidation;
 import jenkins.plugins.nodejs.Messages;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
+import org.kohsuke.stapler.QueryParameter;
 
+import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.TreeSet;
-import java.util.stream.Collectors;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.X509Certificate;
+
+/**
+ * Automatic NodeJS installer from a nodejs.org mirror
+ *
+ * @author Riain Condon
+ * @author Nikolas Falco
+ */
 
 public class MirrorNodeJSInstaller extends NodeJSInstaller {
     private String mirrorUrl;
-    private boolean ignoreTlsErrors;
+    private boolean skipTlsVerify;
+    private String credentialsId;
+
+    private static final String PUBLIC_NODEJS_URL = "https://nodejs.org/dist";
 
     @DataBoundConstructor
-    public MirrorNodeJSInstaller(String id, String npmPackages, long npmPackagesRefreshHours, String mirrorUrl) {
+    public MirrorNodeJSInstaller(String id, String npmPackages, long npmPackagesRefreshHours, @Nonnull String mirrorUrl, boolean skipTlsVerify, String credentialsId) {
         super(id, npmPackages, npmPackagesRefreshHours);
         this.mirrorUrl = mirrorUrl;
+        this.skipTlsVerify = skipTlsVerify;
+        this.credentialsId = credentialsId;
     }
 
-    public MirrorNodeJSInstaller(String id, String npmPackages, long npmPackagesRefreshHours, boolean force32Bit, String mirrorUrl) {
-        super(id, npmPackages, npmPackagesRefreshHours, force32Bit);
+    @DataBoundSetter
+    public void setMirrorUrl(String mirrorUrl) {
         this.mirrorUrl = mirrorUrl;
     }
 
-    public MirrorNodeJSInstaller(String id, String npmPackages, long npmPackagesRefreshHours, String mirrorUrl, boolean ignoreTlsErrors) {
-        this(id, npmPackages, npmPackagesRefreshHours, mirrorUrl);
-        this.ignoreTlsErrors = ignoreTlsErrors;
-    }
-
-    public MirrorNodeJSInstaller(String id, String npmPackages, long npmPackagesRefreshHours, boolean force32Bit, String mirrorUrl, boolean ignoreTlsErrors) {
-        this(id, npmPackages, npmPackagesRefreshHours, force32Bit, mirrorUrl);
-        this.ignoreTlsErrors = ignoreTlsErrors;
+    public String getMirrorUrl() {
+        return this.mirrorUrl;
     }
 
     @DataBoundSetter
-    public void setMirrorUrl(String mirrorUrl) { this.mirrorUrl = mirrorUrl; }
+    public void setSkipTlsVerify(boolean skipTlsVerify) {
+        this.skipTlsVerify = skipTlsVerify;
+    }
 
-    public String getMirrorUrl() { return this.mirrorUrl; }
+    public boolean isSkipTlsVerify() {
+        return this.skipTlsVerify;
+    }
 
     @DataBoundSetter
-    public void setIgnoreTlsErrors(boolean ignoreTlsErrors) { this.ignoreTlsErrors = ignoreTlsErrors; }
+    public void setCredentialsId(String credentialsId) {
+        this.credentialsId = credentialsId;
+    }
 
-    public boolean isIgnoreTlsErrors() { return this.ignoreTlsErrors; }
+    public String getCredentialsId() {
+        return this.credentialsId;
+    }
+
+    TrustManager[] trustAllCerts = new TrustManager[]{
+            new X509TrustManager() {
+                public java.security.cert.X509Certificate[] getAcceptedIssuers() {
+                    return new X509Certificate[0];
+                }
+
+                public void checkClientTrusted(
+                        java.security.cert.X509Certificate[] certs, String authType) {
+                }
+
+                public void checkServerTrusted(
+                        java.security.cert.X509Certificate[] certs, String authType) {
+                }
+            }
+    };
+
+    @Override
+    public FilePath performInstallation(ToolInstallation tool, Node node, TaskListener log) throws IOException, InterruptedException {
+        if (this.isSkipTlsVerify()) {
+            try {
+                SSLContext sc = SSLContext.getInstance("SSL");
+                sc.init(null, trustAllCerts, new java.security.SecureRandom());
+                HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
+            } catch (KeyManagementException | NoSuchAlgorithmException e) {
+                e.printStackTrace();
+            }
+        }
+        return super.performInstallation(tool, node, log);
+    }
 
     @Override
     public Installable getInstallable() throws IOException {
@@ -68,8 +144,7 @@ public class MirrorNodeJSInstaller extends NodeJSInstaller {
         public NodeSpecificInstallable forNode(Node node, TaskListener log) throws IOException {
             InstallerPathResolver installerPathResolver = InstallerPathResolver.Factory.findResolverFor(id);
             String relativeDownloadPath = installerPathResolver.resolvePathFor(id, ToolsUtils.getPlatform(node), ToolsUtils.getCPU(node));
-            boolean useMirror = !mirrorUrl.isEmpty();
-            String baseURL = useMirror ? url.replace("https://nodejs.org/dist", mirrorUrl) : url;
+            String baseURL = url.replace(PUBLIC_NODEJS_URL, mirrorUrl);
             url = baseURL + relativeDownloadPath;
             return this;
         }
@@ -77,40 +152,24 @@ public class MirrorNodeJSInstaller extends NodeJSInstaller {
     }
 
     @Extension
-    public static final class DescriptorImpl extends DownloadFromUrlInstaller.DescriptorImpl<MirrorNodeJSInstaller> { // NOSONAR
+    public static final class DescriptorImpl extends NodeJSInstaller.DescriptorImpl { // NOSONAR
         @Override
         public String getDisplayName() {
             return Messages.MirrorNodeJSInstaller_DescriptorImpl_displayName();
         }
 
-        @Nonnull
-        @Override
-        public List<? extends Installable> getInstallables() throws IOException {
-            // Filtering non blacklisted installables + sorting installables by
-            // version number
-            List<? extends Installable> filteredInstallables = super.getInstallables().stream() //
-                    .filter(i -> !InstallerPathResolver.Factory.isVersionBlacklisted(i.id)) //
-                    .collect(Collectors.toList());
-            TreeSet<Installable> sortedInstallables = new TreeSet<>(new Comparator<Installable>() {
-                @Override
-                public int compare(Installable o1, Installable o2) {
-                    return NodeJSVersion.parseVersion(o1.id).compareTo(NodeJSVersion.parseVersion(o2.id)) * -1;
-                }
-            });
-            sortedInstallables.addAll(filteredInstallables);
-            return new ArrayList<>(sortedInstallables);
-        }
-
-        @Override
-        public String getId() {
-            // For backward compatibility
-            return "hudson.plugins.nodejs.tools.NodeJSInstaller";
-        }
-
-        @Override
-        public boolean isApplicable(Class<? extends ToolInstallation> toolType) {
-            return toolType == NodeJSInstallation.class;
+        public FormValidation doCheckMirrorURL(@CheckForNull @QueryParameter final String mirrorURL) throws IOException {
+            if (!mirrorURL.isEmpty()) {
+                URL url = new URL(mirrorURL);
+                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                connection.setRequestMethod("GET");
+                int responseCode = connection.getResponseCode();
+                if (responseCode == 200) {
+                    return FormValidation.ok();
+                } else return FormValidation.error(Messages.MirrorNodeJSInstaller_DescriptorImpl_unableToReachMirror());
+            } else {
+                return FormValidation.error(Messages.MirrorNodeJSInstaller_DescriptorImpl_emptyMirrorURL());
+            }
         }
     }
-
 }

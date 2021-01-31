@@ -119,7 +119,6 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
             String message = installable.url + " to " + expected + " on " + node.getDisplayName();
             boolean isMSI = installable.url.toLowerCase(Locale.ENGLISH).endsWith("msi");
             URL installableURL = new URL(installable.url);
-
             if (isMSI && installIfNecessaryMSI(expected, installableURL, log, "Installing " + message)
                     || expected.installIfNecessaryFrom(installableURL, log, "Unpacking " + message)) {
 
@@ -221,7 +220,7 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
         return marker.exists() && marker.readToString().equals(npmPackages) && System.currentTimeMillis() < marker.lastModified()+ TimeUnit.HOURS.toMillis(npmPackagesRefreshHours);
     }
 
-    private boolean installIfNecessaryMSI(FilePath expected, URL archive, TaskListener listener, String message) throws IOException, InterruptedException {
+    boolean installIfNecessaryMSI(FilePath expected, URL archive, TaskListener listener, String message) throws IOException, InterruptedException {
         try {
             URLConnection con;
             try {
@@ -349,7 +348,7 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
     }
 
     @Extension
-    public static final class DescriptorImpl extends DownloadFromUrlInstaller.DescriptorImpl<NodeJSInstaller> { // NOSONAR
+    public static class DescriptorImpl extends DownloadFromUrlInstaller.DescriptorImpl<NodeJSInstaller> { // NOSONAR
         @Override
         public String getDisplayName() {
             return Messages.NodeJSInstaller_DescriptorImpl_displayName();

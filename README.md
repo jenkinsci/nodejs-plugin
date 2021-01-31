@@ -37,7 +37,10 @@ Plugins Update Center.
     panel (JENKINS\_URL/configure or JENKINS\_URL/configureTools if
     using jenkins 2),  
     and add new NodeJS installations.
-    If you cannot use the official NodeJS repo to install, enter your mirror repo in this section. For example, some users may need to use a mirror due to their jurisdiction.
+    - If you wish to install NodeJS from a nodejs.org mirror, 
+    select the "Install from nodejs.org mirror" option, where you can 
+    then enter a mirror URL and then install NodeJS just like you would 
+    from nodejs.org.
 2.  For every Nodejs installation, you can choose to install some global
     npm packages.  
     Since 1.2.6 you could force the installation of the 32bit package
