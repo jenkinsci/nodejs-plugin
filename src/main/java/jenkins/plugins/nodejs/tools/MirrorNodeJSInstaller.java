@@ -23,8 +23,6 @@
  */
 package jenkins.plugins.nodejs.tools;
 
-import com.cloudbees.plugins.credentials.Credentials;
-import com.cloudbees.plugins.credentials.CredentialsProvider;
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.model.Node;
@@ -57,36 +55,36 @@ import java.security.cert.X509Certificate;
  */
 
 public class MirrorNodeJSInstaller extends NodeJSInstaller {
-    private String mirrorUrl;
-    private boolean skipTlsVerify;
+    private String mirrorURL;
+    private boolean skipTLSVerify;
     private String credentialsId;
 
     private static final String PUBLIC_NODEJS_URL = "https://nodejs.org/dist";
 
     @DataBoundConstructor
-    public MirrorNodeJSInstaller(String id, String npmPackages, long npmPackagesRefreshHours, @Nonnull String mirrorUrl, boolean skipTlsVerify, String credentialsId) {
+    public MirrorNodeJSInstaller(String id, String npmPackages, long npmPackagesRefreshHours, @Nonnull String mirrorURL, boolean skipTLSVerify, String credentialsId) {
         super(id, npmPackages, npmPackagesRefreshHours);
-        this.mirrorUrl = mirrorUrl;
-        this.skipTlsVerify = skipTlsVerify;
+        this.mirrorURL = mirrorURL;
+        this.skipTLSVerify = skipTLSVerify;
         this.credentialsId = credentialsId;
     }
 
     @DataBoundSetter
-    public void setMirrorUrl(String mirrorUrl) {
-        this.mirrorUrl = mirrorUrl;
+    public void setMirrorURL(String mirrorURL) {
+        this.mirrorURL = mirrorURL;
     }
 
-    public String getMirrorUrl() {
-        return this.mirrorUrl;
+    public String getMirrorURL() {
+        return this.mirrorURL;
     }
 
     @DataBoundSetter
-    public void setSkipTlsVerify(boolean skipTlsVerify) {
-        this.skipTlsVerify = skipTlsVerify;
+    public void setSkipTLSVerify(boolean skipTLSVerify) {
+        this.skipTLSVerify = skipTLSVerify;
     }
 
-    public boolean isSkipTlsVerify() {
-        return this.skipTlsVerify;
+    public boolean isSkipTLSVerify() {
+        return this.skipTLSVerify;
     }
 
     @DataBoundSetter
@@ -116,7 +114,7 @@ public class MirrorNodeJSInstaller extends NodeJSInstaller {
 
     @Override
     public FilePath performInstallation(ToolInstallation tool, Node node, TaskListener log) throws IOException, InterruptedException {
-        if (this.isSkipTlsVerify()) {
+        if (this.isSkipTLSVerify()) {
             try {
                 SSLContext sc = SSLContext.getInstance("SSL");
                 sc.init(null, trustAllCerts, new java.security.SecureRandom());
@@ -144,7 +142,7 @@ public class MirrorNodeJSInstaller extends NodeJSInstaller {
         public NodeSpecificInstallable forNode(Node node, TaskListener log) throws IOException {
             InstallerPathResolver installerPathResolver = InstallerPathResolver.Factory.findResolverFor(id);
             String relativeDownloadPath = installerPathResolver.resolvePathFor(id, ToolsUtils.getPlatform(node), ToolsUtils.getCPU(node));
-            String baseURL = url.replace(PUBLIC_NODEJS_URL, mirrorUrl);
+            String baseURL = url.replace(PUBLIC_NODEJS_URL, mirrorURL);
             url = baseURL + relativeDownloadPath;
             return this;
         }
