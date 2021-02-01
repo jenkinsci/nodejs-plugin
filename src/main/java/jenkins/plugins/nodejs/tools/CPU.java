@@ -105,9 +105,11 @@ public enum CPU {
             case "armv6l":
                 return armv6l;
             case "arm64":
-            case "aarch64":
                 return arm64;
             }
+        }
+        if ("aarch64".equalsIgnoreCase(arch)) {
+            return arm64;
         }
         if (arch.contains("ppc")) {
             return ppc64;
