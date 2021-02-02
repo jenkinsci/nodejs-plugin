@@ -41,6 +41,7 @@ import hudson.util.ArgumentListBuilder;
 import hudson.util.Secret;
 import java.io.File;
 import java.io.IOException;
+import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -343,10 +344,25 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
             InstallerPathResolver installerPathResolver = InstallerPathResolver.Factory.findResolverFor(id);
             String relativeDownloadPath = installerPathResolver.resolvePathFor(id, ToolsUtils.getPlatform(node), ToolsUtils.getCPU(node));
             url += relativeDownloadPath;
+			// evaluate if the URL is reachable
+			if (!reachable(url))
+				throw new IllegalArgumentException(Messages.InstallerPathResolver_unsupportedArch(id,
+						ToolsUtils.getCPU(node).name(), ToolsUtils.getPlatform(node).name()));
             return this;
         }
 
     }
+
+	private static final boolean reachable(String urlStr) {
+		try {
+			HttpURLConnection.setFollowRedirects(false);
+			HttpURLConnection con = (HttpURLConnection) new URL(urlStr).openConnection();
+			con.setRequestMethod("HEAD");
+			return (con.getResponseCode() == HttpURLConnection.HTTP_OK);
+		} catch (Exception e) {
+			return false;
+		}
+	}
 
     @Extension
     public static final class DescriptorImpl extends DownloadFromUrlInstaller.DescriptorImpl<NodeJSInstaller> { // NOSONAR

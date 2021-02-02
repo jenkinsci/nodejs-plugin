@@ -96,18 +96,9 @@ public class LatestInstallerPathResolver implements InstallerPathResolver {
         NodeJSVersion nodeVersion = NodeJSVersion.parseVersion(version);
         switch (cpu) {
         case i386:
-            if (platform == Platform.OSX && nodeVersion.compareTo(new NodeJSVersion(4, 0, 0)) >= 0 //
-                    || ((platform == Platform.SUNOS || platform == Platform.LINUX)
-                            && nodeVersion.compareTo(new NodeJSVersion(10, 0, 0)) >= 0)) {
-                throw new IllegalArgumentException(Messages.InstallerPathResolver_unsupportedArch(version, cpu.name(), platform.name()));
-            }
             arch = "x86";
             break;
         case amd64:
-            if (platform == Platform.SUNOS && //
-                    (new NodeJSVersionRange("[7, 7.5)").includes(nodeVersion) || nodeVersion.compareTo(new NodeJSVersion(0, 12, 18)) == 0)) {
-                throw new IllegalArgumentException(Messages.InstallerPathResolver_unsupportedArch(version, cpu.name(), platform.name()));
-            }
             if (isMSI && nodeVersion.compareTo(new NodeJSVersion(4, 0, 0)) < 0) {
                 path = "x64/";
             }
@@ -115,19 +106,8 @@ public class LatestInstallerPathResolver implements InstallerPathResolver {
             break;
         case arm64:
         case armv6l:
-            if (nodeVersion.compareTo(new NodeJSVersion(12, 0, 0)) >= 0 || nodeVersion.compareTo(new NodeJSVersion(8, 6, 0)) == 0) {
-                throw new IllegalArgumentException(Messages.InstallerPathResolver_unsupportedArch(version, cpu.name(), platform.name()));
-            }
         case armv7l:
-            if (nodeVersion.compareTo(new NodeJSVersion(4, 0, 0)) < 0) {
-                throw new IllegalArgumentException(Messages.InstallerPathResolver_unsupportedArch(version, cpu.name(), platform.name()));
-            }
-            arch = cpu.name();
-            break;
         case ppc64:
-            if (platform != Platform.AIX || nodeVersion.compareTo(new NodeJSVersion(6, 7, 0)) < 0) {
-                throw new IllegalArgumentException(Messages.InstallerPathResolver_unsupportedArch(version, cpu.name(), platform.name()));
-            }
             arch = cpu.name();
             break;
         default:
