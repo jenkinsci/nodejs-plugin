@@ -114,10 +114,17 @@ public class LatestInstallerPathResolver implements InstallerPathResolver {
             arch = "x64";
             break;
         case arm64:
-        case armv6l:
-            if (nodeVersion.compareTo(new NodeJSVersion(12, 0, 0)) >= 0 || nodeVersion.compareTo(new NodeJSVersion(8, 6, 0)) == 0) {
+            if (nodeVersion.compareTo(new NodeJSVersion(15, 8, 1)) >= 0 || nodeVersion.compareTo(new NodeJSVersion(8, 6, 0)) == 0 || nodeVersion.compareTo(new NodeJSVersion(4, 0, 0)) < 0) {
                 throw new IllegalArgumentException(Messages.InstallerPathResolver_unsupportedArch(version, cpu.name(), platform.name()));
             }
+            arch = cpu.name();
+            break;
+        case armv6l:
+            if (nodeVersion.compareTo(new NodeJSVersion(12, 0, 0)) >= 0 || nodeVersion.compareTo(new NodeJSVersion(8, 6, 0)) == 0 || nodeVersion.compareTo(new NodeJSVersion(4, 0, 0)) < 0) {
+                throw new IllegalArgumentException(Messages.InstallerPathResolver_unsupportedArch(version, cpu.name(), platform.name()));
+            }
+            arch = cpu.name();
+            break;
         case armv7l:
             if (nodeVersion.compareTo(new NodeJSVersion(4, 0, 0)) < 0) {
                 throw new IllegalArgumentException(Messages.InstallerPathResolver_unsupportedArch(version, cpu.name(), platform.name()));
