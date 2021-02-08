@@ -105,7 +105,10 @@ public class LatestInstallerPathResolver implements InstallerPathResolver {
             break;
         case amd64:
             if (platform == Platform.SUNOS && //
-                    (new NodeJSVersionRange("[7, 7.5)").includes(nodeVersion) || nodeVersion.compareTo(new NodeJSVersion(0, 12, 18)) == 0)) {
+                    (   new NodeJSVersionRange("[7, 7.5)").includes(nodeVersion) ||
+                        nodeVersion.compareTo(new NodeJSVersion(0, 12, 18)) == 0 ||
+                        nodeVersion.compareTo(new NodeJSVersion(14, 12, 18)) >= 0
+                    )) {
                 throw new IllegalArgumentException(Messages.InstallerPathResolver_unsupportedArch(version, cpu.name(), platform.name()));
             }
             if (isMSI && nodeVersion.compareTo(new NodeJSVersion(4, 0, 0)) < 0) {
