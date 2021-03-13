@@ -45,11 +45,8 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
-import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
-import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
@@ -360,17 +357,10 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
         public List<? extends Installable> getInstallables() throws IOException {
             // Filtering non blacklisted installables + sorting installables by
             // version number
-            List<? extends Installable> filteredInstallables = super.getInstallables().stream() //
+            return super.getInstallables().stream() //
                     .filter(i -> !InstallerPathResolver.Factory.isVersionBlacklisted(i.id)) //
+                    .sorted(new InstallableComparator()) //
                     .collect(Collectors.toList());
-            TreeSet<Installable> sortedInstallables = new TreeSet<>(new Comparator<Installable>() {
-                @Override
-                public int compare(Installable o1, Installable o2) {
-                    return NodeJSVersion.parseVersion(o1.id).compareTo(NodeJSVersion.parseVersion(o2.id)) * -1;
-                }
-            });
-            sortedInstallables.addAll(filteredInstallables);
-            return new ArrayList<>(sortedInstallables);
         }
 
         @Override

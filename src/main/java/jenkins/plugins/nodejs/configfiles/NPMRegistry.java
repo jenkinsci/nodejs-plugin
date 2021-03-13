@@ -52,7 +52,6 @@ import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.cloudbees.plugins.credentials.domains.URIRequirementBuilder;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
 import hudson.Util;
 import hudson.model.AbstractDescribableImpl;
@@ -295,7 +294,6 @@ public class NPMRegistry extends AbstractDescribableImpl<NPMRegistry> implements
             return result;
         }
 
-        @NonNull
         @Nonnull
         protected Authentication getAuthentication(Item item) {
             return item instanceof Queue.Task ? Tasks.getAuthenticationOf((Queue.Task) item) : ACL.SYSTEM;

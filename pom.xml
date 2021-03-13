@@ -3,7 +3,7 @@
     <parent>
         <groupId>org.jenkins-ci.plugins</groupId>
         <artifactId>plugin</artifactId>
-        <version>4.8</version>
+        <version>4.17</version>
         <relativePath />
     </parent>
 
@@ -47,29 +47,23 @@
         <changelist>-SNAPSHOT</changelist>
         <gitHubRepo>jenkinsci/nodejs-plugin</gitHubRepo>
         <java.level>8</java.level>
+
+        <checkstyle.version>8.41</checkstyle.version>
         <config-file-provider-plugin.version>3.6.3</config-file-provider-plugin.version>
-        <plain-credentials-plugin.version>1.7</plain-credentials-plugin.version>
-        <byte-buddy.version>1.9.10</byte-buddy.version>
         <assertj.version>3.15.0</assertj.version>
         <jenkins.version>2.222.4</jenkins.version>
-        <jcasc.version>1.41</jcasc.version>
     </properties>
 
     <dependencyManagement>
         <dependencies>
             <dependency>
                 <groupId>io.jenkins.tools.bom</groupId>
-                <artifactId>bom-2.138.x</artifactId>
-                <version>3</version>
+                <artifactId>bom-2.222.x</artifactId>
+                <version>26</version>
                 <scope>import</scope>
                 <type>pom</type>
             </dependency>
             <!-- need to force this https://github.com/mockito/mockito/issues/1606#issuecomment-473371126 -->
-            <dependency>
-                <groupId>net.bytebuddy</groupId>
-                <artifactId>byte-buddy</artifactId>
-                <version>${byte-buddy.version}</version> 
-            </dependency>
             <dependency>
                 <groupId>org.hamcrest</groupId>
                 <artifactId>hamcrest-core</artifactId>
@@ -91,7 +85,6 @@
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>plain-credentials</artifactId>
-            <version>${plain-credentials-plugin.version}</version>
         </dependency>
         <dependency>
             <groupId>org.assertj</groupId>
@@ -127,13 +120,11 @@
         <dependency>
             <groupId>io.jenkins</groupId>
             <artifactId>configuration-as-code</artifactId>
-            <version>${jcasc.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>io.jenkins.configuration-as-code</groupId>
             <artifactId>test-harness</artifactId>
-            <version>${jcasc.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -169,7 +160,14 @@
         <plugins>
             <plugin>
                 <artifactId>maven-checkstyle-plugin</artifactId>
-                <version>3.1.1</version>
+                <version>3.1.2</version>
+                <dependencies>
+                    <dependency>
+                        <groupId>com.puppycrawl.tools</groupId>
+                        <artifactId>checkstyle</artifactId>
+                        <version>${checkstyle.version}</version>
+                    </dependency>
+                </dependencies>
                 <configuration>
                     <configLocation>${basedir}/checkstyle.xml</configLocation>
                     <sourceDirectories>${project.build.sourceDirectory}</sourceDirectories>
@@ -187,44 +185,4 @@
             </plugin>
         </plugins>
     </build>
-
-    <profiles>
-        <profile>
-            <id>coverage</id>
-            <properties>
-                <maven.javadoc.skip>true</maven.javadoc.skip>
-            </properties>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.jacoco</groupId>
-                        <artifactId>jacoco-maven-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <id>prepare-agent</id>
-                                <goals>
-                                    <goal>prepare-agent</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.eluder.coveralls</groupId>
-                        <artifactId>coveralls-maven-plugin</artifactId>
-                        <version>4.3.0</version>
-                        <configuration>
-                            <repoToken>${env.COVERALLS_REPO_TOKEN}</repoToken>
-                        </configuration>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.codehaus.mojo</groupId>
-                        <artifactId>findbugs-maven-plugin</artifactId>
-                        <configuration>
-                            <skip>true</skip>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-    </profiles>
 </project>

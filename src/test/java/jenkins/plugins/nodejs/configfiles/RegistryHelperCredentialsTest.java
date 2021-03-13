@@ -80,7 +80,7 @@ public class RegistryHelperCredentialsTest {
         dataParameters.add(new Object[] { "global scoped no auth", new NPMRegistry[] { scopedGlobalRegsitry } });
         dataParameters.add(new Object[] { "organisation scoped with auth", new NPMRegistry[] { organisationRegistry } });
         dataParameters.add(new Object[] { "mix of proxy + global scoped + scped organisation registries",
-                new NPMRegistry[] { proxyRegistry, scopedGlobalRegsitry, organisationRegistry } });
+                                          new NPMRegistry[] { proxyRegistry, scopedGlobalRegsitry, organisationRegistry } });
 
         return dataParameters;
     }
