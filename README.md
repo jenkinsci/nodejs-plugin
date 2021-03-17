@@ -28,7 +28,7 @@ Plugins Update Center.
     config-file-provider plugin to setup custom NPM settings
 -   Add a lightweight support to DSL pipeline
 -   Force 32bit architecture
--   Relocate npm cache folder using pre defined streategies
+-   Relocate npm cache folder using pre defined strategies
 -   Allow use of a mirror repo for downloading and installing NodeJS.
 
 ## Usage
@@ -50,14 +50,14 @@ Plugins Update Center.
     *Note that you might provide npm package's version (with syntax
     "package@0.1.2" for instance, or maybe better, "package@\~0.1.0") in
     order to enforce*  
-    *reproductibility of your npm execution environnment (the \~ syntax
+    *reproductibility of your npm execution environment (the \~ syntax
     allows to benefits from bugfixes without taking the risk of a major
     version upgrade)*  
     See below:  
     ![](docs/images/image2018-3-31_16:40:29.png)
 
 3.  Now, go to a job configuration screen, you will have 2 new items :
-    -   On the "Build environnment" section, you will be able to pick
+    -   On the "Build environment" section, you will be able to pick
         one of the NodeJS installations to provide its bin/ folder to
         the PATH.  
         This way, during shell build scripts, you will have some npm
@@ -88,7 +88,7 @@ Plugins Update Center.
 5.  You would relocate the npm cache folder to swipe out it when a job
     is removed or workspace folder is deleted. There are three default
     strategy:
-    -   per node, that is the default NPM behavour. All download package
+    -   per node, that is the default NPM behaviour. All download package
         are placed in the \~/.npm on Unix system or
         %APP\_DATA%\\npm-cache on Windows system;
     -   per executor, where each executor has an own NPM cache folder
@@ -182,7 +182,7 @@ environment. In this case consider if update or not or use an own build
 from  
 [this
 branch](https://github.com/jenkinsci/nodejs-plugin/tree/workaround-26583)
-untill the JENKINS-26583 will not be fixed.
+until the JENKINS-26583 will not be fixed.
 
 -   If you update from NodeJS 0.2.2 or earlier to newer version
     materializes a data migration. This data migration is transparent to
