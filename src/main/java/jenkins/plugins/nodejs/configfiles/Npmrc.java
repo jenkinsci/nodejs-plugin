@@ -24,6 +24,7 @@
 package jenkins.plugins.nodejs.configfiles;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.Writer;
@@ -141,6 +142,8 @@ public class Npmrc {
      * @throws IOException in case of I/O write error
      */
     public void save(File file) throws IOException {
+        // FileWriterWithEncoding does not truncate file if it already exists
+        new FileOutputStream(file).close();
         try (Writer writer = new FileWriterWithEncoding(file, UTF_8)) {
             IOUtils.write(toString(), writer);
         }
