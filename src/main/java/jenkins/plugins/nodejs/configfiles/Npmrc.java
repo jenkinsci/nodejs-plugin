@@ -23,21 +23,21 @@
  */
 package jenkins.plugins.nodejs.configfiles;
 
+import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.StringReader;
-import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.LineIterator;
-import org.apache.commons.io.output.FileWriterWithEncoding;
 
 /**
  * Npm config file parser.
@@ -46,8 +46,6 @@ import org.apache.commons.io.output.FileWriterWithEncoding;
  * @since 1.0
  */
 public class Npmrc {
-    private static final String UTF_8 = "UTF-8";
-
     private Map<Object, String> properties = new LinkedHashMap<>();
 
     /**
@@ -67,7 +65,7 @@ public class Npmrc {
         }
 
         Path path = Paths.get(file.getAbsolutePath());
-        String content = new String(Files.readAllBytes(path), UTF_8);
+        String content = new String(Files.readAllBytes(path), StandardCharsets.UTF_8.name());
 
         Npmrc config = new Npmrc();
         config.from(content);
@@ -142,11 +140,9 @@ public class Npmrc {
      * @throws IOException in case of I/O write error
      */
     public void save(File file) throws IOException {
-        // FileWriterWithEncoding does not truncate file if it already exists
-        new FileOutputStream(file).close();
-        try (Writer writer = new FileWriterWithEncoding(file, UTF_8)) {
-            IOUtils.write(toString(), writer);
-        }
+        BufferedWriter writer = Files.newBufferedWriter(file.toPath(), StandardCharsets.UTF_8, StandardOpenOption.TRUNCATE_EXISTING);
+        writer.write(toString());
+        writer.close();
     }
 
     /**
