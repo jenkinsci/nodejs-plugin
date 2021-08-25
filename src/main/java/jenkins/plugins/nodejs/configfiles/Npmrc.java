@@ -26,7 +26,6 @@ package jenkins.plugins.nodejs.configfiles;
 import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
-import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -34,9 +33,9 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.LineIterator;
-import org.apache.commons.io.output.FileWriterWithEncoding;
 
 /**
  * Npm config file parser.
@@ -141,9 +140,7 @@ public class Npmrc {
      * @throws IOException in case of I/O write error
      */
     public void save(File file) throws IOException {
-        try (Writer writer = new FileWriterWithEncoding(file, UTF_8)) {
-            IOUtils.write(toString(), writer);
-        }
+        FileUtils.writeStringToFile(file, toString(), UTF_8);
     }
 
     /**
