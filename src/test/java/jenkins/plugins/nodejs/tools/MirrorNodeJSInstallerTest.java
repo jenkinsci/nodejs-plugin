@@ -59,7 +59,7 @@ public class MirrorNodeJSInstallerTest {
     @Rule
     public JenkinsRule r = new JenkinsRule();
 
-    private class MockMirrorNodeJSInstaller extends MirrorNodeJSInstaller {
+    public static class MockMirrorNodeJSInstaller extends MirrorNodeJSInstaller {
 
         private Installable installable;
 
