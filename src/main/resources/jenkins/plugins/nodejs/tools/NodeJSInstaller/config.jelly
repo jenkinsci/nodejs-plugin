@@ -23,7 +23,7 @@ THE SOFTWARE.
 -->
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form" xmlns:st="jelly:stapler">
-    <st:include page="/hudson/tools/DownloadFromUrlInstaller/config.jelly" />
+    <st:include page="config.jelly" class="hudson.tools.DownloadFromUrlInstaller" />
 
     <f:entry title="${%force32Bit.title}" description="${%force32Bit.description}">
         <f:checkbox field="force32Bit" />
