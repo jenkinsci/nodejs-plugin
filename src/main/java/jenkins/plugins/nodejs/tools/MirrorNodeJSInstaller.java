@@ -274,12 +274,6 @@ public class MirrorNodeJSInstaller extends NodeJSInstaller {
         }
 
         @Override
-        public String getId() {
-            // For backward compatibility
-            return "hudson.plugins.nodejs.tools.NodeJSInstaller";
-        }
-
-        @Override
         public boolean isApplicable(Class<? extends ToolInstallation> toolType) {
             return toolType == NodeJSInstallation.class;
         }
