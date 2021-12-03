@@ -7,7 +7,7 @@
     </parent>
 
     <artifactId>nodejs</artifactId>
-    <version>${revision}${changelist}</version>
+    <version>1.4.3</version>
     <name>NodeJS Plugin</name>
     <description>Executes NodeJS script as a build step.</description>
     <url>https://github.com/jenkinsci/nodejs-plugin</url>
@@ -145,7 +145,7 @@
         <connection>scm:git:git://github.com/${gitHubRepo}.git</connection>
         <developerConnection>scm:git:git@github.com:${gitHubRepo}.git</developerConnection>
         <url>https://github.com/${gitHubRepo}</url>
-        <tag>${scmTag}</tag>
+        <tag>nodejs-1.4.3</tag>
     </scm>
 
     <pluginRepositories>
