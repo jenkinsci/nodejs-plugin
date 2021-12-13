@@ -355,12 +355,7 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
         @Nonnull
         @Override
         public List<? extends Installable> getInstallables() throws IOException {
-            // Filtering non blacklisted installables + sorting installables by
-            // version number
-            return super.getInstallables().stream() //
-                    .filter(i -> !InstallerPathResolver.Factory.isVersionBlacklisted(i.id)) //
-                    .sorted(new InstallableComparator()) //
-                    .collect(Collectors.toList());
+            return ToolsUtils.getInstallable();
         }
 
         @Override

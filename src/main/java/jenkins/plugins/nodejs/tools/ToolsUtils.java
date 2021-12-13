@@ -23,8 +23,18 @@
  */
 package jenkins.plugins.nodejs.tools;
 
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import hudson.model.Node;
+import hudson.model.DownloadService.Downloadable;
+import hudson.tools.DownloadFromUrlInstaller.Installable;
+import hudson.tools.DownloadFromUrlInstaller.InstallableList;
 import jenkins.plugins.nodejs.Messages;
+import net.sf.json.JSONObject;
 
 /*package */ class ToolsUtils {
 
@@ -65,6 +75,17 @@ import jenkins.plugins.nodejs.Messages;
         default:
             return false;
         }
+    }
+
+    public static List<? extends Installable> getInstallable() throws IOException {
+        JSONObject d = Downloadable.get("hudson.plugins.nodejs.tools.NodeJSInstaller").getData();
+        if (d == null) {
+            return Collections.emptyList();
+        }
+        return Arrays.asList(((InstallableList) JSONObject.toBean(d, InstallableList.class)).list).stream() //
+                .filter(i -> !InstallerPathResolver.Factory.isVersionBlacklisted(i.id)) //
+                .sorted(new InstallableComparator()) //
+                .collect(Collectors.toList());
     }
 
 }

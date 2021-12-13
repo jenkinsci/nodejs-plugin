@@ -30,7 +30,6 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.List;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
@@ -95,7 +94,7 @@ public class MirrorNodeJSInstaller extends NodeJSInstaller {
 
     @DataBoundSetter
     public void setCredentialsId(String credentialsId) {
-        this.credentialsId = credentialsId;
+        this.credentialsId = Util.fixEmptyAndTrim(credentialsId);
     }
 
     public String getCredentialsId() {
@@ -265,12 +264,7 @@ public class MirrorNodeJSInstaller extends NodeJSInstaller {
         @Nonnull
         @Override
         public List<? extends Installable> getInstallables() throws IOException {
-            // Filtering non blacklisted installables + sorting installables by
-            // version number
-            return super.getInstallables().stream() //
-                    .filter(i -> !InstallerPathResolver.Factory.isVersionBlacklisted(i.id)) //
-                    .sorted(new InstallableComparator()) //
-                    .collect(Collectors.toList());
+            return ToolsUtils.getInstallable();
         }
 
         @Override
