@@ -46,6 +46,11 @@ public final class NodeJSConstants {
     public static final String ENVVAR_NODEJS_HOME = "NODEJS_HOME";
 
     /**
+     * Alias for NODEJS_HOME.
+     */
+    public static final String ENVVAR_NODE_HOME = "NODE_HOME";
+
+    /**
      * The name of environment variable that contribute the PATH value.
      */
     public static final String ENVVAR_NODEJS_PATH = "PATH+NODEJS";
