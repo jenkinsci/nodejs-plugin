@@ -85,6 +85,7 @@ public class NodeJSCommandInterpreterTest {
                 EnvVars env = build.getEnvironment(listener);
                 Assertions.assertThat(env.keySet()).contains(NodeJSConstants.ENVVAR_NODEJS_PATH, NodeJSConstants.ENVVAR_NODEJS_HOME);
                 assertEquals(getTestHome(), env.get(NodeJSConstants.ENVVAR_NODEJS_HOME));
+                assertEquals(getTestHome(), env.get(NodeJSConstants.ENVVAR_NODE_HOME));
                 assertEquals(getTestBin(), env.get(NodeJSConstants.ENVVAR_NODEJS_PATH));
             }
         });

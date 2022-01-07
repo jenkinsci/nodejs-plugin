@@ -62,6 +62,7 @@ public class NodeJSInstallationMockitoTest {
         Mockito.verify(env, Mockito.never()).overrideAll(Mockito.<String, String>anyMap());
 
         assertEquals("Unexpected value for " + ENVVAR_NODEJS_HOME, nodeJSHome, env.get(ENVVAR_NODEJS_HOME));
+        assertEquals("Unexpected value for " + ENVVAR_NODE_HOME, nodeJSHome, env.get(ENVVAR_NODE_HOME));
         assertEquals("Unexpected value for " + ENVVAR_NODEJS_PATH, bin, env.get(ENVVAR_NODEJS_PATH));
         assertNull("PATH variable should not appear in this environment", env.get("PATH"));
     }

@@ -48,7 +48,6 @@ import java.net.URLConnection;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 import jenkins.MasterToSlaveFileCallable;
 import jenkins.model.Jenkins;
