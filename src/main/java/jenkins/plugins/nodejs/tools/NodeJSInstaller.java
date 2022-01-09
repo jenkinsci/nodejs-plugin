@@ -23,6 +23,29 @@
  */
 package jenkins.plugins.nodejs.tools;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.net.URLConnection;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+import java.util.List;
+import java.util.Locale;
+import java.util.Objects;
+import java.util.concurrent.TimeUnit;
+
+import javax.annotation.Nonnull;
+
+import org.apache.commons.io.input.CountingInputStream;
+import org.apache.commons.lang.StringUtils;
+import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
+
 import hudson.EnvVars;
 import hudson.Extension;
 import hudson.FilePath;
@@ -39,23 +62,10 @@ import hudson.tools.DownloadFromUrlInstaller;
 import hudson.tools.ToolInstallation;
 import hudson.util.ArgumentListBuilder;
 import hudson.util.Secret;
-import java.io.File;
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.net.URLConnection;
-import java.util.List;
-import java.util.Locale;
-import java.util.concurrent.TimeUnit;
-import javax.annotation.Nonnull;
 import jenkins.MasterToSlaveFileCallable;
 import jenkins.model.Jenkins;
 import jenkins.plugins.nodejs.Messages;
 import jenkins.plugins.nodejs.NodeJSConstants;
-import org.apache.commons.lang.StringUtils;
-import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.DataBoundSetter;
 
 /**
  * Automatic NodeJS installer from nodejs.org
@@ -67,6 +77,7 @@ import org.kohsuke.stapler.DataBoundSetter;
  */
 public class NodeJSInstaller extends DownloadFromUrlInstaller {
 
+    private static boolean DISABLE_CACHE = Boolean.getBoolean(NodeJSInstaller.class.getName() + ".cache.disable");
     public static final String NPM_PACKAGES_RECORD_FILENAME = ".npmPackages";
 
     /**
@@ -112,27 +123,67 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
         }
 
         if (!isUpToDate(expected, installable)) {
-            String message = installable.url + " to " + expected + " on " + node.getDisplayName();
-            boolean isMSI = installable.url.toLowerCase(Locale.ENGLISH).endsWith("msi");
-            URL installableURL = new URL(installable.url);
-
-            if (isMSI && installIfNecessaryMSI(expected, installableURL, log, "Installing " + message)
-                    || expected.installIfNecessaryFrom(installableURL, log, "Unpacking " + message)) {
-
-                expected.child(".timestamp").delete(); // we don't use the
-                // timestamp
-                FilePath base = findPullUpDirectory(expected);
-                if (base != null && base != expected) {
-                    base.moveAllChildrenTo(expected);
+            File cache = getLocalCacheFile(installable, node);
+            if (!DISABLE_CACHE && cache.exists()) {
+                log.getLogger().println(Messages.NodeJSInstaller_installFromCache(cache, expected, node.getDisplayName()));
+                restoreCache(expected, cache, log);
+            } else {
+                String message = installable.url + " to " + expected + " on " + node.getDisplayName();
+                boolean isMSI = installable.url.toLowerCase(Locale.ENGLISH).endsWith("msi");
+                URL installableURL = new URL(installable.url);
+    
+                if (isMSI && installIfNecessaryMSI(expected, installableURL, log, "Installing " + message)
+                        || expected.installIfNecessaryFrom(installableURL, log, "Unpacking " + message)) {
+    
+                    expected.child(".timestamp").delete(); // we don't use the timestamp
+                    FilePath base = findPullUpDirectory(expected);
+                    if (base != null && base != expected) {
+                        base.moveAllChildrenTo(expected);
+                    }
+                    // leave a record for the next up-to-date check
+                    expected.child(".installedFrom").write(installable.url, "UTF-8");
+    
+                    if (!DISABLE_CACHE) {
+                        buildCache(expected, cache);
+                    }
                 }
-                // leave a record for the next up-to-date check
-                expected.child(".installedFrom").write(installable.url, "UTF-8");
             }
         }
 
         refreshGlobalPackages(node, log, expected);
 
         return expected;
+    }
+
+    private void restoreCache(FilePath expected, File cache, TaskListener log) throws IOException, InterruptedException {
+        try (InputStream in = cache.toURI().toURL().openStream()) {
+            CountingInputStream cis = new CountingInputStream(in);
+            try {
+                Objects.requireNonNull(expected).unzipFrom(cis);
+            } catch (IOException e) {
+                throw new IOException(Messages.NodeJSInstaller_failedToUnpack(cache.toURI().toURL(), cis.getByteCount()), e);
+            }
+        }
+    }
+
+    private void buildCache(FilePath expected, File cache) throws IOException, InterruptedException {
+        // update the local cache on master
+        // download to a temporary file and rename it in to handle concurrency and failure correctly,
+        Path tmp = new File(cache.getPath() + ".tmp").toPath();
+        try {
+            Path tmpParent = tmp.getParent();
+            if (tmpParent != null) {
+                Files.createDirectories(tmpParent);
+            }
+            try (OutputStream out = Files.newOutputStream(tmp)) {
+                // workaround to not store current folder as root folder in the archive
+                // this prevent issue when tool name is renamed 
+                expected.zip(out, "**");
+            }
+            Files.move(tmp, cache.toPath(), StandardCopyOption.REPLACE_EXISTING);
+        } finally {
+            Files.deleteIfExists(tmp);
+        }
     }
 
     /*
@@ -326,6 +377,13 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
     @DataBoundSetter
     public void setForce32Bit(boolean force32Bit) {
         this.force32Bit = force32Bit;
+    }
+
+    private File getLocalCacheFile(Installable installable, Node node) throws DetectionFailedException {
+        Platform platform = ToolsUtils.getPlatform(node);
+        CPU cpu = ToolsUtils.getCPU(node);
+        // we store cache as zip
+        return new File(Jenkins.get().getRootDir(), "caches/nodejs/" + platform + "/" + cpu + "/" + id + ".zip");
     }
 
     protected final class NodeJSInstallable extends NodeSpecificInstallable {

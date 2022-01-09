@@ -33,7 +33,6 @@ import org.junit.runner.RunWith;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
-import org.powermock.reflect.Whitebox;
 
 import hudson.model.Node;
 
@@ -44,12 +43,6 @@ public class ToolsUtilsTest {
     @Before
     public void setup() {
         CPU[] cpuValues = CPU.values();
-        CPU mock = PowerMockito.mock(CPU.class);
-        for (CPU c : cpuValues) {
-            Whitebox.setInternalState(mock, "name", c.name());
-            Whitebox.setInternalState(mock, "ordinal", c.ordinal());
-        }
-
         PowerMockito.mockStatic(CPU.class);
         PowerMockito.when(CPU.values()).thenReturn(cpuValues);
     }

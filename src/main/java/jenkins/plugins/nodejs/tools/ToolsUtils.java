@@ -78,14 +78,19 @@ import net.sf.json.JSONObject;
     }
 
     public static List<? extends Installable> getInstallable() throws IOException {
-        JSONObject d = Downloadable.get("hudson.plugins.nodejs.tools.NodeJSInstaller").getData();
-        if (d == null) {
-            return Collections.emptyList();
+        List<Installable> installables = Collections.emptyList();
+
+        Downloadable downloadable = Downloadable.get("hudson.plugins.nodejs.tools.NodeJSInstaller");
+        if (downloadable != null) {
+            JSONObject d = downloadable.getData();
+            if (d != null) {
+                installables = Arrays.asList(((InstallableList) JSONObject.toBean(d, InstallableList.class)).list).stream() //
+                        .filter(i -> !InstallerPathResolver.Factory.isVersionBlacklisted(i.id)) //
+                        .sorted(new InstallableComparator()) //
+                        .collect(Collectors.toList());
+            }
         }
-        return Arrays.asList(((InstallableList) JSONObject.toBean(d, InstallableList.class)).list).stream() //
-                .filter(i -> !InstallerPathResolver.Factory.isVersionBlacklisted(i.id)) //
-                .sorted(new InstallableComparator()) //
-                .collect(Collectors.toList());
+        return installables;
     }
 
 }

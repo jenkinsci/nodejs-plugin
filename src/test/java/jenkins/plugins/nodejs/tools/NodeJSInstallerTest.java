@@ -26,9 +26,15 @@ package jenkins.plugins.nodejs.tools;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.util.zip.ZipFile;
 
+import org.apache.tools.zip.ZipEntry;
+import org.apache.tools.zip.ZipOutputStream;
+import org.assertj.core.api.AssertDelegateTarget;
+import org.assertj.core.api.Assertions;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -36,6 +42,7 @@ import org.junit.runner.RunWith;
 import org.jvnet.hudson.test.Issue;
 import org.mockito.Mockito;
 import org.powermock.api.mockito.PowerMockito;
+import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
@@ -44,12 +51,34 @@ import hudson.model.Node;
 import hudson.model.TaskListener;
 import hudson.tools.ToolInstallation;
 import hudson.tools.DownloadFromUrlInstaller.Installable;
+import hudson.util.StreamTaskListener;
+import io.jenkins.cli.shaded.org.apache.commons.io.output.NullPrintStream;
 
 @RunWith(PowerMockRunner.class)
+@PowerMockIgnore({ "com.sun.org.apache.xerces.*", "javax.xml.*", "org.xml.*", "javax.management.*", "org.w3c.*" })
 public class NodeJSInstallerTest {
+
+    private static class ZipFileAssert implements AssertDelegateTarget {
+
+        private File file;
+
+        public ZipFileAssert(File file) {
+            this.file = file;
+        }
+
+        void hasEntry(String path) throws IOException {
+            Assertions.assertThat(file).exists();
+            try (ZipFile zf = new ZipFile(file)) {
+                Assertions.assertThat(zf.getEntry(path)).as("Entry " + path + " not found.").isNotNull();
+            }
+        }
+    }
 
     @Rule
     public TemporaryFolder fileRule = new TemporaryFolder();
+
+    @SuppressWarnings("deprecation")
+    private TaskListener taskListener = new StreamTaskListener(new NullPrintStream());
 
     /**
      * Verify that the installer skip install of global package also if
@@ -67,13 +96,89 @@ public class NodeJSInstallerTest {
         String expectedPackages = " ";
         int expectedRefreshHours = NodeJSInstaller.DEFAULT_NPM_PACKAGES_REFRESH_HOURS;
         Node currentNode = mock(Node.class);
-        when(currentNode.getRootPath()).thenReturn(new FilePath(fileRule.newFile()));
+        when(currentNode.getRootPath()).thenReturn(new FilePath(fileRule.newFolder()));
 
         // create partial mock
         NodeJSInstaller installer = new NodeJSInstaller("test-id", expectedPackages, expectedRefreshHours);
         NodeJSInstaller spy = PowerMockito.spy(installer);
 
         // use Mockito to set up your expectation
+        PowerMockito.stub(PowerMockito.method(NodeJSInstaller.class, "getLocalCacheFile", Installable.class, Node.class)) //
+            .toReturn(new File(fileRule.getRoot(), "test.zip"));
+        PowerMockito.stub(PowerMockito.method(NodeJSInstaller.class, "areNpmPackagesUpToDate", FilePath.class, String.class, long.class)) //
+            .toThrow(new AssertionError("global package should skip install if is an empty string"));
+        PowerMockito.suppress(PowerMockito.method(FilePath.class, "installIfNecessaryFrom", URL.class, TaskListener.class, String.class));
+        Installable installable = new Installable();
+        installable.url = fileRule.newFile().toURI().toString();
+        PowerMockito.doReturn(installable).when(spy).getInstallable();
+        when(spy.getNpmPackages()).thenReturn(expectedPackages);
+
+        PowerMockito.mockStatic(ToolsUtils.class);
+        when(ToolsUtils.getCPU(currentNode)).thenReturn(CPU.amd64);
+        when(ToolsUtils.getPlatform(currentNode)).thenReturn(Platform.LINUX);
+
+        ToolInstallation toolInstallation = mock(ToolInstallation.class);
+        when(toolInstallation.getHome()).thenReturn("nodejs");
+
+        // execute test
+        spy.performInstallation(toolInstallation, currentNode, taskListener);
+    }
+
+    @Test
+    @PrepareForTest({ NodeJSInstaller.class, ToolsUtils.class, FilePath.class })
+    public void verify_cache_is_build() throws Exception {
+        String expectedPackages = " ";
+        int expectedRefreshHours = NodeJSInstaller.DEFAULT_NPM_PACKAGES_REFRESH_HOURS;
+        Node currentNode = mock(Node.class);
+        when(currentNode.getRootPath()).thenReturn(new FilePath(fileRule.newFolder()));
+
+        // create partial mock
+        NodeJSInstaller installer = new NodeJSInstaller("test-id", expectedPackages, expectedRefreshHours);
+        NodeJSInstaller spy = PowerMockito.spy(installer);
+
+        // use Mockito to set up your expectation
+        File cache = new File(fileRule.getRoot(), "test.zip");
+        PowerMockito.stub(PowerMockito.method(NodeJSInstaller.class, "getLocalCacheFile", Installable.class, Node.class)) //
+                .toReturn(cache);
+        PowerMockito.stub(PowerMockito.method(NodeJSInstaller.class, "areNpmPackagesUpToDate", FilePath.class, String.class, long.class)) //
+                .toThrow(new AssertionError("global package should skip install if is an empty string"));
+        Installable installable = new Installable();
+        File downloadURL = fileRule.newFile("nodejs.zip");
+        fillArchive(downloadURL, "nodejs/bin/npm.sh", "echo \"hello\"".getBytes());
+        installable.url = downloadURL.toURI().toString();
+        PowerMockito.doReturn(installable).when(spy).getInstallable();
+        when(spy.getNpmPackages()).thenReturn(expectedPackages);
+
+        PowerMockito.mockStatic(ToolsUtils.class);
+        when(ToolsUtils.getCPU(currentNode)).thenReturn(CPU.amd64);
+        when(ToolsUtils.getPlatform(currentNode)).thenReturn(Platform.LINUX);
+
+        ToolInstallation toolInstallation = mock(ToolInstallation.class);
+        when(toolInstallation.getHome()).thenReturn("nodejs");
+
+        // execute test
+        spy.performInstallation(toolInstallation, currentNode, taskListener);
+        Assertions.assertThat(new ZipFileAssert(cache)).hasEntry("bin/npm.sh");
+    }
+
+    @Test
+    @PrepareForTest({ NodeJSInstaller.class, ToolsUtils.class, FilePath.class })
+    public void test_cache_archive_is_used() throws Exception {
+        String expectedPackages = " ";
+        int expectedRefreshHours = NodeJSInstaller.DEFAULT_NPM_PACKAGES_REFRESH_HOURS;
+        Node currentNode = mock(Node.class);
+        when(currentNode.getRootPath()).thenReturn(new FilePath(fileRule.newFolder()));
+
+        // create partial mock
+        NodeJSInstaller installer = new NodeJSInstaller("test-id", expectedPackages, expectedRefreshHours);
+        NodeJSInstaller spy = PowerMockito.spy(installer);
+
+        // use Mockito to set up your expectation
+        File cache = fileRule.newFile();
+        fillArchive(cache, "nodejs.txt", "test".getBytes());
+        PowerMockito.stub(PowerMockito.method(NodeJSInstaller.class, "getLocalCacheFile", Installable.class, Node.class)) //
+                .toReturn(cache);
+
         PowerMockito.stub(PowerMockito.method(NodeJSInstaller.class, "areNpmPackagesUpToDate", FilePath.class, String.class, long.class)) //
                 .toThrow(new AssertionError("global package should skip install if is an empty string"));
         PowerMockito.suppress(PowerMockito.method(FilePath.class, "installIfNecessaryFrom", URL.class, TaskListener.class, String.class));
@@ -86,11 +191,21 @@ public class NodeJSInstallerTest {
         when(ToolsUtils.getCPU(currentNode)).thenReturn(CPU.amd64);
         when(ToolsUtils.getPlatform(currentNode)).thenReturn(Platform.LINUX);
 
-        // execute test
         ToolInstallation toolInstallation = mock(ToolInstallation.class);
         when(toolInstallation.getHome()).thenReturn("nodejs");
 
-        spy.performInstallation(toolInstallation, currentNode, mock(TaskListener.class));
+        // execute test
+        FilePath expected = spy.performInstallation(toolInstallation, currentNode, taskListener);
+        Assertions.assertThat(expected.list("nodejs.txt")).isNotEmpty();
+    }
+
+    private void fillArchive(File file, String fileEntry, byte[] content) throws IOException {
+        try (ZipOutputStream zf = new ZipOutputStream(file)) {
+            ZipEntry ze = new ZipEntry(fileEntry);
+            zf.putNextEntry(ze);
+            zf.write(content);
+            zf.closeEntry();
+        }
     }
 
     @Issue("JENKINS-56895")
@@ -100,7 +215,7 @@ public class NodeJSInstallerTest {
         String expectedPackages = "npm@6.7.0";
         int expectedRefreshHours = NodeJSInstaller.DEFAULT_NPM_PACKAGES_REFRESH_HOURS;
         Node currentNode = mock(Node.class);
-        when(currentNode.getRootPath()).thenReturn(new FilePath(fileRule.newFile()));
+        when(currentNode.getRootPath()).thenReturn(new FilePath(fileRule.newFolder()));
 
         // create partial mock
         NodeJSInstaller installer = new NodeJSInstaller("test-id", expectedPackages, expectedRefreshHours) {
@@ -125,7 +240,7 @@ public class NodeJSInstallerTest {
         when(toolInstallation.getHome()).thenReturn("nodejs");
 
         // execute test
-        spy.performInstallation(toolInstallation, currentNode, mock(TaskListener.class));
+        spy.performInstallation(toolInstallation, currentNode, taskListener);
 
         Mockito.verify(spy).refreshGlobalPackages(Mockito.any(Node.class), Mockito.any(TaskListener.class), Mockito.any(FilePath.class));
     }
