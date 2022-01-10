@@ -68,7 +68,7 @@
                 <groupId>org.mockito</groupId>
                 <artifactId>mockito-core</artifactId>
                 <!-- with version 4.x test fails -->
-                <version>3.12.4</version>
+                <version>4.2.0</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
