@@ -9,4 +9,4 @@ updates:
   reviewers:
   - nfalco79
   labels:
-  - skip-changelog
+  - dependencies
