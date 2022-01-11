@@ -1,0 +1,4 @@
+_extends: .github
+tag-template: nodejs-$NEXT_PATCH_VERSION
+name-template: $NEXT_PATCH_VERSION
+version-template: $MAJOR.$MINOR.$PATCH
