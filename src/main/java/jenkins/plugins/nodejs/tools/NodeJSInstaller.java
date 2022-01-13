@@ -41,6 +41,7 @@ import java.util.concurrent.TimeUnit;
 
 import javax.annotation.Nonnull;
 
+import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream;
 import org.apache.commons.io.input.CountingInputStream;
 import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -54,6 +55,7 @@ import hudson.Launcher;
 import hudson.Launcher.ProcStarter;
 import hudson.ProxyConfiguration;
 import hudson.Util;
+import hudson.FilePath.TarCompression;
 import hudson.model.Node;
 import hudson.model.TaskListener;
 import hudson.remoting.VirtualChannel;
@@ -124,10 +126,17 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
 
         if (!isUpToDate(expected, installable)) {
             File cache = getLocalCacheFile(installable, node);
+            boolean skipInstall = false;
             if (!DISABLE_CACHE && cache.exists()) {
                 log.getLogger().println(Messages.NodeJSInstaller_installFromCache(cache, expected, node.getDisplayName()));
-                restoreCache(expected, cache, log);
-            } else {
+                try {
+                    restoreCache(expected, cache, log);
+                    skipInstall = true;
+                } catch (IOException e) {
+                    log.error("Use of caches failed: " + e.getMessage());
+                }
+            }
+            if (!skipInstall) {
                 String message = installable.url + " to " + expected + " on " + node.getDisplayName();
                 boolean isMSI = installable.url.toLowerCase(Locale.ENGLISH).endsWith("msi");
                 URL installableURL = new URL(installable.url);
@@ -159,7 +168,7 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
         try (InputStream in = cache.toURI().toURL().openStream()) {
             CountingInputStream cis = new CountingInputStream(in);
             try {
-                Objects.requireNonNull(expected).unzipFrom(cis);
+                Objects.requireNonNull(expected).untarFrom(cis, TarCompression.GZIP);
             } catch (IOException e) {
                 throw new IOException(Messages.NodeJSInstaller_failedToUnpack(cache.toURI().toURL(), cis.getByteCount()), e);
             }
@@ -175,10 +184,10 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
             if (tmpParent != null) {
                 Files.createDirectories(tmpParent);
             }
-            try (OutputStream out = Files.newOutputStream(tmp)) {
+            try (OutputStream out = new GzipCompressorOutputStream(Files.newOutputStream(tmp))) {
                 // workaround to not store current folder as root folder in the archive
                 // this prevent issue when tool name is renamed 
-                expected.zip(out, "**");
+                expected.tar(out, "**");
             }
             Files.move(tmp, cache.toPath(), StandardCopyOption.REPLACE_EXISTING);
         } finally {
@@ -382,8 +391,8 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
     private File getLocalCacheFile(Installable installable, Node node) throws DetectionFailedException {
         Platform platform = ToolsUtils.getPlatform(node);
         CPU cpu = ToolsUtils.getCPU(node);
-        // we store cache as zip
-        return new File(Jenkins.get().getRootDir(), "caches/nodejs/" + platform + "/" + cpu + "/" + id + ".zip");
+        // we store cache as tar.gz to preserve symlink
+        return new File(Jenkins.get().getRootDir(), "caches/nodejs/" + platform + "/" + cpu + "/" + id + ".tar.gz");
     }
 
     protected final class NodeJSInstallable extends NodeSpecificInstallable {
