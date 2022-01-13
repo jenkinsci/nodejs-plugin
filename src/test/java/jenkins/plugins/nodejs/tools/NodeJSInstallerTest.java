@@ -27,12 +27,17 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URL;
-import java.util.zip.ZipFile;
+import java.util.zip.GZIPInputStream;
 
-import org.apache.tools.zip.ZipEntry;
-import org.apache.tools.zip.ZipOutputStream;
+import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
+import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
+import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
+import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream;
+import org.apache.commons.io.IOUtils;
 import org.assertj.core.api.AssertDelegateTarget;
 import org.assertj.core.api.Assertions;
 import org.junit.Rule;
@@ -58,18 +63,24 @@ import io.jenkins.cli.shaded.org.apache.commons.io.output.NullPrintStream;
 @PowerMockIgnore({ "com.sun.org.apache.xerces.*", "javax.xml.*", "org.xml.*", "javax.management.*", "org.w3c.*" })
 public class NodeJSInstallerTest {
 
-    private static class ZipFileAssert implements AssertDelegateTarget {
+    private static class TarFileAssert implements AssertDelegateTarget {
 
         private File file;
 
-        public ZipFileAssert(File file) {
+        public TarFileAssert(File file) {
             this.file = file;
         }
 
         void hasEntry(String path) throws IOException {
             Assertions.assertThat(file).exists();
-            try (ZipFile zf = new ZipFile(file)) {
-                Assertions.assertThat(zf.getEntry(path)).as("Entry " + path + " not found.").isNotNull();
+            try (TarArchiveInputStream zf = new TarArchiveInputStream(new GZIPInputStream(new FileInputStream(file)))) {
+                TarArchiveEntry entry;
+                while ((entry = zf.getNextTarEntry()) != null) {
+                    if (path.equals(entry.getName())) {
+                        break;
+                    }
+                }
+                Assertions.assertThat(entry).as("Entry " + path + " not found.").isNotNull();
             }
         }
     }
@@ -104,7 +115,7 @@ public class NodeJSInstallerTest {
 
         // use Mockito to set up your expectation
         PowerMockito.stub(PowerMockito.method(NodeJSInstaller.class, "getLocalCacheFile", Installable.class, Node.class)) //
-            .toReturn(new File(fileRule.getRoot(), "test.zip"));
+            .toReturn(new File(fileRule.getRoot(), "test.tar.gz"));
         PowerMockito.stub(PowerMockito.method(NodeJSInstaller.class, "areNpmPackagesUpToDate", FilePath.class, String.class, long.class)) //
             .toThrow(new AssertionError("global package should skip install if is an empty string"));
         PowerMockito.suppress(PowerMockito.method(FilePath.class, "installIfNecessaryFrom", URL.class, TaskListener.class, String.class));
@@ -137,13 +148,13 @@ public class NodeJSInstallerTest {
         NodeJSInstaller spy = PowerMockito.spy(installer);
 
         // use Mockito to set up your expectation
-        File cache = new File(fileRule.getRoot(), "test.zip");
+        File cache = new File(fileRule.getRoot(), "test.tar.gz");
         PowerMockito.stub(PowerMockito.method(NodeJSInstaller.class, "getLocalCacheFile", Installable.class, Node.class)) //
                 .toReturn(cache);
         PowerMockito.stub(PowerMockito.method(NodeJSInstaller.class, "areNpmPackagesUpToDate", FilePath.class, String.class, long.class)) //
                 .toThrow(new AssertionError("global package should skip install if is an empty string"));
         Installable installable = new Installable();
-        File downloadURL = fileRule.newFile("nodejs.zip");
+        File downloadURL = fileRule.newFile("nodejs.tar.gz");
         fillArchive(downloadURL, "nodejs/bin/npm.sh", "echo \"hello\"".getBytes());
         installable.url = downloadURL.toURI().toString();
         PowerMockito.doReturn(installable).when(spy).getInstallable();
@@ -158,7 +169,7 @@ public class NodeJSInstallerTest {
 
         // execute test
         spy.performInstallation(toolInstallation, currentNode, taskListener);
-        Assertions.assertThat(new ZipFileAssert(cache)).hasEntry("bin/npm.sh");
+        Assertions.assertThat(new TarFileAssert(cache)).hasEntry("bin/npm.sh");
     }
 
     @Test
@@ -200,11 +211,12 @@ public class NodeJSInstallerTest {
     }
 
     private void fillArchive(File file, String fileEntry, byte[] content) throws IOException {
-        try (ZipOutputStream zf = new ZipOutputStream(file)) {
-            ZipEntry ze = new ZipEntry(fileEntry);
-            zf.putNextEntry(ze);
-            zf.write(content);
-            zf.closeEntry();
+        try (TarArchiveOutputStream zf = new TarArchiveOutputStream(new GzipCompressorOutputStream(new FileOutputStream(file)))) {
+            TarArchiveEntry ze = new TarArchiveEntry(fileEntry);
+            ze.setSize(content.length);
+            zf.putArchiveEntry(ze);
+            IOUtils.write(content, zf);
+            zf.closeArchiveEntry();
         }
     }
 
