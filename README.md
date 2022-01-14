@@ -30,6 +30,8 @@ Plugins Update Center.
 -   Force 32bit architecture
 -   Relocate npm cache folder using pre defined strategies
 -   Allow use of a mirror repo for downloading and installing NodeJS.
+-   Cache NodeJS archives per architecture to speedup installations on
+    ephemeral Jenkins slaves.
 
 ## Usage
 
@@ -96,6 +98,17 @@ Plugins Update Center.
     -   per job, placed in the workspace folder under
         $WORKSPACE/npm-cache. This cache will be swipe out together the
         workspace and will be removed when the job is deleted.
+
+## Configure cache
+
+Each time an executor request a new NodeJS installation after download
+the NodeJS archive it is stored on master node in JENKINS_HOME/caches/nodejs.
+This is done to speed up the installation on a Jenkins slaves (for example
+on ephemeral slaves in kubernetes) and reduce internet traffic.
+
+This functionality can be turn off adding a JVM property in java options:
+
+`JENKINS_JAVA_OPTIONS="[...] -Djenkins.plugins.nodejs.tools.NodeJSInstaller.cache.disable=true"`
 
 ## Pipeline
 
