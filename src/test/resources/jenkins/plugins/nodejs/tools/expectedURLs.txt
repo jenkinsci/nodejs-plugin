@@ -1,3 +1,12 @@
+https://nodejs.org/dist/v16.13.2/node-v16.13.2-linux-x64.tar.gz
+https://nodejs.org/dist/v16.13.2/node-v16.13.2-linux-armv7l.tar.gz
+https://nodejs.org/dist/v16.13.2/node-v16.13.2-linux-arm64.tar.gz
+https://nodejs.org/dist/v16.13.2/node-v16.13.2-win-x86.zip
+https://nodejs.org/dist/v16.13.2/node-v16.13.2-win-x64.zip
+https://nodejs.org/dist/v16.13.2/node-v16.13.2-darwin-x64.tar.gz
+https://nodejs.org/dist/v16.13.2/node-v16.13.2-aix-ppc64.tar.gz
+https://nodejs.org/dist/v16.13.2/node-v16.13.2-sunos-x86.tar.gz
+https://nodejs.org/dist/v16.13.2/node-v16.13.2-sunos-x64.tar.gz
 https://nodejs.org/dist/v15.8.0/node-v15.8.0-linux-x64.tar.gz
 https://nodejs.org/dist/v15.8.0/node-v15.8.0-linux-armv7l.tar.gz
 https://nodejs.org/dist/v15.8.0/node-v15.8.0-linux-arm64.tar.gz
