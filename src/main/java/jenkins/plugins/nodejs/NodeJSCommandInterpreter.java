@@ -26,8 +26,8 @@ package jenkins.plugins.nodejs;
 import java.io.IOException;
 import java.util.ArrayList;
 
-import javax.annotation.CheckForNull;
-import javax.annotation.Nullable;
+import edu.umd.cs.findbugs.annotations.CheckForNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 
 import org.jenkinsci.Symbol;
 import org.jenkinsci.lib.configprovider.model.ConfigFile;

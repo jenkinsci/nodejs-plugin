@@ -23,9 +23,9 @@
  */
 package jenkins.plugins.nodejs;
 
-import javax.annotation.CheckForNull;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+import edu.umd.cs.findbugs.annotations.CheckForNull;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 
 import org.jenkinsci.lib.configprovider.model.Config;
 import org.jenkinsci.plugins.configfiles.ConfigFiles;
@@ -49,7 +49,7 @@ import jenkins.plugins.nodejs.configfiles.VerifyConfigProviderException;
      * @return a collection of user npmrc files found for the given context
      *         always including a system default.
      */
-    @Nonnull
+    @NonNull
     public static ListBoxModel getConfigs(@Nullable ItemGroup<?> context) {
         ListBoxModel items = new ListBoxModel();
         items.add(Messages.NPMConfig_default(), "");

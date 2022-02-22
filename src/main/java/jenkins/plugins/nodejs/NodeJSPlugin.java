@@ -28,8 +28,8 @@ import hudson.model.Items;
 
 import java.io.IOException;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import jenkins.model.Jenkins;
@@ -79,7 +79,7 @@ public class NodeJSPlugin extends Plugin {
      * @deprecated Use {@link NodeJSUtils#getInstallations()} instead of this.
      */
     @Deprecated
-    @Nonnull
+    @NonNull
     public NodeJSInstallation[] getInstallations() {
         return NodeJSUtils.getInstallations();
     }
@@ -99,7 +99,7 @@ public class NodeJSPlugin extends Plugin {
      *             #setInstallations(NodeJSInstallation[])}
      */
     @Deprecated
-    public void setInstallations(@Nonnull NodeJSInstallation[] installations) {
+    public void setInstallations(@NonNull NodeJSInstallation[] installations) {
         DescriptorImpl descriptor = Jenkins.getActiveInstance().getDescriptorByType(NodeJSInstallation.DescriptorImpl.class);
         if (descriptor != null) {
             descriptor.setInstallations(installations != null ? installations : new NodeJSInstallation[0]);

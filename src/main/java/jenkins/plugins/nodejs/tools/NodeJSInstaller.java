@@ -39,7 +39,7 @@ import java.util.Locale;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
-import javax.annotation.Nonnull;
+import edu.umd.cs.findbugs.annotations.NonNull;
 
 import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream;
 import org.apache.commons.io.input.CountingInputStream;
@@ -418,7 +418,7 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
             return Messages.NodeJSInstaller_DescriptorImpl_displayName();
         }
 
-        @Nonnull
+        @NonNull
         @Override
         public List<? extends Installable> getInstallables() throws IOException {
             return ToolsUtils.getInstallable();

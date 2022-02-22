@@ -25,7 +25,7 @@ package jenkins.plugins.nodejs.cache;
 
 import hudson.Extension;
 import hudson.FilePath;
-import javax.annotation.Nonnull;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import jenkins.plugins.nodejs.Messages;
 import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -41,7 +41,7 @@ public class DefaultCacheLocationLocator extends CacheLocationLocator {
     }
 
     @Override
-    public FilePath locate(@Nonnull FilePath workspace) {
+    public FilePath locate(@NonNull FilePath workspace) {
         return null;
     }
 

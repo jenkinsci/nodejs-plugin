@@ -30,8 +30,8 @@ import java.nio.charset.Charset;
 import java.util.Locale;
 import java.util.Map;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 
 import org.apache.commons.io.output.NullOutputStream;
 
@@ -60,7 +60,7 @@ public enum CPU {
      * @throws DetectionFailedException
      *             when the current CPU node is not supported.
      */
-    public static CPU of(@Nonnull Node node) throws DetectionFailedException {
+    public static CPU of(@NonNull Node node) throws DetectionFailedException {
         try {
             Computer computer = node.toComputer();
             if (computer == null) {
@@ -130,7 +130,7 @@ public enum CPU {
             Charset charset = Charset.defaultCharset();
 
             FilePath basePath = new FilePath(f);
-            Launcher launcher = basePath.createLauncher(new StreamTaskListener(new NullOutputStream(), charset));
+            Launcher launcher = basePath.createLauncher(new StreamTaskListener(NullOutputStream.NULL_OUTPUT_STREAM, charset));
 
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
 

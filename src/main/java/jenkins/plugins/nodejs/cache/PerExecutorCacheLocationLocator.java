@@ -28,7 +28,7 @@ import hudson.FilePath;
 import hudson.model.Computer;
 import hudson.model.Executor;
 import hudson.model.Node;
-import javax.annotation.Nonnull;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import jenkins.plugins.nodejs.Messages;
 import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -44,7 +44,7 @@ public class PerExecutorCacheLocationLocator extends CacheLocationLocator {
     }
 
     @Override
-    public FilePath locate(@Nonnull FilePath workspace) {
+    public FilePath locate(@NonNull FilePath workspace) {
         final Computer computer = workspace.toComputer();
         if (computer == null) {
             throw new IllegalStateException(Messages.NodeJSBuilders_nodeOffline());

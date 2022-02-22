@@ -28,8 +28,8 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.StaplerRequest;
@@ -68,11 +68,11 @@ public class NodeJSInstallation extends ToolInstallation implements EnvironmentS
     private transient Platform platform;
 
     @DataBoundConstructor
-    public NodeJSInstallation(@Nonnull String name, @Nullable String home, List<? extends ToolProperty<?>> properties) {
+    public NodeJSInstallation(@NonNull String name, @Nullable String home, List<? extends ToolProperty<?>> properties) {
         this(name, home, properties, null);
     }
 
-    protected NodeJSInstallation(@Nonnull String name, @Nullable String home, List<? extends ToolProperty<?>> properties, Platform platform) {
+    protected NodeJSInstallation(@NonNull String name, @Nullable String home, List<? extends ToolProperty<?>> properties, Platform platform) {
         super(Util.fixEmptyAndTrim(name), Util.fixEmptyAndTrim(home), properties);
         this.platform = platform;
     }
@@ -91,7 +91,7 @@ public class NodeJSInstallation extends ToolInstallation implements EnvironmentS
      * @see hudson.slaves.NodeSpecific#forNode(hudson.model.Node, hudson.model.TaskListener)
      */
     @Override
-    public NodeJSInstallation forNode(@Nonnull Node node, TaskListener log) throws IOException, InterruptedException {
+    public NodeJSInstallation forNode(@NonNull Node node, TaskListener log) throws IOException, InterruptedException {
         return new NodeJSInstallation(getName(), translateFor(node, log), getProperties().toList(), Platform.of(node));
     }
 

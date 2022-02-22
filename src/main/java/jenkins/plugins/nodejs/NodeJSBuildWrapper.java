@@ -44,9 +44,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.annotation.CheckForNull;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+import edu.umd.cs.findbugs.annotations.CheckForNull;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import jenkins.plugins.nodejs.cache.CacheLocationLocator;
 import jenkins.plugins.nodejs.cache.DefaultCacheLocationLocator;
 import jenkins.plugins.nodejs.tools.NodeJSInstallation;
@@ -73,7 +73,7 @@ public class NodeJSBuildWrapper extends SimpleBuildWrapper {
 
         private final transient Context context; // NOSONAR
 
-        public EnvVarsAdapter(@Nonnull Context context) {
+        public EnvVarsAdapter(@NonNull Context context) {
             this.context = context;
         }
 

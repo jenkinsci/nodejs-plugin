@@ -26,7 +26,7 @@ package jenkins.plugins.nodejs.cache;
 import hudson.ExtensionPoint;
 import hudson.FilePath;
 import hudson.model.AbstractDescribableImpl;
-import javax.annotation.Nonnull;
+import edu.umd.cs.findbugs.annotations.NonNull;
 
 /**
  * Strategy pattern that decides the location of the NPM cache location for a
@@ -43,7 +43,7 @@ public abstract class CacheLocationLocator extends AbstractDescribableImpl<Cache
      * @return null to let NPM uses its default location. Otherwise this must be
      *         located on the same node as described by this path.
      */
-    public abstract FilePath locate(@Nonnull FilePath workspace);
+    public abstract FilePath locate(@NonNull FilePath workspace);
 
     @Override
     public CacheLocationLocatorDescriptor getDescriptor() {

@@ -32,9 +32,9 @@ import java.util.List;
 import java.util.StringTokenizer;
 import java.util.regex.Pattern;
 
-import javax.annotation.CheckForNull;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+import edu.umd.cs.findbugs.annotations.CheckForNull;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 
 import org.acegisecurity.Authentication;
 import org.apache.commons.lang.StringUtils;
@@ -95,7 +95,7 @@ public class NPMRegistry extends AbstractDescribableImpl<NPMRegistry> implements
      * @param credentialsId credentials identifier
      * @param scopes url-safe characters, no leading dots or underscores
      */
-    public NPMRegistry(@Nonnull String url, String credentialsId, String scopes) {
+    public NPMRegistry(@NonNull String url, String credentialsId, String scopes) {
         this.url = Util.fixEmpty(url);
         this.credentialsId = Util.fixEmpty(credentialsId);
         this.scopes = fixScope(Util.fixEmpty(scopes));
@@ -110,7 +110,7 @@ public class NPMRegistry extends AbstractDescribableImpl<NPMRegistry> implements
      * @param scopes url-safe characters, no leading dots or underscores
      */
     @DataBoundConstructor
-    public NPMRegistry(@Nonnull String url, String credentialsId, boolean hasScopes, String scopes) {
+    public NPMRegistry(@NonNull String url, String credentialsId, boolean hasScopes, String scopes) {
         this.url = Util.fixEmpty(url);
         this.credentialsId = Util.fixEmpty(credentialsId);
         this.scopes = hasScopes ? fixScope(Util.fixEmpty(scopes)) : null;
@@ -294,7 +294,7 @@ public class NPMRegistry extends AbstractDescribableImpl<NPMRegistry> implements
             return result;
         }
 
-        @Nonnull
+        @NonNull
         protected Authentication getAuthentication(Item item) {
             return item instanceof Queue.Task ? Tasks.getAuthenticationOf((Queue.Task) item) : ACL.SYSTEM;
         }

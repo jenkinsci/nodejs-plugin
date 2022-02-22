@@ -23,8 +23,8 @@
  */
 package jenkins.plugins.nodejs;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 
 import jenkins.model.Jenkins;
 import jenkins.plugins.nodejs.tools.NodeJSInstallation;
@@ -60,7 +60,7 @@ import jenkins.plugins.nodejs.tools.NodeJSInstallation.DescriptorImpl;
      *
      * @return an array of NodeJS tool installation
      */
-    @Nonnull
+    @NonNull
     public static NodeJSInstallation[] getInstallations() {
         DescriptorImpl descriptor = Jenkins.get().getDescriptorByType(NodeJSInstallation.DescriptorImpl.class);
         if (descriptor == null) {

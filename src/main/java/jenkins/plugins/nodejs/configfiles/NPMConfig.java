@@ -29,7 +29,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import javax.annotation.Nonnull;
+import edu.umd.cs.findbugs.annotations.NonNull;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
@@ -60,7 +60,7 @@ public class NPMConfig extends Config {
     private final List<NPMRegistry> registries;
 
     @DataBoundConstructor
-    public NPMConfig(@Nonnull String id, String name, String comment, String content, List<NPMRegistry> registries) {
+    public NPMConfig(@NonNull String id, String name, String comment, String content, List<NPMRegistry> registries) {
         super(id, Util.fixEmptyAndTrim(name), Util.fixEmptyAndTrim(comment), Util.fixEmptyAndTrim(content));
         this.registries = registries == null ? new ArrayList<NPMRegistry>(3) : registries;
     }
@@ -112,7 +112,7 @@ public class NPMConfig extends Config {
         }
 
         @Override
-        public Config newConfig(@Nonnull String configId) {
+        public Config newConfig(@NonNull String configId) {
             return new NPMConfig(configId, "MyNpmrcConfig", "user config", loadTemplateContent(), null);
         }
 

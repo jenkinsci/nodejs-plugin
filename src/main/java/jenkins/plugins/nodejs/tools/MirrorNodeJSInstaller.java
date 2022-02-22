@@ -31,8 +31,8 @@ import java.net.URL;
 import java.util.List;
 import java.util.regex.Pattern;
 
-import javax.annotation.CheckForNull;
-import javax.annotation.Nonnull;
+import edu.umd.cs.findbugs.annotations.CheckForNull;
+import edu.umd.cs.findbugs.annotations.NonNull;
 
 import org.acegisecurity.Authentication;
 import org.apache.commons.lang.StringUtils;
@@ -83,7 +83,7 @@ public class MirrorNodeJSInstaller extends NodeJSInstaller {
     private String credentialsId;
 
     @DataBoundConstructor
-    public MirrorNodeJSInstaller(@Nonnull String id, @Nonnull String mirrorURL, String npmPackages, long npmPackagesRefreshHours) {
+    public MirrorNodeJSInstaller(@NonNull String id, @NonNull String mirrorURL, String npmPackages, long npmPackagesRefreshHours) {
         super(id, npmPackages, npmPackagesRefreshHours);
         this.mirrorURL = Util.fixEmptyAndTrim(mirrorURL);
     }
@@ -244,7 +244,7 @@ public class MirrorNodeJSInstaller extends NodeJSInstaller {
             return result;
         }
 
-        @Nonnull
+        @NonNull
         protected Authentication getAuthentication(Item item) {
             return item instanceof Queue.Task ? Tasks.getAuthenticationOf((Queue.Task) item) : ACL.SYSTEM;
         }
@@ -261,7 +261,7 @@ public class MirrorNodeJSInstaller extends NodeJSInstaller {
             return FormValidation.ok();
         }
 
-        @Nonnull
+        @NonNull
         @Override
         public List<? extends Installable> getInstallables() throws IOException {
             return ToolsUtils.getInstallable();
