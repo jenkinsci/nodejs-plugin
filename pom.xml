@@ -49,7 +49,7 @@
         <!-- https://www.jenkins.io/doc/developer/plugin-development/choosing-jenkins-baseline/#changing-the-minimum-required-version -->
         <jenkins.version>2.303.3</jenkins.version> <!-- .3 because of config-file-provider -->
 
-        <checkstyle.version>10.2</checkstyle.version>
+        <checkstyle.version>10.3.3</checkstyle.version>
         <config-file-provider-plugin.version>3.9.0</config-file-provider-plugin.version>
         <assertj.version>3.23.1</assertj.version>
         <powermock.version>2.0.9</powermock.version>
