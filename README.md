@@ -16,7 +16,7 @@ Plugins Update Center.
 
 ## Main features
 
--   Provides NodeJS auto-installer, allowing to create as many NodeJS
+-   Provides [NodeJS](https://www.interviewbit.com/node-js-interview-questions/) auto-installer, allowing to create as many NodeJS
     installations "profiles" as you want.  
     The auto-installer will automatically install a given version of
     NodeJS, on every jenkins agent where it will be needed
