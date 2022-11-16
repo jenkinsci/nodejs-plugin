@@ -388,7 +388,7 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
         this.force32Bit = force32Bit;
     }
 
-    private File getLocalCacheFile(Installable installable, Node node) throws DetectionFailedException {
+    protected File getLocalCacheFile(Installable installable, Node node) throws DetectionFailedException {
         Platform platform = ToolsUtils.getPlatform(node);
         CPU cpu = ToolsUtils.getCPU(node);
         // we store cache as tar.gz to preserve symlink

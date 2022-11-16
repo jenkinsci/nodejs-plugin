@@ -24,20 +24,18 @@
 package jenkins.plugins.nodejs.tools;
 
 import static jenkins.plugins.nodejs.NodeJSConstants.*;
-import static org.junit.Assert.*;
-
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.jvnet.hudson.test.Issue;
-import org.mockito.Mockito;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.mockito.Mockito.anyMap;
+import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
 
 import hudson.EnvVars;
+import org.junit.Test;
+import org.jvnet.hudson.test.Issue;
 
-@RunWith(PowerMockRunner.class)
-@PrepareForTest(NodeJSInstallation.class)
 public class NodeJSInstallationMockitoTest {
 
     /**
@@ -53,13 +51,12 @@ public class NodeJSInstallationMockitoTest {
         String nodeJSHome = "/home/nodejs";
         String bin = nodeJSHome + "/bin";
 
-        NodeJSInstallation installer = PowerMockito.spy(new NodeJSInstallation("test", nodeJSHome, null));
-        PowerMockito.doReturn(bin).when(installer, "getBin");
+        NodeJSInstallation installer = spy(new NodeJSInstallation("test", nodeJSHome, null));
 
-        EnvVars env = PowerMockito.spy(new EnvVars());
+        EnvVars env = spy(new EnvVars());
         installer.buildEnvVars(env);
-        Mockito.verify(env, Mockito.never()).override(Mockito.anyString(), Mockito.anyString());
-        Mockito.verify(env, Mockito.never()).overrideAll(Mockito.<String, String>anyMap());
+        verify(env, never()).override(anyString(), anyString());
+        verify(env, never()).overrideAll(anyMap());
 
         assertEquals("Unexpected value for " + ENVVAR_NODEJS_HOME, nodeJSHome, env.get(ENVVAR_NODEJS_HOME));
         assertEquals("Unexpected value for " + ENVVAR_NODE_HOME, nodeJSHome, env.get(ENVVAR_NODE_HOME));

@@ -24,27 +24,30 @@
 package jenkins.plugins.nodejs.tools;
 
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
 
+import hudson.model.Node;
 import org.assertj.core.api.Assertions;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
+import org.mockito.MockedStatic;
 
-import hudson.model.Node;
-
-@RunWith(PowerMockRunner.class)
-@PrepareForTest(CPU.class)
 public class ToolsUtilsTest {
+
+    private MockedStatic<CPU> staticCpu;
 
     @Before
     public void setup() {
         CPU[] cpuValues = CPU.values();
-        PowerMockito.mockStatic(CPU.class);
-        PowerMockito.when(CPU.values()).thenReturn(cpuValues);
+        staticCpu = mockStatic(CPU.class);
+        staticCpu.when(CPU::values).thenReturn(cpuValues);
+    }
+
+    @After
+    public void tearDown() {
+        staticCpu.close();
     }
 
     @Test

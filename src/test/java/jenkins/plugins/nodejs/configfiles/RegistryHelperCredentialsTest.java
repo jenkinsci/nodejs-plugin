@@ -32,6 +32,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
@@ -47,7 +49,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
-import org.mockito.Mockito;
 
 import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
@@ -61,14 +62,14 @@ public class RegistryHelperCredentialsTest {
     public static Collection<Object[]> data() throws Exception {
         Collection<Object[]> dataParameters = new ArrayList<Object[]>();
 
-        user = Mockito.mock(StandardUsernamePasswordCredentials.class);
-        Mockito.when(user.getId()).thenReturn("privateId");
-        Mockito.when(user.getUsername()).thenReturn("myuser");
+        user = mock(StandardUsernamePasswordCredentials.class);
+        when(user.getId()).thenReturn("privateId");
+        when(user.getUsername()).thenReturn("myuser");
 
         Constructor<Secret> c = Secret.class.getDeclaredConstructor(String.class);
         c.setAccessible(true);
         Secret userSecret = c.newInstance("mypassword");
-        Mockito.when(((StandardUsernamePasswordCredentials) user).getPassword()).thenReturn(userSecret);
+        when(((StandardUsernamePasswordCredentials) user).getPassword()).thenReturn(userSecret);
 
         NPMRegistry globalRegistry = new NPMRegistry("https://registry.npmjs.org", null, null);
         NPMRegistry proxyRegistry = new NPMRegistry("https://registry.proxy.com", user.getId(), null);
