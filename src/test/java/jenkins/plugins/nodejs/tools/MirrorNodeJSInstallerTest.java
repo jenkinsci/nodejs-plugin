@@ -25,6 +25,7 @@ package jenkins.plugins.nodejs.tools;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -39,7 +40,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
 import org.mockito.ArgumentCaptor;
-import org.mockito.Mockito;
 
 import com.cloudbees.plugins.credentials.Credentials;
 import com.cloudbees.plugins.credentials.CredentialsScope;
@@ -94,7 +94,7 @@ public class MirrorNodeJSInstallerTest {
         installable.id = installationId;
         installable.url = "https://nodejs.org/dist/v8.2.1/";
 
-        MockMirrorNodeJSInstaller installer = Mockito.spy(new MockMirrorNodeJSInstaller(installable, mirror));
+        MockMirrorNodeJSInstaller installer = spy(new MockMirrorNodeJSInstaller(installable, mirror));
 
         ToolInstallation tool = mock(ToolInstallation.class);
         when(tool.getHome()).thenReturn("home");
@@ -122,7 +122,7 @@ public class MirrorNodeJSInstallerTest {
         credentialsMap.put(Domain.global(), Arrays.asList(credentials));
         SystemCredentialsProvider.getInstance().setDomainCredentialsMap(credentialsMap);
         
-        MockMirrorNodeJSInstaller installer = Mockito.spy(new MockMirrorNodeJSInstaller(installable, mirror));
+        MockMirrorNodeJSInstaller installer = spy(new MockMirrorNodeJSInstaller(installable, mirror));
         installer.setCredentialsId(credentialsId);
 
         ToolInstallation tool = mock(ToolInstallation.class);

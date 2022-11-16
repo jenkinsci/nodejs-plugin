@@ -27,25 +27,17 @@ import hudson.FilePath;
 import hudson.model.Computer;
 import hudson.model.Executor;
 import hudson.model.Node;
-import jenkins.plugins.nodejs.cache.DefaultCacheLocationLocator;
-import jenkins.plugins.nodejs.cache.PerExecutorCacheLocationLocator;
-import jenkins.plugins.nodejs.cache.PerJobCacheLocationLocator;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-import org.junit.runner.RunWith;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PowerMockIgnore;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
+import org.mockito.MockedStatic;
 
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.when;
 
-@RunWith(PowerMockRunner.class)
-@PrepareForTest({ FilePath.class, Executor.class })
-@PowerMockIgnore({ "javax.xml.*", "org.xml.*" })
 public class CacheLocationLocatorTest {
 
     @Rule
@@ -69,21 +61,23 @@ public class CacheLocationLocatorTest {
 
     @Test
     public void test_per_executor() throws Exception {
-        FilePath wc = PowerMockito.mock(FilePath.class);
-        PowerMockito.mockStatic(Executor.class);
+        FilePath wc = mock(FilePath.class);
         Executor executor = mock(Executor.class);
         int executorNumber = 7;
         when(executor.getNumber()).thenReturn(executorNumber);
-        PowerMockito.when(Executor.currentExecutor()).thenReturn(executor);
 
-        Computer computer = mock(Computer.class);
-        Node node = PowerMockito.mock(Node.class);
-        when(computer.getNode()).thenReturn(node);
-        FilePath rootPath = new FilePath(fileRule.newFolder());
-        when(node.getRootPath()).thenReturn(rootPath);
-        PowerMockito.when(wc.toComputer()).thenReturn(computer);
+        try (MockedStatic<Executor> staticExecutor = mockStatic(Executor.class)) {
+            staticExecutor.when(Executor::currentExecutor).thenReturn(executor);
 
-        FilePath expectedLocation = rootPath.child("npm-cache").child(String.valueOf(executorNumber));
-        Assert.assertEquals("expect null location path", expectedLocation, new PerExecutorCacheLocationLocator().locate(wc));
+            Computer computer = mock(Computer.class);
+            Node node = mock(Node.class);
+            when(computer.getNode()).thenReturn(node);
+            FilePath rootPath = new FilePath(fileRule.newFolder());
+            when(node.getRootPath()).thenReturn(rootPath);
+            when(wc.toComputer()).thenReturn(computer);
+
+            FilePath expectedLocation = rootPath.child("npm-cache").child(String.valueOf(executorNumber));
+            Assert.assertEquals("expect null location path", expectedLocation, new PerExecutorCacheLocationLocator().locate(wc));
+        }
     }
 }

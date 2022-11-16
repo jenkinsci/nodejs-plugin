@@ -23,6 +23,7 @@
  */
 package jenkins.plugins.nodejs.tools;
 
+import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.Charset;
@@ -35,7 +36,6 @@ import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 import org.jvnet.hudson.test.Issue;
 import org.jvnet.hudson.test.JenkinsRule;
-import org.powermock.reflect.Whitebox;
 
 import hudson.EnvVars;
 import hudson.ProxyConfiguration;
@@ -84,7 +84,9 @@ public class NodeJSInstallerProxyTest {
 
         NodeJSInstaller installer = new NodeJSInstaller("test-id", "grunt", NodeJSInstaller.DEFAULT_NPM_PACKAGES_REFRESH_HOURS);
         EnvVars env = new EnvVars();
-        Whitebox.invokeMethod(installer, "buildProxyEnvVars", env, log);
+        Method method = installer.getClass().getDeclaredMethod("buildProxyEnvVars", EnvVars.class, TaskListener.class);
+        method.setAccessible(true);
+        method.invoke(installer, env, log);
 
         Assertions.assertThat(env.keySet()).contains("HTTP_PROXY", "HTTPS_PROXY");
         Assertions.assertThat(env.get("HTTP_PROXY")).isEqualTo(expectedURL);
@@ -98,7 +100,9 @@ public class NodeJSInstallerProxyTest {
 
         NodeJSInstaller installer = new NodeJSInstaller("test-id", "grunt", NodeJSInstaller.DEFAULT_NPM_PACKAGES_REFRESH_HOURS);
         EnvVars env = new EnvVars();
-        Whitebox.invokeMethod(installer, "buildProxyEnvVars", env, log);
+        Method method = installer.getClass().getDeclaredMethod("buildProxyEnvVars", EnvVars.class, TaskListener.class);
+        method.setAccessible(true);
+        method.invoke(installer, env, log);
 
         Assertions.assertThat(env.keySet()).contains("HTTP_PROXY", "HTTPS_PROXY");
         Assertions.assertThat(env.get("NO_PROXY")).isEqualTo("*.npm.org,registry.npm.org");

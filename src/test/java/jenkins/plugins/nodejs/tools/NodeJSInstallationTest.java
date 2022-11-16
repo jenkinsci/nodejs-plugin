@@ -33,6 +33,7 @@ import hudson.tools.ToolPropertyDescriptor;
 import hudson.util.DescribableList;
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Method;
 import jenkins.model.Jenkins;
 import jenkins.plugins.nodejs.tools.NodeJSInstallation.DescriptorImpl;
 import org.junit.Rule;
@@ -40,10 +41,13 @@ import org.junit.Test;
 import org.jvnet.hudson.test.Issue;
 import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.recipes.LocalData;
-import org.powermock.reflect.Whitebox;
 import org.xml.sax.SAXException;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 public class NodeJSInstallationTest {
 
@@ -59,7 +63,9 @@ public class NodeJSInstallationTest {
     public void test_executable_resolved_on_slave_node() throws Exception {
         assertNull(Computer.currentComputer());
         NodeJSInstallation installation = new NodeJSInstallation("test_executable_resolved_on_slave_node", "/home/nodejs", null);
-        Platform platform = Whitebox.invokeMethod(installation, "getPlatform");
+        Method method = installation.getClass().getDeclaredMethod("getPlatform");
+        method.setAccessible(true);
+        Platform platform = (Platform) method.invoke(installation);
         assertEquals(Platform.current(), platform);
     }
 
