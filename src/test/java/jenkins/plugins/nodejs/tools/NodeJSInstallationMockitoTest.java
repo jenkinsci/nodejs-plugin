@@ -33,6 +33,7 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 
 import hudson.EnvVars;
+import hudson.Functions;
 import org.junit.Test;
 import org.jvnet.hudson.test.Issue;
 
@@ -60,7 +61,7 @@ public class NodeJSInstallationMockitoTest {
 
         assertEquals("Unexpected value for " + ENVVAR_NODEJS_HOME, nodeJSHome, env.get(ENVVAR_NODEJS_HOME));
         assertEquals("Unexpected value for " + ENVVAR_NODE_HOME, nodeJSHome, env.get(ENVVAR_NODE_HOME));
-        assertEquals("Unexpected value for " + ENVVAR_NODEJS_PATH, bin, env.get(ENVVAR_NODEJS_PATH));
+        assertEquals("Unexpected value for " + ENVVAR_NODEJS_PATH, Functions.isWindows() ? nodeJSHome : bin, env.get(ENVVAR_NODEJS_PATH));
         assertNull("PATH variable should not appear in this environment", env.get("PATH"));
     }
 
