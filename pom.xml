@@ -52,7 +52,7 @@
 
         <checkstyle.version>10.3.3</checkstyle.version>
         <config-file-provider-plugin.version>3.9.0</config-file-provider-plugin.version>
-        <assertj.version>3.23.1</assertj.version>
+        <assertj.version>3.24.2</assertj.version>
     </properties>
 
     <dependencyManagement>
