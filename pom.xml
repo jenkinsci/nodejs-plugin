@@ -1,10 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+		 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+		 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/maven-v4_0_0.xsd">
+
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>org.jenkins-ci.plugins</groupId>
         <artifactId>plugin</artifactId>
-        <version>4.50</version>
+        <version>4.54</version>
         <relativePath />
     </parent>
 
@@ -48,10 +51,9 @@
         <changelist>-SNAPSHOT</changelist>
         <gitHubRepo>jenkinsci/${project.artifactId}-plugin</gitHubRepo>
         <!-- https://www.jenkins.io/doc/developer/plugin-development/choosing-jenkins-baseline/#changing-the-minimum-required-version -->
-        <jenkins.version>2.303.3</jenkins.version> <!-- .3 because of config-file-provider -->
+        <jenkins.version>2.375.1</jenkins.version>
 
         <checkstyle.version>10.3.3</checkstyle.version>
-        <config-file-provider-plugin.version>3.9.0</config-file-provider-plugin.version>
         <assertj.version>3.24.2</assertj.version>
     </properties>
 
@@ -59,8 +61,8 @@
         <dependencies>
             <dependency>
                 <groupId>io.jenkins.tools.bom</groupId>
-                <artifactId>bom-2.303.x</artifactId>
-                <version>1155.v77b_fd92a_26fc</version>
+                <artifactId>bom-2.375.x</artifactId>
+                <version>1798.vc671fe94856f</version>
                 <scope>import</scope>
                 <type>pom</type>
             </dependency>
@@ -75,7 +77,6 @@
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>config-file-provider</artifactId>
-            <version>${config-file-provider-plugin.version}</version>
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
