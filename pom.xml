@@ -51,7 +51,7 @@
         <jenkins.version>2.303.3</jenkins.version> <!-- .3 because of config-file-provider -->
 
         <checkstyle.version>10.3.3</checkstyle.version>
-        <config-file-provider-plugin.version>3.9.0</config-file-provider-plugin.version>
+        <config-file-provider-plugin.version>3.11.1</config-file-provider-plugin.version>
         <assertj.version>3.24.2</assertj.version>
     </properties>
 
