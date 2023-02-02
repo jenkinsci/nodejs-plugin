@@ -32,16 +32,13 @@ import java.util.List;
 import java.util.StringTokenizer;
 import java.util.regex.Pattern;
 
-import edu.umd.cs.findbugs.annotations.CheckForNull;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
-
 import org.acegisecurity.Authentication;
 import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.plugins.plaincredentials.StringCredentials;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
+import org.kohsuke.stapler.verb.POST;
 
 import com.cloudbees.plugins.credentials.CredentialsMatcher;
 import com.cloudbees.plugins.credentials.CredentialsMatchers;
@@ -49,17 +46,24 @@ import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.common.StandardCredentials;
 import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
 import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
+import com.cloudbees.plugins.credentials.common.StandardUsernameListBoxModel;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.cloudbees.plugins.credentials.domains.URIRequirementBuilder;
 
+import edu.umd.cs.findbugs.annotations.CheckForNull;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import hudson.Extension;
 import hudson.Util;
 import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
 import hudson.model.Item;
+import hudson.model.ItemGroup;
 import hudson.model.Queue;
 import hudson.model.queue.Tasks;
 import hudson.security.ACL;
+import hudson.security.AccessControlled;
+import hudson.security.Permission;
 import hudson.util.FormValidation;
 import hudson.util.FormValidation.Kind;
 import hudson.util.ListBoxModel;
@@ -205,7 +209,7 @@ public class NPMRegistry extends AbstractDescribableImpl<NPMRegistry> implements
 
     @Extension
     public static class DescriptorImpl extends Descriptor<NPMRegistry> {
-        
+
         private Pattern variableRegExp = Pattern.compile ( "\\$\\{.*\\}" );
 
         public FormValidation doCheckScopes(@CheckForNull @QueryParameter final boolean hasScopes,
@@ -243,13 +247,12 @@ public class NPMRegistry extends AbstractDescribableImpl<NPMRegistry> implements
             return FormValidation.ok();
         }
 
-        public FormValidation doCheckCredentialsId(@CheckForNull @AncestorInPath Item item,
-                @QueryParameter String credentialsId, @QueryParameter String serverUrl) {
-            if (item == null) {
-                if (!Jenkins.get().hasPermission(Jenkins.ADMINISTER)) {
-                    return FormValidation.ok();
-                }
-            } else if (!item.hasPermission(Item.EXTENDED_READ) && !item.hasPermission(CredentialsProvider.USE_ITEM)) {
+        @POST
+        public FormValidation doCheckCredentialsId(@CheckForNull @AncestorInPath Item projectOrFolder,
+                                                   @QueryParameter String credentialsId,
+                                                   @QueryParameter String serverUrl) {
+            if ((projectOrFolder == null && !Jenkins.get().hasPermission(Jenkins.ADMINISTER)) ||
+                    (projectOrFolder != null && !projectOrFolder.hasPermission(Item.EXTENDED_READ) && !projectOrFolder.hasPermission(CredentialsProvider.USE_ITEM))) {
                 return FormValidation.ok();
             }
             if (StringUtils.isBlank(credentialsId)) {
@@ -257,41 +260,42 @@ public class NPMRegistry extends AbstractDescribableImpl<NPMRegistry> implements
             }
 
             List<DomainRequirement> domainRequirement = URIRequirementBuilder.fromUri(serverUrl).build();
-            if (CredentialsProvider.listCredentials(StandardUsernameCredentials.class, item, getAuthentication(item),
-                    domainRequirement, CredentialsMatchers.withId(credentialsId)).isEmpty()
-                    && CredentialsProvider.listCredentials(StringCredentials.class, item, getAuthentication(item),
-                    domainRequirement, CredentialsMatchers.withId(credentialsId)).isEmpty()) {
+            Authentication authentication = getAuthentication(projectOrFolder);
+            CredentialsMatcher matcher = CredentialsMatchers.withId(credentialsId);
+            if (CredentialsProvider.listCredentials(StandardUsernameCredentials.class, projectOrFolder, authentication, domainRequirement, matcher).isEmpty()
+                    && CredentialsProvider.listCredentials(StringCredentials.class, projectOrFolder, authentication, domainRequirement, matcher).isEmpty()) {
                 return FormValidation.error(Messages.NPMRegistry_DescriptorImpl_invalidCredentialsId());
             }
             return FormValidation.ok();
         }
 
-        public ListBoxModel doFillCredentialsIdItems(final @AncestorInPath Item item, @QueryParameter String credentialsId, final @QueryParameter String url) {
-            StandardListBoxModel result = new StandardListBoxModel();
-
+        @POST
+        public ListBoxModel doFillCredentialsIdItems(final @CheckForNull @AncestorInPath ItemGroup<?> context,
+                                                     final @CheckForNull @AncestorInPath Item projectOrFolder,
+                                                     @QueryParameter String credentialsId,
+                                                     final @QueryParameter String url) {
+            Permission permToCheck = projectOrFolder == null ? Jenkins.ADMINISTER : Item.CONFIGURE;
+            AccessControlled contextToCheck = projectOrFolder == null ? Jenkins.get() : projectOrFolder;
             credentialsId = StringUtils.trimToEmpty(credentialsId);
-            if (item == null) {
-                if (!Jenkins.get().hasPermission(Jenkins.ADMINISTER)) {
-                    return result.includeCurrentValue(credentialsId);
-                }
-            } else {
-                if (!item.hasPermission(Item.EXTENDED_READ) && !item.hasPermission(CredentialsProvider.USE_ITEM)) {
-                    return result.includeCurrentValue(credentialsId);
-                }
+
+            // If we're on the global page and we don't have administer
+            // permission or if we're in a project or folder
+            // and we don't have configure permission there
+            if (!contextToCheck.hasPermission(permToCheck)) {
+                return new StandardUsernameListBoxModel().includeCurrentValue(credentialsId);
             }
 
-            Authentication authentication = getAuthentication(item);
-            List<DomainRequirement> build = URIRequirementBuilder.fromUri(url).build();
-            CredentialsMatcher either = CredentialsMatchers.either(CredentialsMatchers.instanceOf(StandardUsernameCredentials.class), CredentialsMatchers.instanceOf(StringCredentials.class));
+            Authentication authentication = getAuthentication(projectOrFolder);
+            List<DomainRequirement> domainRequirements = URIRequirementBuilder.fromUri(url).build();
+            CredentialsMatcher either = CredentialsMatchers.either( //
+                    CredentialsMatchers.instanceOf(StandardUsernameCredentials.class), //
+                    CredentialsMatchers.instanceOf(StringCredentials.class) //
+            );
             Class<StandardCredentials> type = StandardCredentials.class;
 
-            result.includeEmptyValue();
-            if (item != null) {
-                result.includeMatchingAs(authentication, item, type, build, either);
-            } else {
-                result.includeMatchingAs(authentication, Jenkins.get(), type, build, either);
-            }
-            return result;
+            return new StandardListBoxModel() //
+                    .includeMatchingAs(authentication, context, type, domainRequirements, either) //
+                    .includeEmptyValue();
         }
 
         @NonNull
