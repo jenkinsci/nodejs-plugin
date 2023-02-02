@@ -23,7 +23,12 @@
  */
 package jenkins.plugins.nodejs.configfiles;
 
-import static jenkins.plugins.nodejs.NodeJSConstants.*;
+import static jenkins.plugins.nodejs.NodeJSConstants.NPM_SETTINGS_ALWAYS_AUTH;
+import static jenkins.plugins.nodejs.NodeJSConstants.NPM_SETTINGS_AUTH;
+import static jenkins.plugins.nodejs.NodeJSConstants.NPM_SETTINGS_AUTHTOKEN;
+import static jenkins.plugins.nodejs.NodeJSConstants.NPM_SETTINGS_PASSWORD;
+import static jenkins.plugins.nodejs.NodeJSConstants.NPM_SETTINGS_REGISTRY;
+import static jenkins.plugins.nodejs.NodeJSConstants.NPM_SETTINGS_USER;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -33,19 +38,19 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import edu.umd.cs.findbugs.annotations.CheckForNull;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
-
 import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.plugins.plaincredentials.StringCredentials;
 
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.common.StandardCredentials;
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
-import com.cloudbees.plugins.credentials.domains.HostnameRequirement;
+import com.cloudbees.plugins.credentials.domains.URIRequirementBuilder;
 
+import edu.umd.cs.findbugs.annotations.CheckForNull;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.Util;
 import hudson.model.Run;
@@ -82,7 +87,7 @@ public final class RegistryHelper {
                 final URL registryURL = toURL(registry.getUrl());
                 List<DomainRequirement> domainRequirements = Collections.emptyList();
                 if (registryURL != null) {
-                    domainRequirements = Collections.<DomainRequirement> singletonList(new HostnameRequirement(registryURL.getHost()));
+                    domainRequirements = URIRequirementBuilder.fromUri(registry.getUrl()).build();
                 }
 
                 StandardCredentials c = CredentialsProvider.findCredentialById(credentialsId, StandardCredentials.class, build, domainRequirements);
@@ -103,8 +108,22 @@ public final class RegistryHelper {
      * @return the updated version of the {@code npmrcContent} with the registry
      *         credentials added
      */
-    @SuppressFBWarnings(value = "DM_DEFAULT_ENCODING", justification = "npm auth_token could not support base64 UTF-8 char encoding")
     public String fillRegistry(String npmrcContent, Map<String, StandardCredentials> registry2Credentials) {
+        return fillRegistry(npmrcContent, registry2Credentials, false);
+    }
+
+    /**
+     * Fill the npmpc user config with the given registries.
+     *
+     * @param npmrcContent .npmrc user config
+     * @param registry2Credentials the credentials to be inserted into the user
+     *        config (key: registry URL, value: Jenkins credentials)
+     * @param npm9Format use npm version 9 format
+     * @return the updated version of the {@code npmrcContent} with the registry
+     *         credentials added
+     */
+    @SuppressFBWarnings(value = "DM_DEFAULT_ENCODING", justification = "npm auth_token could not support base64 UTF-8 char encoding")
+    public String fillRegistry(String npmrcContent, Map<String, StandardCredentials> registry2Credentials, boolean npm9Format) {
         Npmrc npmrc = new Npmrc();
         npmrc.from(npmrcContent);
 
@@ -123,8 +142,9 @@ public final class RegistryHelper {
 
                     // add scoped values to the user config file
                     npmrc.set(compose('@' + scope, NPM_SETTINGS_REGISTRY), registryURL);
-                    npmrc.set(compose(registryPrefix, NPM_SETTINGS_ALWAYS_AUTH), credentials != null);
                     if (credentials != null) { // NOSONAR
+                        npmrc.set(compose(registryPrefix, NPM_SETTINGS_ALWAYS_AUTH), credentials != null);
+
                         // the _auth directive seems not be considered for scoped registry
                         // only authToken or username/password works
                         if (credentials instanceof StandardUsernamePasswordCredentials) {
@@ -138,17 +158,19 @@ public final class RegistryHelper {
                     }
                 }
             } else {
+                String registryPrefix = npm9Format ? calculatePrefix(registry.getUrl()) : null;
+
                 // add values to the user config file
                 npmrc.set(NPM_SETTINGS_REGISTRY, registry.getUrl());
-                npmrc.set(NPM_SETTINGS_ALWAYS_AUTH, credentials != null);
                 if (credentials != null) {
+                    npmrc.set(compose(registryPrefix, NPM_SETTINGS_ALWAYS_AUTH), credentials != null);
                     if (credentials instanceof StandardUsernamePasswordCredentials) {
                         String authValue = ((StandardUsernamePasswordCredentials)credentials).getUsername() + ':' + Secret.toString(((StandardUsernamePasswordCredentials)credentials).getPassword());
                         authValue = Base64.encodeBase64String(authValue.getBytes());
-                        npmrc.set(NPM_SETTINGS_AUTH, authValue);
+                        npmrc.set(compose(registryPrefix, NPM_SETTINGS_AUTH), authValue);
                     } else if (credentials instanceof StringCredentials) {
                         String tokenValue = Secret.toString(((StringCredentials)credentials).getSecret());
-                        npmrc.set(NPM_SETTINGS_AUTHTOKEN, tokenValue);
+                        npmrc.set(compose(registryPrefix, NPM_SETTINGS_AUTHTOKEN), tokenValue);
                     }
                 }
             }
@@ -180,6 +202,9 @@ public final class RegistryHelper {
 
     @NonNull
     public String compose(@NonNull final String registryPrefix, @NonNull final String setting) {
+        if (StringUtils.isBlank(registryPrefix)) {
+            return setting;
+        }
         return registryPrefix + ":" + setting;
     }
 

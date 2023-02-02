@@ -82,6 +82,8 @@ public final class NodeJSConstants {
      * </p>
      */
     public static final String NPM_SETTINGS_REGISTRY = "registry";
+
+    /* since npm 9 each of these entries must be scoped with a registry */
     /**
      * The authentication base64 string &gt;USER&lt;:&gt;PASSWORD&lt; used to
      * login to the global registry.

@@ -55,6 +55,10 @@ THE SOFTWARE.
         <f:textbox readonly="readonly" name="config.comment" value="${config.comment}" />
     </f:entry>
 
+    <f:entry title="${%registry.format}">
+        <f:checkbox readonly="readonly" name="config.npm9Format" value="${config.npm9Format}" />
+    </f:entry>
+
     <f:entry title="${%registry.title}" xmlns:local="local">
         <!-- fix for https://issues.jenkins.io/browse/JENKINS-62911 -->
         <j:choose>

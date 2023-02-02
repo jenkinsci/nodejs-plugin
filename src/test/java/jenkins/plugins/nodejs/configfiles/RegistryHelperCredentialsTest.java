@@ -42,7 +42,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.cloudbees.plugins.credentials.common.StandardCredentials;
 import org.apache.commons.codec.binary.Base64;
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
@@ -50,6 +49,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
+import com.cloudbees.plugins.credentials.common.StandardCredentials;
 import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 
@@ -76,12 +76,13 @@ public class RegistryHelperCredentialsTest {
         NPMRegistry scopedGlobalRegsitry = new NPMRegistry("https://registry.npmjs.org", null, "@user1 user2");
         NPMRegistry organisationRegistry = new NPMRegistry("https://registry.acme.com", user.getId(), "scope1 scope2");
 
-        dataParameters.add(new Object[] { "global no auth", new NPMRegistry[] { globalRegistry } });
-        dataParameters.add(new Object[] { "proxy with auth", new NPMRegistry[] { proxyRegistry } });
-        dataParameters.add(new Object[] { "global scoped no auth", new NPMRegistry[] { scopedGlobalRegsitry } });
-        dataParameters.add(new Object[] { "organisation scoped with auth", new NPMRegistry[] { organisationRegistry } });
+        dataParameters.add(new Object[] { "global no auth", new NPMRegistry[] { globalRegistry }, false });
+        dataParameters.add(new Object[] { "proxy with auth", new NPMRegistry[] { proxyRegistry }, false });
+        dataParameters.add(new Object[] { "global scoped no auth", new NPMRegistry[] { scopedGlobalRegsitry }, false });
+        dataParameters.add(new Object[] { "organisation scoped with auth", new NPMRegistry[] { organisationRegistry }, false });
+        dataParameters.add(new Object[] { "organisation scoped with auth", new NPMRegistry[] { organisationRegistry }, true });
         dataParameters.add(new Object[] { "mix of proxy + global scoped + scped organisation registries",
-                                          new NPMRegistry[] { proxyRegistry, scopedGlobalRegsitry, organisationRegistry } });
+                                          new NPMRegistry[] { proxyRegistry, scopedGlobalRegsitry, organisationRegistry }, true });
 
         return dataParameters;
     }
@@ -89,8 +90,9 @@ public class RegistryHelperCredentialsTest {
     private static StandardUsernameCredentials user;
     private NPMRegistry[] registries;
     private Map<String, StandardCredentials> resolvedCredentials;
+    private boolean npm9Format;
 
-    public RegistryHelperCredentialsTest(String testName, NPMRegistry[] registries) {
+    public RegistryHelperCredentialsTest(String testName, NPMRegistry[] registries, boolean npm9Format) {
         this.registries = registries;
 
         resolvedCredentials = new HashMap<>();
@@ -99,12 +101,13 @@ public class RegistryHelperCredentialsTest {
                 resolvedCredentials.put(r.getUrl(), user);
             }
         }
+        this.npm9Format = npm9Format;
     }
 
     @Test
     public void test_registry_credentials() throws Exception {
         RegistryHelper helper = new RegistryHelper(Arrays.asList(registries));
-        String content = helper.fillRegistry("", resolvedCredentials);
+        String content = helper.fillRegistry("", resolvedCredentials, npm9Format);
         assertNotNull(content);
 
         Npmrc npmrc = new Npmrc();
@@ -112,7 +115,7 @@ public class RegistryHelperCredentialsTest {
 
         for (NPMRegistry registry : registries) {
             if (!registry.isHasScopes()) {
-                verifyGlobalRegistry(registry, npmrc);
+                verifyGlobalRegistry(helper, registry, npmrc);
             } else {
                 verifyScopedRegistry(helper, npmrc, registry);
             }
@@ -121,20 +124,28 @@ public class RegistryHelperCredentialsTest {
     }
 
     private void verifyScopedRegistry(RegistryHelper helper, Npmrc npmrc, NPMRegistry registry) {
-        String prefix = helper.calculatePrefix(registry.getUrl());
+        String registryPrefix = helper.calculatePrefix(registry.getUrl());
+
+        // scoped registry not depends on npm format, has always the registry prefix
+        String alwaysAuthKey = helper.compose(registryPrefix, NPM_SETTINGS_ALWAYS_AUTH);
+        String usernameKey = helper.compose(registryPrefix, NPM_SETTINGS_USER);
+        String passwordKey = helper.compose(registryPrefix, NPM_SETTINGS_PASSWORD);
+
         for (String scope : registry.getScopesAsList()) {
-            assertFalse("Unexpected value for " + NPM_SETTINGS_AUTH, npmrc.contains(helper.compose(prefix, NPM_SETTINGS_AUTH)));
+            assertFalse("Unexpected value for " + NPM_SETTINGS_AUTH, npmrc.contains(helper.compose(registryPrefix, NPM_SETTINGS_AUTH)));
 
             if (registry.getCredentialsId() != null) {
                 // test require authentication, by default is false
-                assertTrue("Unexpected value for " + NPM_SETTINGS_ALWAYS_AUTH, npmrc.getAsBoolean(helper.compose(prefix, NPM_SETTINGS_ALWAYS_AUTH)));
+                Assertions.assertThat(npmrc.contains(alwaysAuthKey)).isTrue() //
+                    .describedAs("key %s not found", NPM_SETTINGS_ALWAYS_AUTH);
+                Assertions.assertThat(npmrc.getAsBoolean(alwaysAuthKey)).isTrue();
 
                 // test credentials fields
-                assertEquals("Unexpected value for " + NPM_SETTINGS_USER, user.getUsername(), npmrc.get(helper.compose(prefix, NPM_SETTINGS_USER)));
-                String password = npmrc.get(helper.compose(prefix, NPM_SETTINGS_PASSWORD));
-                assertNotNull("Unexpected value for " + NPM_SETTINGS_PASSWORD, password);
+                Assertions.assertThat(npmrc.get(usernameKey)).isEqualTo(user.getUsername());
+                String password = npmrc.get(passwordKey);
+                Assertions.assertThat(password).isNotNull();
                 password = new String(Base64.decodeBase64(password));
-                assertEquals("Invalid password for scoped registry", password, "mypassword");
+                Assertions.assertThat(password).isEqualTo("mypassword").describedAs("Invalid scoped password");
             }
 
             scope = '@' + scope;
@@ -145,20 +156,24 @@ public class RegistryHelperCredentialsTest {
         }
     }
 
-    private void verifyGlobalRegistry(NPMRegistry registry, Npmrc npmrc) {
-        // test require authentication, by default is false
-        assertEquals("Unexpected value for " + NPM_SETTINGS_ALWAYS_AUTH, registry.getCredentialsId() != null, npmrc.getAsBoolean(NPM_SETTINGS_ALWAYS_AUTH));
+    private void verifyGlobalRegistry(RegistryHelper helper, NPMRegistry registry, Npmrc npmrc) {
+        String registryPrefix = helper.calculatePrefix(registry.getUrl());
+        String alwaysAuthKey = npm9Format ? helper.compose(registryPrefix, NPM_SETTINGS_ALWAYS_AUTH) : NPM_SETTINGS_ALWAYS_AUTH;
+        String authKey = npm9Format ? helper.compose(registryPrefix, NPM_SETTINGS_AUTH) : NPM_SETTINGS_AUTH;
+
+        Assertions.assertThat(npmrc.contains(alwaysAuthKey)).isEqualTo(registry.getCredentialsId() != null) //
+            .describedAs("Unexpected value for %s", alwaysAuthKey);
 
         if (registry.getCredentialsId() != null) {
             // test _auth
-            String auth = npmrc.get(NPM_SETTINGS_AUTH);
+            String auth = npmrc.get(authKey);
             assertNotNull("Unexpected value for " + NPM_SETTINGS_AUTH, npmrc);
             auth = new String(Base64.decodeBase64(auth));
             Assertions.assertThat(auth).startsWith(user.getUsername()).endsWith("mypassword");
         }
 
         // test registry URL entry
-        assertEquals("Unexpected value for " + NPM_SETTINGS_REGISTRY, registry.getUrl(), npmrc.get(NPM_SETTINGS_REGISTRY));
+        Assertions.assertThat(npmrc.get(NPM_SETTINGS_REGISTRY)).isEqualTo(registry.getUrl());
     }
 
 }

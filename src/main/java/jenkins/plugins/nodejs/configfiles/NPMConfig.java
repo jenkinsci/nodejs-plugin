@@ -29,17 +29,17 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
-
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.lib.configprovider.AbstractConfigProviderImpl;
 import org.jenkinsci.lib.configprovider.model.Config;
 import org.jenkinsci.lib.configprovider.model.ContentType;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
 
 import com.cloudbees.plugins.credentials.common.StandardCredentials;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.AbortException;
 import hudson.Extension;
 import hudson.FilePath;
@@ -58,6 +58,7 @@ public class NPMConfig extends Config {
     private static final long serialVersionUID = 1L;
 
     private final List<NPMRegistry> registries;
+    private boolean npm9Format = false;
 
     @DataBoundConstructor
     public NPMConfig(@NonNull String id, String name, String comment, String content, List<NPMRegistry> registries) {
@@ -94,9 +95,23 @@ public class NPMConfig extends Config {
         }
     }
 
+    public boolean isNpm9Format() {
+        return npm9Format;
+    }
+
+    /**
+     * Sets if the generated .npmrc format is compatible with NPM version 9.
+     *
+     * @param npm9Format enable NPM version 9 or not
+     */
+    @DataBoundSetter
+    public void setNpm9Format(boolean npm9Format) {
+        this.npm9Format = npm9Format;
+    }
+
     @Extension
     public static class NPMConfigProvider extends AbstractConfigProviderImpl {
-        
+
         public NPMConfigProvider() {
             load();
         }
@@ -135,7 +150,7 @@ public class NPMConfig extends Config {
                 if (!registries.isEmpty()) {
                     listener.getLogger().println("Adding all registry entries");
                     Map<String, StandardCredentials> registry2Credentials = helper.resolveCredentials(build);
-                    fileContent = helper.fillRegistry(fileContent, registry2Credentials);
+                    fileContent = helper.fillRegistry(fileContent, registry2Credentials, config.npm9Format);
                 }
 
                 try {

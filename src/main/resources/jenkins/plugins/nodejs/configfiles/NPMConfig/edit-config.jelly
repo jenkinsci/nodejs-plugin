@@ -31,6 +31,10 @@ THE SOFTWARE.
     <j:set var="descriptor" value="${config.descriptor}" />
     <st:include page="id-name-and-comment" class="${descriptor.clazz}" />
 
+    <f:entry title="${%registry.format}">
+        <f:checkbox field="npm9Format" />
+    </f:entry>
+
     <f:entry title="${%registry.title}">
         <f:repeatableProperty field="registries" />
     </f:entry>

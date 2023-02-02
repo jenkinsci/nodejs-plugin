@@ -23,6 +23,24 @@
  */
 package jenkins.plugins.nodejs;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.allOf;
+import static org.hamcrest.Matchers.arrayWithSize;
+import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasProperty;
+import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.instanceOf;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
+import java.util.List;
+
+import org.jenkinsci.lib.configprovider.model.Config;
+import org.jenkinsci.plugins.configfiles.ConfigFiles;
+import org.junit.Assert;
+import org.jvnet.hudson.test.RestartableJenkinsRule;
+
 import hudson.tools.BatchCommandInstaller;
 import hudson.tools.CommandInstaller;
 import hudson.tools.InstallSourceProperty;
@@ -38,17 +56,6 @@ import jenkins.plugins.nodejs.configfiles.NPMConfig;
 import jenkins.plugins.nodejs.configfiles.NPMRegistry;
 import jenkins.plugins.nodejs.tools.NodeJSInstallation;
 import jenkins.plugins.nodejs.tools.NodeJSInstaller;
-import org.jenkinsci.lib.configprovider.model.Config;
-import org.jenkinsci.plugins.configfiles.ConfigFiles;
-import org.junit.Assert;
-import org.jvnet.hudson.test.RestartableJenkinsRule;
-
-import java.util.List;
-
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 public class JCasCTest extends RoundTripAbstractTest {
 
@@ -66,6 +73,7 @@ public class JCasCTest extends RoundTripAbstractTest {
         assertEquals("myComment", npmConfig.comment);
         assertEquals("myContent", npmConfig.content);
         assertEquals("myConfig", npmConfig.name);
+        assertEquals(true, npmConfig.isNpm9Format());
 
         List<NPMRegistry> registries = npmConfig.getRegistries();
         Assert.assertTrue(registries.size() == 1);
