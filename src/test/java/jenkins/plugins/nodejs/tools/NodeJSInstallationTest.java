@@ -23,9 +23,9 @@
  */
 package jenkins.plugins.nodejs.tools;
 
-import com.gargoylesoftware.htmlunit.html.HtmlButton;
-import com.gargoylesoftware.htmlunit.html.HtmlForm;
-import com.gargoylesoftware.htmlunit.html.HtmlPage;
+import org.htmlunit.html.HtmlButton;
+import org.htmlunit.html.HtmlForm;
+import org.htmlunit.html.HtmlPage;
 import hudson.model.Computer;
 import hudson.tools.InstallSourceProperty;
 import hudson.tools.ToolProperty;
@@ -100,8 +100,8 @@ public class NodeJSInstallationTest {
         HtmlForm f = p.getFormByName("config");
         HtmlButton b = r.getButtonByCaption(f, "Add NodeJS");
         b.click();
-        r.findPreviousInputElement(b, "name").setValueAttribute("myNode");
-        r.findPreviousInputElement(b, "home").setValueAttribute("/tmp/foo");
+        r.findPreviousInputElement(b, "name").setValue("myNode");
+        r.findPreviousInputElement(b, "home").setValue("/tmp/foo");
         r.submit(f);
         verify();
 
