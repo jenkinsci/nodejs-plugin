@@ -29,6 +29,7 @@ import hudson.Extension;
 import hudson.FilePath;
 import hudson.Launcher;
 import hudson.Util;
+import hudson.console.ConsoleLogFilter;
 import hudson.model.AbstractProject;
 import hudson.model.Computer;
 import hudson.model.ItemGroup;
@@ -38,12 +39,18 @@ import hudson.model.TaskListener;
 import hudson.tasks.BuildWrapperDescriptor;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
+import hudson.util.Secret;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.io.Serializable;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.Pattern;
 import edu.umd.cs.findbugs.annotations.CheckForNull;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
@@ -52,8 +59,11 @@ import jenkins.plugins.nodejs.cache.DefaultCacheLocationLocator;
 import jenkins.plugins.nodejs.tools.NodeJSInstallation;
 import jenkins.tasks.SimpleBuildWrapper;
 import org.jenkinsci.Symbol;
+import org.jenkinsci.lib.configprovider.model.Config;
 import org.jenkinsci.lib.configprovider.model.ConfigFile;
 import org.jenkinsci.lib.configprovider.model.ConfigFileManager;
+import org.jenkinsci.plugins.configfiles.ConfigFiles;
+import org.jenkinsci.plugins.credentialsbinding.masking.SecretPatterns;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
@@ -180,6 +190,18 @@ public class NodeJSBuildWrapper extends SimpleBuildWrapper {
         }
     }
 
+    @Override
+    public ConsoleLogFilter createLoggerDecorator(@NonNull Run<?, ?> build) {
+        if (configId != null) {
+            Config conf = ConfigFiles.getByIdOrNull(build, configId);
+            List<String> sensitiveContentForMasking = conf.getProvider().getSensitiveContentForMasking(conf, build);
+            if (!sensitiveContentForMasking.isEmpty()) {
+                return new SecretFilter(sensitiveContentForMasking, build.getCharset());
+            }
+        }
+        return null;
+    }
+
     /**
      * Migrate old data, set cacheLocationStrategy
      *
@@ -255,6 +277,25 @@ public class NodeJSBuildWrapper extends SimpleBuildWrapper {
          */
         public FormValidation doCheckConfigId(@Nullable @AncestorInPath ItemGroup<?> context, @CheckForNull @QueryParameter final String configId) {
             return NodeJSDescriptorUtils.checkConfig(context, configId);
+        }
+
+    }
+
+    private static final class SecretFilter extends ConsoleLogFilter implements Serializable {
+
+        private static final long serialVersionUID = 1;
+
+        private Secret pattern;
+        private String charset;
+
+        SecretFilter(Collection<String> secrets, Charset cs) {
+            pattern = Secret.fromString(SecretPatterns.getAggregateSecretPattern(secrets).pattern());
+            charset = cs.name();
+        }
+
+        @Override
+        public OutputStream decorateLogger(Run build, OutputStream logger) {
+            return new SecretPatterns.MaskingOutputStream(logger, () -> Pattern.compile(pattern.getPlainText()), charset);
         }
 
     }
