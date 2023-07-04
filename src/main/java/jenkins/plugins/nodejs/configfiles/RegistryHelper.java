@@ -32,6 +32,7 @@ import static jenkins.plugins.nodejs.NodeJSConstants.NPM_SETTINGS_USER;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -232,4 +233,31 @@ public final class RegistryHelper {
         return result;
     }
 
+    @SuppressFBWarnings(value = "DM_DEFAULT_ENCODING", justification = "does exactly what fillRegistry does which has a questionable justification")
+    public @NonNull List<String> secretsForMasking(Run<?, ?> build) {
+        List<String> secretsForMasking = new ArrayList<>();
+        Map<String, StandardCredentials> resolveCredentials = resolveCredentials(build);
+        for (StandardCredentials credential : resolveCredentials.values()) {
+            if (credential instanceof StandardUsernamePasswordCredentials) {
+                StandardUsernamePasswordCredentials userPassCredential = (StandardUsernamePasswordCredentials)credential;
+                // we could be passed separately, or as a basic token.
+                String username = userPassCredential.getUsername();
+                if (userPassCredential.isUsernameSecret()) {
+                    secretsForMasking.add(userPassCredential.getUsername());
+                }
+                String password = Secret.toString(userPassCredential.getPassword());
+                secretsForMasking.add(password);
+                // and base64 encoded in some npmrc files
+                if (!password.isBlank()) {
+                    secretsForMasking.add(Base64.encodeBase64String(password.getBytes()));
+                }
+                // and HTTP basic...
+                secretsForMasking.add(Base64.encodeBase64String((username + ":" + password).getBytes()));
+            } else if (credential instanceof StringCredentials) {
+                String tokenValue = Secret.toString(((StringCredentials)credential).getSecret());
+                secretsForMasking.add(tokenValue);
+            }
+        }
+        return secretsForMasking;
+    }
 }

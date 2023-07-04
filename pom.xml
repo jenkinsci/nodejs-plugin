@@ -72,10 +72,34 @@
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>structs</artifactId>
         </dependency>
+		
+		<!-- Due to including version 953.v0432a_802e4d2 of config-file-provider for SECURITY-3196 below, we also have to include new dependencies for token-macro, credentials-binding, script-security and ionicons-api -->
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>config-file-provider</artifactId>
+            <version>951.953.vdfc5f6e2dcc4</version>
         </dependency>
+		<dependency>
+            <groupId>org.jenkins-ci.plugins</groupId>
+            <artifactId>token-macro</artifactId>
+            <version>359.vb_cde11682e0c</version>
+        </dependency>
+		<dependency>
+            <groupId>org.jenkins-ci.plugins</groupId>
+            <artifactId>credentials-binding</artifactId>
+            <version>604.vb_64480b_c56ca_</version>
+        </dependency>
+		<dependency>
+            <groupId>org.jenkins-ci.plugins</groupId>
+            <artifactId>script-security</artifactId>
+            <version>1244.ve463715a_f89c</version>
+        </dependency>
+        <dependency>
+            <groupId>io.jenkins.plugins</groupId>
+            <artifactId>ionicons-api</artifactId>
+            <version>45.vf54fca_5d2154</version>
+        </dependency>
+
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>plain-credentials</artifactId>
@@ -101,6 +125,7 @@
             <groupId>org.jenkins-ci.plugins.workflow</groupId>
             <artifactId>workflow-job</artifactId>
             <scope>test</scope>
+            <version>1289.vd1c337fd5354</version> <!-- included version 1289.vd1c337fd5354 here due to using version 953.v0432a_802e4d2 of config-file-provider for SECURITY-3196 -->
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.plugins.workflow</groupId>

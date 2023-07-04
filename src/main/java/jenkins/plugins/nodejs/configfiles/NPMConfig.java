@@ -164,5 +164,18 @@ public class NPMConfig extends Config {
             return fileContent;
         }
 
+        @Override
+        public @NonNull List<String> getSensitiveContentForMasking(Config configFile, Run<?, ?> build) {
+            List<String> sensitiveContent = new ArrayList<>();
+            if (configFile instanceof NPMConfig) {
+                NPMConfig config = (NPMConfig) configFile;
+                List<NPMRegistry> registries = config.getRegistries();
+                if (!registries.isEmpty()) {
+                    RegistryHelper helper = new RegistryHelper(registries);
+                    sensitiveContent = helper.secretsForMasking(build);
+                }
+            }
+            return sensitiveContent;
+        }
     }
 }
