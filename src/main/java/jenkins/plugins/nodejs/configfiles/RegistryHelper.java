@@ -32,6 +32,7 @@ import static jenkins.plugins.nodejs.NodeJSConstants.NPM_SETTINGS_USER;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -44,14 +45,13 @@ import org.jenkinsci.plugins.plaincredentials.StringCredentials;
 
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.common.StandardCredentials;
-import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
+import com.cloudbees.plugins.credentials.common.UsernamePasswordCredentials;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.cloudbees.plugins.credentials.domains.URIRequirementBuilder;
 
 import edu.umd.cs.findbugs.annotations.CheckForNull;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.Util;
 import hudson.model.Run;
 import hudson.util.Secret;
@@ -122,7 +122,6 @@ public final class RegistryHelper {
      * @return the updated version of the {@code npmrcContent} with the registry
      *         credentials added
      */
-    @SuppressFBWarnings(value = "DM_DEFAULT_ENCODING", justification = "npm auth_token could not support base64 UTF-8 char encoding")
     public String fillRegistry(String npmrcContent, Map<String, StandardCredentials> registry2Credentials, boolean npm9Format) {
         Npmrc npmrc = new Npmrc();
         npmrc.from(npmrcContent);
@@ -147,12 +146,14 @@ public final class RegistryHelper {
 
                         // the _auth directive seems not be considered for scoped registry
                         // only authToken or username/password works
-                        if (credentials instanceof StandardUsernamePasswordCredentials) {
-                            String passwordValue = Base64.encodeBase64String(Secret.toString(((StandardUsernamePasswordCredentials)credentials).getPassword()).getBytes());
-                            npmrc.set(compose(registryPrefix, NPM_SETTINGS_USER), ((StandardUsernamePasswordCredentials)credentials).getUsername());
+                        if (credentials instanceof UsernamePasswordCredentials) {
+                            UsernamePasswordCredentials usernamePassowrd = (UsernamePasswordCredentials) credentials;
+                            String passwordValue = Base64.encodeBase64String(Secret.toString(usernamePassowrd.getPassword()).getBytes(StandardCharsets.UTF_8));
+                            npmrc.set(compose(registryPrefix, NPM_SETTINGS_USER), usernamePassowrd.getUsername());
                             npmrc.set(compose(registryPrefix, NPM_SETTINGS_PASSWORD), passwordValue);
                         } else if (credentials instanceof StringCredentials) {
-                            String tokenValue = Secret.toString(((StringCredentials)credentials).getSecret());
+                            StringCredentials stringCredentials = (StringCredentials) credentials;
+                            String tokenValue = Secret.toString(stringCredentials.getSecret());
                             npmrc.set(compose(registryPrefix, NPM_SETTINGS_AUTHTOKEN), tokenValue);
                         }
                     }
@@ -164,12 +165,14 @@ public final class RegistryHelper {
                 npmrc.set(NPM_SETTINGS_REGISTRY, registry.getUrl());
                 if (credentials != null) {
                     npmrc.set(compose(registryPrefix, NPM_SETTINGS_ALWAYS_AUTH), credentials != null);
-                    if (credentials instanceof StandardUsernamePasswordCredentials) {
-                        String authValue = ((StandardUsernamePasswordCredentials)credentials).getUsername() + ':' + Secret.toString(((StandardUsernamePasswordCredentials)credentials).getPassword());
-                        authValue = Base64.encodeBase64String(authValue.getBytes());
+                    if (credentials instanceof UsernamePasswordCredentials) {
+                        UsernamePasswordCredentials usernamePassowrd = (UsernamePasswordCredentials) credentials;
+                        String authValue = usernamePassowrd.getUsername() + ':' + Secret.toString(usernamePassowrd.getPassword());
+                        authValue = Base64.encodeBase64String(authValue.getBytes(StandardCharsets.UTF_8));
                         npmrc.set(compose(registryPrefix, NPM_SETTINGS_AUTH), authValue);
                     } else if (credentials instanceof StringCredentials) {
-                        String tokenValue = Secret.toString(((StringCredentials)credentials).getSecret());
+                        StringCredentials stringCredentials = (StringCredentials) credentials;
+                        String tokenValue = Secret.toString(stringCredentials.getSecret());
                         npmrc.set(compose(registryPrefix, NPM_SETTINGS_AUTHTOKEN), tokenValue);
                     }
                 }
