@@ -47,14 +47,12 @@ import org.jenkinsci.plugins.plaincredentials.StringCredentials;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.common.StandardCredentials;
 import com.cloudbees.plugins.credentials.common.UsernamePasswordCredentials;
-import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.cloudbees.plugins.credentials.domains.URIRequirementBuilder;
 
 import edu.umd.cs.findbugs.annotations.CheckForNull;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.Util;
 import hudson.model.Run;
 import hudson.util.Secret;
@@ -238,13 +236,12 @@ public final class RegistryHelper {
         return result;
     }
 
-    @SuppressFBWarnings(value = "DM_DEFAULT_ENCODING", justification = "does exactly what fillRegistry does which has a questionable justification")
     public @NonNull List<String> secretsForMasking(Run<?, ?> build) {
         List<String> secretsForMasking = new ArrayList<>();
         Map<String, StandardCredentials> resolveCredentials = resolveCredentials(build);
         for (StandardCredentials credential : resolveCredentials.values()) {
-            if (credential instanceof StandardUsernamePasswordCredentials) {
-                StandardUsernamePasswordCredentials userPassCredential = (StandardUsernamePasswordCredentials)credential;
+            if (credential instanceof UsernamePasswordCredentials) {
+                UsernamePasswordCredentials userPassCredential = (UsernamePasswordCredentials) credential;
                 // we could be passed separately, or as a basic token.
                 String username = userPassCredential.getUsername();
                 if (userPassCredential.isUsernameSecret()) {
@@ -254,12 +251,12 @@ public final class RegistryHelper {
                 secretsForMasking.add(password);
                 // and base64 encoded in some npmrc files
                 if (!password.isBlank()) {
-                    secretsForMasking.add(Base64.encodeBase64String(password.getBytes()));
+                    secretsForMasking.add(Base64.encodeBase64String(password.getBytes(StandardCharsets.UTF_8)));
                 }
                 // and HTTP basic...
-                secretsForMasking.add(Base64.encodeBase64String((username + ":" + password).getBytes()));
+                secretsForMasking.add(Base64.encodeBase64String((username + ":" + password).getBytes(StandardCharsets.UTF_8)));
             } else if (credential instanceof StringCredentials) {
-                String tokenValue = Secret.toString(((StringCredentials)credential).getSecret());
+                String tokenValue = Secret.toString(((StringCredentials) credential).getSecret());
                 secretsForMasking.add(tokenValue);
             }
         }
