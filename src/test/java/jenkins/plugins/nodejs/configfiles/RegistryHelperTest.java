@@ -33,7 +33,7 @@ import org.assertj.core.api.Assertions;
 import org.jenkinsci.plugins.plaincredentials.StringCredentials;
 import org.jenkinsci.plugins.plaincredentials.impl.StringCredentialsImpl;
 import org.junit.Before;
-import org.junit.Rule;
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
 
@@ -50,8 +50,9 @@ import hudson.util.Secret;
 
 public class RegistryHelperTest {
 
-    @Rule
-    public JenkinsRule j = new JenkinsRule();
+    @ClassRule
+    public static JenkinsRule j = new JenkinsRule();
+
     private StandardUsernameCredentials user;
     private StringCredentials token;
 

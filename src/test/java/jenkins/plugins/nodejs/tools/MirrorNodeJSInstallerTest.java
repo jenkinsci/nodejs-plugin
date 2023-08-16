@@ -36,7 +36,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.assertj.core.api.Assertions;
-import org.junit.Rule;
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
 import org.mockito.ArgumentCaptor;
@@ -56,8 +56,8 @@ import hudson.tools.DownloadFromUrlInstaller.Installable;
 
 public class MirrorNodeJSInstallerTest {
 
-    @Rule
-    public JenkinsRule r = new JenkinsRule();
+    @ClassRule
+    public static JenkinsRule r = new JenkinsRule();
 
     public static class MockMirrorNodeJSInstaller extends MirrorNodeJSInstaller {
 
@@ -121,7 +121,7 @@ public class MirrorNodeJSInstallerTest {
         Map<Domain, List<Credentials>> credentialsMap = new HashMap<>();
         credentialsMap.put(Domain.global(), Arrays.asList(credentials));
         SystemCredentialsProvider.getInstance().setDomainCredentialsMap(credentialsMap);
-        
+
         MockMirrorNodeJSInstaller installer = spy(new MockMirrorNodeJSInstaller(installable, mirror));
         installer.setCredentialsId(credentialsId);
 

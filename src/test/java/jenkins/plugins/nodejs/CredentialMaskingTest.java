@@ -24,24 +24,27 @@
 package jenkins.plugins.nodejs;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
 import org.jenkinsci.plugins.configfiles.GlobalConfigFiles;
 import org.jenkinsci.plugins.plaincredentials.impl.StringCredentialsImpl;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.jvnet.hudson.test.BuildWatcher;
 import org.jvnet.hudson.test.Issue;
 import org.jvnet.hudson.test.JenkinsRule;
+
 import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.cloudbees.plugins.credentials.SystemCredentialsProvider;
 import com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl;
+
 import hudson.tools.InstallSourceProperty;
 import hudson.util.Secret;
 import jenkins.model.Jenkins;
@@ -59,8 +62,8 @@ public class CredentialMaskingTest {
     @Rule
     public BuildWatcher buildWatcher = new BuildWatcher();
 
-    @Rule
-    public JenkinsRule r = new JenkinsRule();
+    @ClassRule
+    public static JenkinsRule r = new JenkinsRule();
 
     @Before
     public void setupConfigWithCredentials() {
@@ -74,18 +77,19 @@ public class CredentialMaskingTest {
 
         SystemCredentialsProvider.getInstance().getCredentials().add(new StringCredentialsImpl(CredentialsScope.GLOBAL, "stringcreds", "", Secret.fromString("sensitive")));
 
-        GlobalConfigFiles.get().save(new NPMConfig("npm", "npm config", "", ";empty config to populate with repos", 
+        GlobalConfigFiles.get().save(new NPMConfig("npm", "npm config", "", ";empty config to populate with repos",
                                                    // Refusing to marshal java.util.ImmutableCollections$ListN
-                                                   new ArrayList(List.of(new NPMRegistry("https://npmjs.example.com", "usercreds", "scope1"),
+                                                   List.of(new NPMRegistry("https://npmjs.example.com", "usercreds", "scope1"),
                                                            new NPMRegistry("https://npmjs2.example.com", "usercreds2", null),
-                                                           new NPMRegistry("https://npmjs3.example.com", "stringcreds", "scope2")))));
+                                                           new NPMRegistry("https://npmjs3.example.com", "stringcreds", "scope2"))));
     }
 
-    @Test @Issue("SECURITY-3196")
+    @Test
+    @Issue("SECURITY-3196")
     public void testNPMConfigFileWithConfigFileProviderBlock() throws Exception {
-        WorkflowJob p = r.createProject(WorkflowJob.class, "p");
+        WorkflowJob p = r.createProject(WorkflowJob.class, "p1");
         p.setDefinition(new CpsFlowDefinition(
-                String.join("\n", 
+                String.join("\n",
                   "node {",
                   "  configFileProvider([configFile(fileId: 'npm', ",
                   "                                 variable: 'NPM_RC_LOCATION')]) {",
@@ -119,7 +123,8 @@ public class CredentialMaskingTest {
         r.assertLogNotContains("sensitive", b1);
     }
 
-    @Test @Issue("SECURITY-3196")
+    @Test
+    @Issue("SECURITY-3196")
     public void testNPMConfigFileWithNodejsBlock() throws Exception {
         // fake enough of a nodejs install.
         Platform platform = Platform.current();
@@ -128,14 +133,14 @@ public class CredentialMaskingTest {
         bin.mkdir();
         new File(bin, platform.nodeFileName).createNewFile();
         new File(bin, platform.npmFileName).createNewFile();
-        
-        NodeJSInstallation installation = new NodeJSInstallation("bogus-nodejs", dir.toString(), 
+
+        NodeJSInstallation installation = new NodeJSInstallation("bogus-nodejs", dir.toString(),
                 Collections.singletonList(new InstallSourceProperty(Collections.singletonList(new NodeJSInstaller("anything", null, Long.MAX_VALUE)))));
         Jenkins.get().getDescriptorByType(NodeJSInstallation.DescriptorImpl.class).setInstallations(installation);
 
-        WorkflowJob p = r.createProject(WorkflowJob.class, "p");
+        WorkflowJob p = r.createProject(WorkflowJob.class, "p2");
         p.setDefinition(new CpsFlowDefinition(
-                String.join("\n", 
+                String.join("\n",
                   "node {",
                   "  nodejs(nodeJSInstallationName:'bogus-nodejs', configId:'npm') {",
                   "    String content = readFile(env.npm_config_userconfig)",

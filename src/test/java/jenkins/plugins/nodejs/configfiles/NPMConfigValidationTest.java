@@ -23,18 +23,16 @@
  */
 package jenkins.plugins.nodejs.configfiles;
 
-import static org.junit.Assert.*;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 
 import java.util.Arrays;
 
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 
 public class NPMConfigValidationTest {
-
-    @Rule
-    public ExpectedException thrown = ExpectedException.none();
 
     @Test
     public void test_new_config() {
@@ -52,20 +50,20 @@ public class NPMConfigValidationTest {
         NPMRegistry privateRegistry = new NPMRegistry("https://private.organization.com/", null, null);
         NPMRegistry officalRegistry = new NPMRegistry("https://registry.npmjs.org/", null, null);
 
-        thrown.expect(VerifyConfigProviderException.class);
-
         NPMConfig config = new NPMConfig("too_many_registry", null, null, null, Arrays.asList(privateRegistry, officalRegistry));
-        config.doVerify();
+
+        assertThatExceptionOfType(VerifyConfigProviderException.class) //
+            .isThrownBy(() -> config.doVerify());
     }
 
     @Test
     public void test_empty_URL() throws Exception {
         NPMRegistry registry = new NPMRegistry("", null, null);
 
-        thrown.expect(VerifyConfigProviderException.class);
-
         NPMConfig config = new NPMConfig("empty_URL", null, null, null, Arrays.asList(registry));
-        config.doVerify();
+
+        assertThatExceptionOfType(VerifyConfigProviderException.class) //
+            .isThrownBy(() -> config.doVerify());
     }
 
     @Test

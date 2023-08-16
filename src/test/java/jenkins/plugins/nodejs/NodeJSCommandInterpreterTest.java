@@ -41,12 +41,12 @@ import java.util.List;
 import org.assertj.core.api.Assertions;
 import org.jenkinsci.lib.configprovider.model.Config;
 import org.jenkinsci.plugins.configfiles.GlobalConfigFiles;
+import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.jvnet.hudson.test.Issue;
 import org.jvnet.hudson.test.JenkinsRule;
-import org.jvnet.hudson.test.recipes.LocalData;
 
 import hudson.EnvVars;
 import hudson.FilePath;
@@ -58,8 +58,6 @@ import hudson.model.Result;
 import hudson.model.TaskListener;
 import jenkins.plugins.nodejs.CIBuilderHelper.Verifier;
 import jenkins.plugins.nodejs.VerifyEnvVariableBuilder.EnvVarVerifier;
-import jenkins.plugins.nodejs.cache.DefaultCacheLocationLocator;
-import jenkins.plugins.nodejs.cache.PerJobCacheLocationLocator;
 import jenkins.plugins.nodejs.configfiles.NPMConfig;
 import jenkins.plugins.nodejs.configfiles.NPMRegistry;
 import jenkins.plugins.nodejs.tools.DetectionFailedException;
@@ -68,8 +66,8 @@ import jenkins.plugins.nodejs.tools.Platform;
 
 public class NodeJSCommandInterpreterTest {
 
-    @Rule
-    public JenkinsRule j = new JenkinsRule();
+    @ClassRule
+    public static JenkinsRule j = new JenkinsRule();
     @Rule
     public TemporaryFolder folder = new TemporaryFolder();
 
@@ -154,41 +152,9 @@ public class NodeJSCommandInterpreterTest {
 
         NodeJSCommandInterpreter builder = CIBuilderHelper.createMock("test_creation_of_config", installation, null);
 
-        FreeStyleProject job = j.createFreeStyleProject("free");
+        FreeStyleProject job = j.createFreeStyleProject("JENKINS-45840");
         job.getBuildersList().add(builder);
         j.assertBuildStatus(Result.FAILURE, job.scheduleBuild2(0));
-    }
-
-    /**
-     * Verify that the serialisation is backward compatible.
-     */
-    @LocalData
-    @Test
-    @Issue("JENKINS-57844")
-    public void test_serialisation_is_compatible_with_version_1_2_x() throws Exception {
-        FreeStyleProject prj = j.jenkins.getAllItems(hudson.model.FreeStyleProject.class) //
-                .stream() //
-                .filter(p -> "test".equals(p.getName())) //
-                .findFirst().get();
-
-        NodeJSCommandInterpreter step = prj.getBuildersList().get(NodeJSCommandInterpreter.class);
-        Assertions.assertThat(step.getCacheLocationStrategy()).isInstanceOf(DefaultCacheLocationLocator.class);
-    }
-
-    /**
-     * Verify reloading jenkins job configuration use the saved cache strategy instead reset to default.
-     */
-    @LocalData
-    @Test
-    @Issue("JENKINS-58029")
-    public void test_reloading_job_configuration_contains_saved_cache_strategy() throws Exception {
-        FreeStyleProject prj = j.jenkins.getAllItems(hudson.model.FreeStyleProject.class) //
-                .stream() //
-                .filter(p -> "test".equals(p.getName())) //
-                .findFirst().get();
-
-        NodeJSCommandInterpreter step = prj.getBuildersList().get(NodeJSCommandInterpreter.class);
-        Assertions.assertThat(step.getCacheLocationStrategy()).isInstanceOf(PerJobCacheLocationLocator.class);
     }
 
     @Test

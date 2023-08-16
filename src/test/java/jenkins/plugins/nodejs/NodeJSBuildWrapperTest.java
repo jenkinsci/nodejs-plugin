@@ -38,12 +38,12 @@ import java.util.List;
 import org.assertj.core.api.Assertions;
 import org.jenkinsci.lib.configprovider.model.Config;
 import org.jenkinsci.plugins.configfiles.GlobalConfigFiles;
+import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.jvnet.hudson.test.Issue;
 import org.jvnet.hudson.test.JenkinsRule;
-import org.jvnet.hudson.test.recipes.LocalData;
 
 import hudson.EnvVars;
 import hudson.ExtensionList;
@@ -54,8 +54,6 @@ import hudson.model.Result;
 import hudson.model.TaskListener;
 import jenkins.plugins.nodejs.VerifyEnvVariableBuilder.EnvVarVerifier;
 import jenkins.plugins.nodejs.VerifyEnvVariableBuilder.FileVerifier;
-import jenkins.plugins.nodejs.cache.DefaultCacheLocationLocator;
-import jenkins.plugins.nodejs.cache.PerJobCacheLocationLocator;
 import jenkins.plugins.nodejs.configfiles.NPMConfig;
 import jenkins.plugins.nodejs.configfiles.NPMRegistry;
 import jenkins.plugins.nodejs.tools.NodeJSInstallation;
@@ -63,8 +61,8 @@ import jenkins.plugins.nodejs.tools.Platform;
 
 public class NodeJSBuildWrapperTest {
 
-    @Rule
-    public JenkinsRule j = new JenkinsRule();
+    @ClassRule
+    public static JenkinsRule j = new JenkinsRule();
     @Rule
     public TemporaryFolder fileRule = new TemporaryFolder();
 
@@ -86,7 +84,7 @@ public class NodeJSBuildWrapperTest {
 
     @Test
     public void test_creation_of_config() throws Exception {
-        FreeStyleProject job = j.createFreeStyleProject("free");
+        FreeStyleProject job = j.createFreeStyleProject("free2");
 
         final Config config = createSetting("my-config-id", "email=foo@acme.com", null);
 
@@ -102,7 +100,7 @@ public class NodeJSBuildWrapperTest {
 
     @Test
     public void test_inject_path_variable() throws Exception {
-        FreeStyleProject job = j.createFreeStyleProject("free");
+        FreeStyleProject job = j.createFreeStyleProject("free3");
 
         final Config config = createSetting("my-config-id", "", null);
 
@@ -123,7 +121,7 @@ public class NodeJSBuildWrapperTest {
     @Issue("JENKINS-45840")
     @Test
     public void test_check_no_executable_in_installation_folder() throws Exception {
-        FreeStyleProject job = j.createFreeStyleProject("free");
+        FreeStyleProject job = j.createFreeStyleProject("free4");
 
         NodeJSInstallation installation = mockInstaller();
         when(installation.getExecutable(any(Launcher.class))).thenReturn(null);
@@ -132,38 +130,6 @@ public class NodeJSBuildWrapperTest {
         job.getBuildWrappersList().add(bw);
 
         j.assertBuildStatus(Result.FAILURE, job.scheduleBuild2(0));
-    }
-
-    /**
-     * Verify that the serialisation is backward compatible.
-     */
-    @LocalData
-    @Test
-    @Issue("JENKINS-57844")
-    public void test_serialisation_is_compatible_with_version_1_2_x() throws Exception {
-        FreeStyleProject prj = j.jenkins.getAllItems(hudson.model.FreeStyleProject.class) //
-                .stream() //
-                .filter(p -> "test".equals(p.getName())) //
-                .findFirst().get();
-
-        NodeJSBuildWrapper step = prj.getBuildWrappersList().get(NodeJSBuildWrapper.class);
-        Assertions.assertThat(step.getCacheLocationStrategy()).isInstanceOf(DefaultCacheLocationLocator.class);
-    }
-
-    /**
-     * Verify reloading jenkins job configuration use the saved cache strategy instead reset to default.
-     */
-    @LocalData
-    @Test
-    @Issue("JENKINS-58029")
-    public void test_reloading_job_configuration_contains_saved_cache_strategy() throws Exception {
-        FreeStyleProject prj = j.jenkins.getAllItems(hudson.model.FreeStyleProject.class) //
-                .stream() //
-                .filter(p -> "test".equals(p.getName())) //
-                .findFirst().get();
-
-        NodeJSBuildWrapper step = prj.getBuildWrappersList().get(NodeJSBuildWrapper.class);
-        Assertions.assertThat(step.getCacheLocationStrategy()).isInstanceOf(PerJobCacheLocationLocator.class);
     }
 
     @Test

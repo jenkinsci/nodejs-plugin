@@ -29,7 +29,7 @@ import java.net.URL;
 import java.nio.charset.Charset;
 
 import org.assertj.core.api.Assertions;
-import org.junit.Rule;
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -52,8 +52,9 @@ public class NodeJSInstallerProxyTest {
         };
     }
 
-    @Rule
-    public JenkinsRule r = new JenkinsRule();
+    @ClassRule
+    public static JenkinsRule r = new JenkinsRule();
+
     private String host;
     private int port;
     private String username;
