@@ -935,6 +935,11 @@
     "url": "https://nodejs.org/dist/v15.0.0/"
   },
     {
+    "id": "16.0.0",
+    "name": "NodeJS 16.0.0",
+    "url": "https://nodejs.org/dist/v16.0.0/"
+  },
+    {
     "id": "14.9.0",
     "name": "NodeJS 14.9.0",
     "url": "https://nodejs.org/dist/v14.9.0/"
