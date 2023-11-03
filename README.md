@@ -56,7 +56,7 @@ Plugins Update Center.
     allows to benefits from bugfixes without taking the risk of a major
     version upgrade)*  
     See below:  
-    ![](docs/images/image2018-3-31_16:40:29.png)
+    ![](docs/images/nodejs_tools_configuration.png)
 
 3.  Now, go to a job configuration screen, you will have 2 new items :
     -   On the "Build environment" section, you will be able to pick
