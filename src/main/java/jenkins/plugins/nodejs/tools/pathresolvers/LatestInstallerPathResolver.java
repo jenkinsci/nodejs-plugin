@@ -23,9 +23,9 @@
  */
 package jenkins.plugins.nodejs.tools.pathresolvers;
 
-import jenkins.plugins.nodejs.Messages;
 import java.text.MessageFormat;
 
+import jenkins.plugins.nodejs.Messages;
 import jenkins.plugins.nodejs.tools.CPU;
 import jenkins.plugins.nodejs.tools.InstallerPathResolver;
 import jenkins.plugins.nodejs.tools.NodeJSVersion;
@@ -105,7 +105,9 @@ public class LatestInstallerPathResolver implements InstallerPathResolver {
             break;
         case amd64:
             if (platform == Platform.SUNOS && //
-                    (new NodeJSVersionRange("[7, 7.5)").includes(nodeVersion) || nodeVersion.compareTo(new NodeJSVersion(0, 12, 18)) == 0)) {
+                    (new NodeJSVersionRange("[7, 7.5)").includes(nodeVersion)
+                            || nodeVersion.compareTo(new NodeJSVersion(0, 12, 18)) == 0
+                            || nodeVersion.compareTo(new NodeJSVersion(14, 0, 0)) >= 0)) {
                 throw new IllegalArgumentException(Messages.InstallerPathResolver_unsupportedArch(version, cpu.name(), platform.name()));
             }
             if (isMSI && nodeVersion.compareTo(new NodeJSVersion(4, 0, 0)) < 0) {
@@ -115,6 +117,9 @@ public class LatestInstallerPathResolver implements InstallerPathResolver {
             break;
         case arm64:
             if (nodeVersion.compareTo(new NodeJSVersion(4, 0, 0)) < 0) {
+                throw new IllegalArgumentException(Messages.InstallerPathResolver_unsupportedArch(version, cpu.name(), platform.name()));
+            }
+            if (platform == Platform.OSX && nodeVersion.compareTo(new NodeJSVersion(16, 0, 0)) < 0) {
                 throw new IllegalArgumentException(Messages.InstallerPathResolver_unsupportedArch(version, cpu.name(), platform.name()));
             }
             arch = cpu.name();

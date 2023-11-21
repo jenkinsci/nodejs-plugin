@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.TreeSet;
@@ -67,7 +68,7 @@ public class InstallerPathResolversTest {
         Collection<Object[]> testPossibleParams = new ArrayList<Object[]>();
 
         try (InputStream is = InstallerPathResolversTest.class.getResourceAsStream("expectedURLs.txt")) {
-            expectedURLs = new TreeSet<>(IOUtils.readLines(is));
+            expectedURLs = new TreeSet<>(IOUtils.readLines(is, StandardCharsets.UTF_8));
         }
 
         String installablesJSONStr = Resources.toString(Resources.getResource("updates/jenkins.plugins.nodejs.tools.NodeJSInstaller.json"), Charsets.UTF_8);
@@ -83,8 +84,12 @@ public class InstallerPathResolversTest {
 
             for (Platform platform : Platform.values()) {
                 for (CPU cpu : CPU.values()) {
-                    if (cpu.name().startsWith("arm") && platform != Platform.LINUX) {
-                        // arm are only supported on linux
+                    if (cpu.name().equals("arm64") && (platform == Platform.WINDOWS || platform == Platform.SUNOS)) {
+                        // arm64 are only supported on linux and OSX
+                        continue;
+                    }
+                    if ((cpu.name().equals("armv6l") || cpu.name().equals("armv7l")) && platform != Platform.LINUX) {
+                        // armXl are only supported on linux
                         continue;
                     }
                     if (platform == Platform.AIX && !cpu.name().equals("ppc64")) {
