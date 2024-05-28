@@ -38,10 +38,10 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
+import java.util.zip.GZIPOutputStream;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 
-import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream;
 import org.apache.commons.io.input.CountingInputStream;
 import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -184,7 +184,7 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
             if (tmpParent != null) {
                 Files.createDirectories(tmpParent);
             }
-            try (OutputStream out = new GzipCompressorOutputStream(Files.newOutputStream(tmp))) {
+            try (OutputStream out = new GZIPOutputStream(Files.newOutputStream(tmp))) {
                 // workaround to not store current folder as root folder in the archive
                 // this prevent issue when tool name is renamed 
                 expected.tar(out, "**");

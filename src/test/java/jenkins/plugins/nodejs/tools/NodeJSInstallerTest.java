@@ -37,12 +37,13 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
-import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
-import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
-import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
-import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.io.output.NullPrintStream;
+import org.apache.tools.tar.TarEntry;
+import org.apache.tools.tar.TarInputStream;
+import org.apache.tools.tar.TarOutputStream;
 import org.assertj.core.api.AssertDelegateTarget;
 import org.assertj.core.api.Assertions;
 import org.junit.Rule;
@@ -57,7 +58,6 @@ import hudson.model.TaskListener;
 import hudson.tools.ToolInstallation;
 import hudson.tools.DownloadFromUrlInstaller.Installable;
 import hudson.util.StreamTaskListener;
-import io.jenkins.cli.shaded.org.apache.commons.io.output.NullPrintStream;
 
 public class NodeJSInstallerTest {
 
@@ -71,9 +71,9 @@ public class NodeJSInstallerTest {
 
         void hasEntry(String path) throws IOException {
             Assertions.assertThat(file).exists();
-            try (TarArchiveInputStream zf = new TarArchiveInputStream(new GZIPInputStream(new FileInputStream(file)))) {
-                TarArchiveEntry entry;
-                while ((entry = zf.getNextTarEntry()) != null) {
+            try (TarInputStream zf = new TarInputStream(new GZIPInputStream(new FileInputStream(file)))) {
+                TarEntry entry;
+                while ((entry = zf.getNextEntry()) != null) {
                     if (path.equals(entry.getName())) {
                         break;
                     }
@@ -200,12 +200,12 @@ public class NodeJSInstallerTest {
     }
 
     private void fillArchive(File file, String fileEntry, byte[] content) throws IOException {
-        try (TarArchiveOutputStream zf = new TarArchiveOutputStream(new GzipCompressorOutputStream(new FileOutputStream(file)))) {
-            TarArchiveEntry ze = new TarArchiveEntry(fileEntry);
+        try (TarOutputStream zf = new TarOutputStream(new GZIPOutputStream(new FileOutputStream(file)))) {
+            TarEntry ze = new TarEntry(fileEntry);
             ze.setSize(content.length);
-            zf.putArchiveEntry(ze);
+            zf.putNextEntry(ze);
             IOUtils.write(content, zf);
-            zf.closeArchiveEntry();
+            zf.closeEntry();
         }
     }
 
