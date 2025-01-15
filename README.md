@@ -91,7 +91,7 @@ Plugins Update Center.
     ![](docs/images/nodejs_choose_configfile.png)
     
     You can also choose if enable or not the support for npm 9+ version.
-6.  You would relocate the npm cache folder to swipe out it when a job
+5.  You would relocate the npm cache folder to swipe out it when a job
     is removed or workspace folder is deleted. There are three default
     strategy:
     -   per node, that is the default NPM behaviour. All download package
