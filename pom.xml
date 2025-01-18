@@ -10,7 +10,7 @@
     </parent>
 
     <artifactId>nodejs</artifactId>
-    <version>1.6.3</version>
+    <version>${revision}${changelist}</version>
     <name>NodeJS Plugin</name>
     <description>Executes NodeJS script as a build step.</description>
     <url>https://github.com/jenkinsci/${project.artifactId}-plugin</url>
@@ -45,7 +45,7 @@
     </licenses>
 
     <properties>
-        <revision>1.6.3</revision>
+        <revision>1.6.4</revision>
         <changelist>-SNAPSHOT</changelist>
         <gitHubRepo>jenkinsci/${project.artifactId}-plugin</gitHubRepo>
 
