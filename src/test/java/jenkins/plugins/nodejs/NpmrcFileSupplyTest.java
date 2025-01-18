@@ -45,6 +45,7 @@ import com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl;
 
 import hudson.FilePath;
 import hudson.model.FreeStyleBuild;
+import hudson.model.Descriptor.FormException;
 import jenkins.plugins.nodejs.configfiles.NPMConfig;
 import jenkins.plugins.nodejs.configfiles.NPMRegistry;
 import jenkins.plugins.nodejs.configfiles.Npmrc;
@@ -73,7 +74,7 @@ public class NpmrcFileSupplyTest {
         assertEquals("Unexpected value from settings email", "guest@example.com", npmrc.get("email"));
     }
 
-    private StandardUsernameCredentials createUser(String id, String username, String password) {
+    private StandardUsernameCredentials createUser(String id, String username, String password) throws FormException {
         return new UsernamePasswordCredentialsImpl(CredentialsScope.GLOBAL, id, null, username, password);
     }
 

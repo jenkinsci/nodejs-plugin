@@ -5,7 +5,7 @@
     <parent>
         <groupId>org.jenkins-ci.plugins</groupId>
         <artifactId>plugin</artifactId>
-        <version>4.86</version>
+        <version>5.4</version>
         <relativePath />
     </parent>
 
@@ -48,9 +48,9 @@
         <revision>1.6.3</revision>
         <changelist>-SNAPSHOT</changelist>
         <gitHubRepo>jenkinsci/${project.artifactId}-plugin</gitHubRepo>
-        <!-- https://www.jenkins.io/doc/developer/plugin-development/choosing-jenkins-baseline/#changing-the-minimum-required-version -->
-        <jenkins.version>2.440.3</jenkins.version>
 
+        <jenkins.version>2.479.1</jenkins.version>
+        <jenkins-bom.version>2.479</jenkins-bom.version>
         <checkstyle.version>10.3.3</checkstyle.version>
         <assertj.version>3.27.2</assertj.version>
     </properties>
@@ -59,8 +59,8 @@
         <dependencies>
             <dependency>
                 <groupId>io.jenkins.tools.bom</groupId>
-                <artifactId>bom-2.440.x</artifactId>
-                <version>3234.v5ca_5154341ef</version>
+                <artifactId>bom-${jenkins-bom.version}.x</artifactId>
+                <version>3944.v1a_e4f8b_452db_</version>
                 <scope>import</scope>
                 <type>pom</type>
             </dependency>
