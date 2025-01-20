@@ -52,7 +52,7 @@
         <jenkins.version>2.479.1</jenkins.version>
         <jenkins-bom.version>2.479</jenkins-bom.version>
         <checkstyle.version>10.3.3</checkstyle.version>
-        <assertj.version>3.27.2</assertj.version>
+        <assertj.version>3.27.3</assertj.version>
     </properties>
 
     <dependencyManagement>
