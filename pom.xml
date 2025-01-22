@@ -48,9 +48,9 @@
         <revision>1.6.4</revision>
         <changelist>-SNAPSHOT</changelist>
         <gitHubRepo>jenkinsci/${project.artifactId}-plugin</gitHubRepo>
-
-        <jenkins.version>2.479.1</jenkins.version>
-        <jenkins-bom.version>2.479</jenkins-bom.version>
+        <!-- https://www.jenkins.io/doc/developer/plugin-development/choosing-jenkins-baseline/ -->
+        <jenkins.baseline>2.479</jenkins.baseline>
+        <jenkins.version>${jenkins.baseline}.1</jenkins.version>
         <checkstyle.version>10.3.3</checkstyle.version>
         <assertj.version>3.27.2</assertj.version>
     </properties>
@@ -59,7 +59,7 @@
         <dependencies>
             <dependency>
                 <groupId>io.jenkins.tools.bom</groupId>
-                <artifactId>bom-${jenkins-bom.version}.x</artifactId>
+                <artifactId>bom-${jenkins.baseline}.x</artifactId>
                 <version>3944.v1a_e4f8b_452db_</version>
                 <scope>import</scope>
                 <type>pom</type>
