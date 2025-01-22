@@ -66,7 +66,7 @@ public class CredentialMaskingTest {
     public static JenkinsRule r = new JenkinsRule();
 
     @Before
-    public void setupConfigWithCredentials() {
+    public void setupConfigWithCredentials() throws Exception {
         UsernamePasswordCredentialsImpl credential = new UsernamePasswordCredentialsImpl(CredentialsScope.GLOBAL, "usercreds", "", "bot", "s3cr3t");
         credential.setUsernameSecret(true);
         SystemCredentialsProvider.getInstance().getCredentials().add(credential);

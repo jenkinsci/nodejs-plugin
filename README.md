@@ -84,9 +84,12 @@ Plugins Update Center.
     and select for each one stored credential (only user/password
     supported type) as follow:  
     ![](docs/images/nodejs_npm_configfile.png)
-    and than select the config file to use for each configured build
+    
+    and then select the config file to use for each configured build
     step
+    
     ![](docs/images/nodejs_choose_configfile.png)
+    
     You can also choose if enable or not the support for npm 9+ version.
 5.  You would relocate the npm cache folder to swipe out it when a job
     is removed or workspace folder is deleted. There are three default
