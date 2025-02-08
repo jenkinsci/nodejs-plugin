@@ -32,7 +32,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.StaplerRequest;
+import org.kohsuke.stapler.StaplerRequest2;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.EnvVars;
@@ -225,10 +225,10 @@ public class NodeJSInstallation extends ToolInstallation implements EnvironmentS
 
         /*
          * (non-Javadoc)
-         * @see hudson.tools.Descriptor#configure(org.kohsuke.stapler.StaplerRequest, net.sf.json.JSONObject)
+         * @see hudson.tools.Descriptor#configure(org.kohsuke.stapler.StaplerRequest2, net.sf.json.JSONObject)
          */
         @Override
-        public boolean configure(StaplerRequest req, JSONObject json) throws hudson.model.Descriptor.FormException {
+        public boolean configure(StaplerRequest2 req, JSONObject json) throws hudson.model.Descriptor.FormException {
             boolean result = super.configure(req, json);
             /*
              * Invoked when the global configuration page is submitted. If
