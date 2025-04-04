@@ -24,6 +24,7 @@
 package jenkins.plugins.nodejs;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 
@@ -32,12 +33,10 @@ import org.jenkinsci.plugins.plaincredentials.impl.StringCredentialsImpl;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
-import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-import org.jvnet.hudson.test.BuildWatcher;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.jvnet.hudson.test.Issue;
 import org.jvnet.hudson.test.JenkinsRule;
 
@@ -53,20 +52,23 @@ import jenkins.plugins.nodejs.configfiles.NPMRegistry;
 import jenkins.plugins.nodejs.tools.NodeJSInstallation;
 import jenkins.plugins.nodejs.tools.NodeJSInstaller;
 import jenkins.plugins.nodejs.tools.Platform;
+import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 
-public class CredentialMaskingTest {
+@WithJenkins
+class CredentialMaskingTest {
 
-    @Rule
-    public TemporaryFolder temp = new TemporaryFolder();
+    @TempDir
+    private File temp;
 
-    @Rule
-    public BuildWatcher buildWatcher = new BuildWatcher();
+    private static JenkinsRule r;
 
-    @ClassRule
-    public static JenkinsRule r = new JenkinsRule();
+    @BeforeAll
+    static void setUp(JenkinsRule rule) {
+        r = rule;
+    }
 
-    @Before
-    public void setupConfigWithCredentials() throws Exception {
+    @BeforeEach
+    void setupConfigWithCredentials() throws Exception {
         UsernamePasswordCredentialsImpl credential = new UsernamePasswordCredentialsImpl(CredentialsScope.GLOBAL, "usercreds", "", "bot", "s3cr3t");
         credential.setUsernameSecret(true);
         SystemCredentialsProvider.getInstance().getCredentials().add(credential);
@@ -86,7 +88,7 @@ public class CredentialMaskingTest {
 
     @Test
     @Issue("SECURITY-3196")
-    public void testNPMConfigFileWithConfigFileProviderBlock() throws Exception {
+    void testNPMConfigFileWithConfigFileProviderBlock() throws Exception {
         WorkflowJob p = r.createProject(WorkflowJob.class, "p1");
         p.setDefinition(new CpsFlowDefinition(
                 String.join("\n",
@@ -125,10 +127,10 @@ public class CredentialMaskingTest {
 
     @Test
     @Issue("SECURITY-3196")
-    public void testNPMConfigFileWithNodejsBlock() throws Exception {
+    void testNPMConfigFileWithNodejsBlock() throws Exception {
         // fake enough of a nodejs install.
         Platform platform = Platform.current();
-        File dir = temp.newFolder("node-js-dist");
+        File dir = newFolder(temp, "node-js-dist");
         File bin = new File(dir, platform.binFolder);
         bin.mkdir();
         new File(bin, platform.nodeFileName).createNewFile();
@@ -171,5 +173,14 @@ public class CredentialMaskingTest {
 
         // stringcreds
         r.assertLogNotContains("sensitive", b1);
+    }
+
+    private static File newFolder(File root, String... subDirs) throws IOException {
+        String subFolder = String.join("/", subDirs);
+        File result = new File(root, subFolder);
+        if (!result.mkdirs()) {
+            throw new IOException("Couldn't create folders " + root);
+        }
+        return result;
     }
 }

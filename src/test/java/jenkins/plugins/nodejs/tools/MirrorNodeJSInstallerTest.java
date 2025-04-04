@@ -23,6 +23,7 @@
  */
 package jenkins.plugins.nodejs.tools;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
@@ -30,15 +31,15 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.assertj.core.api.Assertions;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.jvnet.hudson.test.JenkinsRule;
+import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 import org.mockito.ArgumentCaptor;
 
 import com.cloudbees.plugins.credentials.Credentials;
@@ -54,14 +55,14 @@ import hudson.tools.ToolInstallation;
 import hudson.tools.ToolInstallerDescriptor;
 import hudson.tools.DownloadFromUrlInstaller.Installable;
 
-public class MirrorNodeJSInstallerTest {
+@WithJenkins
+class MirrorNodeJSInstallerTest {
 
-    @ClassRule
-    public static JenkinsRule r = new JenkinsRule();
+    private static JenkinsRule r;
 
     public static class MockMirrorNodeJSInstaller extends MirrorNodeJSInstaller {
 
-        private Installable installable;
+        private final Installable installable;
 
         public MockMirrorNodeJSInstaller(Installable installable, String mirrorURL) {
             super(installable.id, mirrorURL, null, 0);
@@ -69,7 +70,7 @@ public class MirrorNodeJSInstallerTest {
         }
 
         @Override
-        public boolean isUpToDate(FilePath expectedLocation, Installable i) throws IOException, InterruptedException {
+        public boolean isUpToDate(FilePath expectedLocation, Installable i) {
             return true;
         }
 
@@ -78,15 +79,21 @@ public class MirrorNodeJSInstallerTest {
         public ToolInstallerDescriptor<?> getDescriptor() {
             hudson.tools.DownloadFromUrlInstaller.DescriptorImpl<?> descriptor = mock(hudson.tools.DownloadFromUrlInstaller.DescriptorImpl.class);
             try {
-                when(descriptor.getInstallables()).thenReturn((List) Arrays.asList(installable));
+                when(descriptor.getInstallables()).thenReturn((List) Collections.singletonList(installable));
             } catch (IOException e) {
+                // ignored
             }
             return descriptor;
         }
     }
 
+    @BeforeAll
+    static void setup(JenkinsRule rule) {
+        r = rule;
+    }
+
     @Test
-    public void verify_mirror_url_replacing() throws Exception {
+    void verify_mirror_url_replacing() throws Exception {
         String installationId = "8.2.1";
         String mirror = "http://npm.taobao.org/mirrors/node/";
 
@@ -104,11 +111,11 @@ public class MirrorNodeJSInstallerTest {
 
         ArgumentCaptor<Installable> captor = ArgumentCaptor.forClass(Installable.class);
         verify(installer).isUpToDate(any(FilePath.class), captor.capture());
-        Assertions.assertThat(captor.getValue().url).startsWith("http://npm.taobao.org/mirrors/node/v8.2.1/node-v8.2.1");
+        assertThat(captor.getValue().url).startsWith("http://npm.taobao.org/mirrors/node/v8.2.1/node-v8.2.1");
     }
 
     @Test
-    public void verify_credentials_on_mirror_url() throws Exception {
+    void verify_credentials_on_mirror_url() throws Exception {
         String credentialsId = "secret";
         String installationId = "8.2.1";
         String mirror = "http://npm.taobao.org/mirrors/node/";
@@ -119,7 +126,7 @@ public class MirrorNodeJSInstallerTest {
 
         Credentials credentials = new UsernamePasswordCredentialsImpl(CredentialsScope.GLOBAL, credentialsId, "", "user", "password");
         Map<Domain, List<Credentials>> credentialsMap = new HashMap<>();
-        credentialsMap.put(Domain.global(), Arrays.asList(credentials));
+        credentialsMap.put(Domain.global(), List.of(credentials));
         SystemCredentialsProvider.getInstance().setDomainCredentialsMap(credentialsMap);
 
         MockMirrorNodeJSInstaller installer = spy(new MockMirrorNodeJSInstaller(installable, mirror));
@@ -133,7 +140,7 @@ public class MirrorNodeJSInstallerTest {
 
         ArgumentCaptor<Installable> captor = ArgumentCaptor.forClass(Installable.class);
         verify(installer).isUpToDate(any(FilePath.class), captor.capture());
-        Assertions.assertThat(captor.getValue().url).startsWith("http://user:password@npm.taobao.org/mirrors/node/node-v8.2.1");
+        assertThat(captor.getValue().url).startsWith("http://user:password@npm.taobao.org/mirrors/node/node-v8.2.1");
     }
 
 }

@@ -23,20 +23,21 @@
  */
 package jenkins.plugins.nodejs.tools;
 
-import org.assertj.core.api.Assertions;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.jvnet.hudson.test.Issue;
 
-public class CPUTest {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class CPUTest {
 
     @Test
     @Issue("JENKINS-64311")
-    public void verify_aarch64() throws DetectionFailedException {
+    void verify_aarch64() throws DetectionFailedException {
         String systemProperty = "os.arch";
 
         String current = System.setProperty(systemProperty, "aarch64");
         try {
-            Assertions.assertThat(CPU.current()).isEqualTo(CPU.arm64);
+            assertThat(CPU.current()).isEqualTo(CPU.arm64);
         } finally {
             if (current != null) {
                 System.setProperty(systemProperty, current);
