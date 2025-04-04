@@ -27,40 +27,43 @@ import hudson.FilePath;
 import hudson.model.Computer;
 import hudson.model.Executor;
 import hudson.model.Node;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.mockito.MockedStatic;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
 
-public class CacheLocationLocatorTest {
+import java.io.File;
+import java.io.IOException;
 
-    @Rule
-    public TemporaryFolder fileRule = new TemporaryFolder();
+class CacheLocationLocatorTest {
+
+    @TempDir
+    private File fileRule;
     private FilePath workspace;
 
-    @Before
-    public void setup() throws Exception {
-        workspace = new FilePath(fileRule.newFolder());
+    @BeforeEach
+    void setup() throws Exception {
+        workspace = new FilePath(newFolder(fileRule, "junit"));
     }
 
     @Test
-    public void test_default() {
-        Assert.assertNull("expect null location path", new DefaultCacheLocationLocator().locate(workspace));
+    void test_default() {
+        assertNull(new DefaultCacheLocationLocator().locate(workspace), "expect null location path");
     }
 
     @Test
-    public void test_per_job() throws Exception {
-        Assert.assertEquals("expect the same location path passes as input", workspace.child(".npm"), new PerJobCacheLocationLocator().locate(workspace));
+    void test_per_job() {
+        assertEquals(workspace.child(".npm"), new PerJobCacheLocationLocator().locate(workspace), "expect the same location path passes as input");
     }
 
     @Test
-    public void test_per_executor() throws Exception {
+    void test_per_executor() throws Exception {
         FilePath wc = mock(FilePath.class);
         Executor executor = mock(Executor.class);
         int executorNumber = 7;
@@ -72,12 +75,21 @@ public class CacheLocationLocatorTest {
             Computer computer = mock(Computer.class);
             Node node = mock(Node.class);
             when(computer.getNode()).thenReturn(node);
-            FilePath rootPath = new FilePath(fileRule.newFolder());
+            FilePath rootPath = new FilePath(newFolder(fileRule, "junit"));
             when(node.getRootPath()).thenReturn(rootPath);
             when(wc.toComputer()).thenReturn(computer);
 
             FilePath expectedLocation = rootPath.child("npm-cache").child(String.valueOf(executorNumber));
-            Assert.assertEquals("expect null location path", expectedLocation, new PerExecutorCacheLocationLocator().locate(wc));
+            assertEquals(expectedLocation, new PerExecutorCacheLocationLocator().locate(wc), "expect null location path");
         }
+    }
+
+    private static File newFolder(File root, String... subDirs) throws IOException {
+        String subFolder = String.join("/", subDirs);
+        File result = new File(root, subFolder);
+        if (!result.exists() && !result.mkdirs()) {
+            throw new IOException("Couldn't create folders " + root);
+        }
+        return result;
     }
 }

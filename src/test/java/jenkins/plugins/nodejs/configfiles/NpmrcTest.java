@@ -23,9 +23,7 @@
  */
 package jenkins.plugins.nodejs.configfiles;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -34,23 +32,22 @@ import java.io.InputStream;
 import java.util.List;
 
 import org.apache.commons.io.IOUtils;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
-public class NpmrcTest {
+class NpmrcTest {
 
-    @Rule
-    public TemporaryFolder folder = new TemporaryFolder();
+    @TempDir
+    private File folder;
     private File file;
 
-    @Before
-    public void setUp() throws IOException {
+    @BeforeEach
+    void setUp() throws IOException {
         InputStream is = null;
         try {
             is = getClass().getResourceAsStream("npmrc.config");
-            file = folder.newFile(".npmrc");
+            file = File.createTempFile(".npmrc", null, folder);
             hudson.util.IOUtils.copy(is, file);
         } finally {
             IOUtils.closeQuietly(is);
@@ -58,7 +55,7 @@ public class NpmrcTest {
     }
 
     @Test
-    public void testLoad() throws Exception {
+    void testLoad() throws Exception {
         Npmrc npmrc = Npmrc.load(file);
         assertTrue(npmrc.contains("always-auth"));
         assertEquals("true", npmrc.get("always-auth"));
@@ -67,13 +64,13 @@ public class NpmrcTest {
     }
 
     @Test
-    public void testAvoidParseError() throws Exception {
+    void testAvoidParseError() throws Exception {
         Npmrc npmrc = Npmrc.load(file);
         assertFalse(npmrc.contains("browser"));
     }
 
     @Test
-    public void testSave() throws Exception {
+    void testSave() throws Exception {
         String testKey = "test";
         String testValue = "value";
 
@@ -88,7 +85,7 @@ public class NpmrcTest {
     }
 
     @Test
-    public void testCommandAtLast() throws Exception {
+    void testCommandAtLast() throws Exception {
         String comment = "test comment";
 
         Npmrc npmrc = Npmrc.load(file);

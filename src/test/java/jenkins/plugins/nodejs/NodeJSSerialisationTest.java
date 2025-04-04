@@ -23,55 +23,28 @@
  */
 package jenkins.plugins.nodejs;
 
-import org.assertj.core.api.Assertions;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.jvnet.hudson.test.Issue;
 import org.jvnet.hudson.test.JenkinsRule;
+import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 import org.jvnet.hudson.test.recipes.LocalData;
 
 import hudson.model.FreeStyleProject;
+
 import jenkins.plugins.nodejs.cache.DefaultCacheLocationLocator;
 import jenkins.plugins.nodejs.cache.PerJobCacheLocationLocator;
 
-public class NodeJSSerialisationTest {
+import static org.assertj.core.api.Assertions.assertThat;
 
-    @Rule
-    public JenkinsRule j = new JenkinsRule();
-    @Rule
-    public TemporaryFolder fileRule = new TemporaryFolder();
+@WithJenkins
+class NodeJSSerialisationTest {
 
-    /**
-     * Verify that the serialisation is backward compatible.
-     */
-    @LocalData
-    @Test
-    @Issue("JENKINS-57844")
-    public void test_serialisation_is_compatible_with_version_1_2_x_interpreter() throws Exception {
-        FreeStyleProject prj = j.jenkins.getAllItems(hudson.model.FreeStyleProject.class) //
-                .stream() //
-                .filter(p -> "test".equals(p.getName())) //
-                .findFirst().get();
+    private JenkinsRule j;
 
-        NodeJSCommandInterpreter step = prj.getBuildersList().get(NodeJSCommandInterpreter.class);
-        Assertions.assertThat(step.getCacheLocationStrategy()).isInstanceOf(DefaultCacheLocationLocator.class);
-    }
-
-    /**
-     * Verify reloading jenkins job configuration use the saved cache strategy instead reset to default.
-     */
-    @LocalData
-    @Test
-    @Issue("JENKINS-58029")
-    public void test_reloading_job_configuration_contains_saved_cache_strategy_interpreter() throws Exception {
-        FreeStyleProject prj = j.jenkins.getAllItems(hudson.model.FreeStyleProject.class) //
-                .stream() //
-                .filter(p -> "test".equals(p.getName())) //
-                .findFirst().get();
-
-        NodeJSCommandInterpreter step = prj.getBuildersList().get(NodeJSCommandInterpreter.class);
-        Assertions.assertThat(step.getCacheLocationStrategy()).isInstanceOf(PerJobCacheLocationLocator.class);
+    @BeforeEach
+    void setUp(JenkinsRule rule) {
+        j = rule;
     }
 
     /**
@@ -80,14 +53,14 @@ public class NodeJSSerialisationTest {
     @LocalData
     @Test
     @Issue("JENKINS-57844")
-    public void test_serialisation_is_compatible_with_version_1_2_x_buildWrapper() throws Exception {
+    void test_serialisation_is_compatible_with_version_1_2_x_interpreter() {
         FreeStyleProject prj = j.jenkins.getAllItems(hudson.model.FreeStyleProject.class) //
                 .stream() //
                 .filter(p -> "test".equals(p.getName())) //
                 .findFirst().get();
 
-        NodeJSBuildWrapper step = prj.getBuildWrappersList().get(NodeJSBuildWrapper.class);
-        Assertions.assertThat(step.getCacheLocationStrategy()).isInstanceOf(DefaultCacheLocationLocator.class);
+        NodeJSCommandInterpreter step = prj.getBuildersList().get(NodeJSCommandInterpreter.class);
+        assertThat(step.getCacheLocationStrategy()).isInstanceOf(DefaultCacheLocationLocator.class);
     }
 
     /**
@@ -96,14 +69,46 @@ public class NodeJSSerialisationTest {
     @LocalData
     @Test
     @Issue("JENKINS-58029")
-    public void test_reloading_job_configuration_contains_saved_cache_strategy_buildWrapper() throws Exception {
+    void test_reloading_job_configuration_contains_saved_cache_strategy_interpreter() {
+        FreeStyleProject prj = j.jenkins.getAllItems(hudson.model.FreeStyleProject.class) //
+                .stream() //
+                .filter(p -> "test".equals(p.getName())) //
+                .findFirst().get();
+
+        NodeJSCommandInterpreter step = prj.getBuildersList().get(NodeJSCommandInterpreter.class);
+        assertThat(step.getCacheLocationStrategy()).isInstanceOf(PerJobCacheLocationLocator.class);
+    }
+
+    /**
+     * Verify that the serialisation is backward compatible.
+     */
+    @LocalData
+    @Test
+    @Issue("JENKINS-57844")
+    void test_serialisation_is_compatible_with_version_1_2_x_buildWrapper() {
         FreeStyleProject prj = j.jenkins.getAllItems(hudson.model.FreeStyleProject.class) //
                 .stream() //
                 .filter(p -> "test".equals(p.getName())) //
                 .findFirst().get();
 
         NodeJSBuildWrapper step = prj.getBuildWrappersList().get(NodeJSBuildWrapper.class);
-        Assertions.assertThat(step.getCacheLocationStrategy()).isInstanceOf(PerJobCacheLocationLocator.class);
+        assertThat(step.getCacheLocationStrategy()).isInstanceOf(DefaultCacheLocationLocator.class);
+    }
+
+    /**
+     * Verify reloading jenkins job configuration use the saved cache strategy instead reset to default.
+     */
+    @LocalData
+    @Test
+    @Issue("JENKINS-58029")
+    void test_reloading_job_configuration_contains_saved_cache_strategy_buildWrapper() {
+        FreeStyleProject prj = j.jenkins.getAllItems(hudson.model.FreeStyleProject.class) //
+                .stream() //
+                .filter(p -> "test".equals(p.getName())) //
+                .findFirst().get();
+
+        NodeJSBuildWrapper step = prj.getBuildWrappersList().get(NodeJSBuildWrapper.class);
+        assertThat(step.getCacheLocationStrategy()).isInstanceOf(PerJobCacheLocationLocator.class);
     }
 
 }

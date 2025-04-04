@@ -25,22 +25,26 @@ package jenkins.plugins.nodejs;
 
 import hudson.FilePath;
 import hudson.model.Descriptor;
-import jenkins.plugins.nodejs.Messages;
 import jenkins.plugins.nodejs.tools.NodeJSInstallation;
 import hudson.tasks.Builder;
-import hudson.tools.ToolProperty;
 
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class SimpleNodeJSCommandInterpreterTest {
+@WithJenkins
+class SimpleNodeJSCommandInterpreterTest {
 
     private static final String COMMAND = "var sys = require('sys'); sys.puts('build number: ' + process.env['BUILD_NUMBER']);";
 
@@ -48,49 +52,58 @@ public class SimpleNodeJSCommandInterpreterTest {
     private Descriptor<Builder> descriptor;
     private NodeJSInstallation installation;
 
-    @Rule
-    public TemporaryFolder tempFolder = new TemporaryFolder();
+    @TempDir
+    private File tempFolder;
 
-    @Before
-    public void setUp() {
-        installation = new NodeJSInstallation("11.0.0", "", Collections.<ToolProperty<?>>emptyList());
+    @BeforeEach
+    void setUp() {
+        installation = new NodeJSInstallation("11.0.0", "", Collections.emptyList());
         interpreter = new NodeJSCommandInterpreter(COMMAND, installation.getName(), null);
         descriptor = new NodeJSCommandInterpreter.NodeJsDescriptor();
     }
 
     @Test
-    public void testGetContentsShouldGiveExpectedValue() {
+    void testGetContentsShouldGiveExpectedValue() {
         assertEquals(COMMAND, interpreter.getCommand());
     }
 
     @Test
-    public void testGetContentWithEmptyCommandShouldGiveExpectedValue() {
+    void testGetContentWithEmptyCommandShouldGiveExpectedValue() {
         assertEquals("", new NodeJSCommandInterpreter("", installation.getName(), null).getCommand());
     }
 
     @Test
-    public void testGetContentWithNullCommandShouldGiveExpectedValue() {
+    void testGetContentWithNullCommandShouldGiveExpectedValue() {
         assertNull(new NodeJSCommandInterpreter(null, installation.getName(), null).getCommand());
     }
 
     @Test
-    public void testGetFileExtensionShouldGiveExpectedValue() throws IOException, InterruptedException {
-        assertEquals(true, interpreter.createScriptFile(new FilePath(tempFolder.newFolder())).getName().endsWith(".js"));
+    void testGetFileExtensionShouldGiveExpectedValue() throws IOException, InterruptedException {
+        assertTrue(interpreter.createScriptFile(new FilePath(newFolder(tempFolder, "junit"))).getName().endsWith(".js"));
     }
 
     @Test
-    public void testGetDescriptorShouldGiveExpectedValue() {
+    void testGetDescriptorShouldGiveExpectedValue() {
         assertNotNull(descriptor);
-        assertTrue(descriptor instanceof Descriptor<?>);
+        assertInstanceOf(Descriptor.class, descriptor);
     }
 
     @Test
-    public void testDescriptorGetDisplayNameShouldGiveExpectedValue() {
+    void testDescriptorGetDisplayNameShouldGiveExpectedValue() {
         assertEquals(Messages.NodeJSCommandInterpreter_displayName(), descriptor.getDisplayName());
     }
 
     @Test
-    public void testDescriptorGetHelpFileShouldGiveExpectedValue() {
+    void testDescriptorGetHelpFileShouldGiveExpectedValue() {
         assertEquals("/plugin/nodejs/help.html", descriptor.getHelpFile());
+    }
+
+    private static File newFolder(File root, String... subDirs) throws IOException {
+        String subFolder = String.join("/", subDirs);
+        File result = new File(root, subFolder);
+        if (!result.mkdirs()) {
+            throw new IOException("Couldn't create folders " + root);
+        }
+        return result;
     }
 }

@@ -24,16 +24,12 @@
 package jenkins.plugins.nodejs.tools;
 
 import java.lang.reflect.Method;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.Charset;
 
-import org.assertj.core.api.Assertions;
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameters;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.jvnet.hudson.test.Issue;
 import org.jvnet.hudson.test.JenkinsRule;
 
@@ -41,19 +37,14 @@ import hudson.EnvVars;
 import hudson.ProxyConfiguration;
 import hudson.model.StreamBuildListener;
 import hudson.model.TaskListener;
+import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 
-@RunWith(Parameterized.class)
-public class NodeJSInstallerProxyTest {
+import static org.assertj.core.api.Assertions.assertThat;
 
-    @Parameters(name = "proxy url = {0}")
-    public static String[][] data() throws MalformedURLException {
-        return new String[][] { { "http://proxy.example.org:8080", "*.npm.org\n\nregistry.npm.org" },
-            { "http://user:password@proxy.example.org:8080", "*.npm.org\n\nregistry.npm.org" }
-        };
-    }
+@WithJenkins
+class NodeJSInstallerProxyTest {
 
-    @ClassRule
-    public static JenkinsRule r = new JenkinsRule();
+    private static JenkinsRule r;
 
     private String host;
     private int port;
@@ -61,14 +52,24 @@ public class NodeJSInstallerProxyTest {
     private String password;
     private String expectedURL;
     private TaskListener log;
-    private String noProxy;
 
-    public NodeJSInstallerProxyTest(String url, String noProxy) throws Exception {
+    @BeforeAll
+    static void setUp(JenkinsRule rule) {
+        r = rule;
+    }
+
+    static String[][] data() {
+        return new String[][] {
+            { "http://proxy.example.org:8080", "*.npm.org\n\nregistry.npm.org" },
+            { "http://user:password@proxy.example.org:8080", "*.npm.org\n\nregistry.npm.org" }
+        };
+    }
+
+    private void init(String url) throws Exception {
         URL proxyURL = new URL(url);
 
         this.log = new StreamBuildListener(System.out, Charset.defaultCharset());
         this.expectedURL = url;
-        this.noProxy = noProxy;
         this.host = proxyURL.getHost();
         this.port = proxyURL.getPort();
         if (proxyURL.getUserInfo() != null) {
@@ -79,8 +80,11 @@ public class NodeJSInstallerProxyTest {
     }
 
     @Issue("JENKINS-29266")
-    @Test
-    public void test_proxy_settings() throws Exception {
+    @ParameterizedTest(name = "proxy url = {0}")
+    @MethodSource("data")
+    void test_proxy_settings(String url, String noProxy) throws Exception {
+        init(url);
+
         r.getInstance().proxy = new ProxyConfiguration(host, port, username, password);
 
         NodeJSInstaller installer = new NodeJSInstaller("test-id", "grunt", NodeJSInstaller.DEFAULT_NPM_PACKAGES_REFRESH_HOURS);
@@ -89,14 +93,17 @@ public class NodeJSInstallerProxyTest {
         method.setAccessible(true);
         method.invoke(installer, env, log);
 
-        Assertions.assertThat(env.keySet()).contains("HTTP_PROXY", "HTTPS_PROXY");
-        Assertions.assertThat(env.get("HTTP_PROXY")).isEqualTo(expectedURL);
-        Assertions.assertThat(env.get("HTTPS_PROXY")).isEqualTo(expectedURL);
-        Assertions.assertThat(env.keySet()).doesNotContain("NO_PROXY");
+        assertThat(env.keySet()).contains("HTTP_PROXY", "HTTPS_PROXY");
+        assertThat(env.get("HTTP_PROXY")).isEqualTo(expectedURL);
+        assertThat(env.get("HTTPS_PROXY")).isEqualTo(expectedURL);
+        assertThat(env.keySet()).doesNotContain("NO_PROXY");
     }
 
-    @Test
-    public void test_no_proxy_settings() throws Exception {
+    @ParameterizedTest(name = "proxy url = {0}")
+    @MethodSource("data")
+    void test_no_proxy_settings(String url, String noProxy) throws Exception {
+        init(url);
+
         r.getInstance().proxy = new ProxyConfiguration(host, port, username, password, noProxy);
 
         NodeJSInstaller installer = new NodeJSInstaller("test-id", "grunt", NodeJSInstaller.DEFAULT_NPM_PACKAGES_REFRESH_HOURS);
@@ -105,8 +112,8 @@ public class NodeJSInstallerProxyTest {
         method.setAccessible(true);
         method.invoke(installer, env, log);
 
-        Assertions.assertThat(env.keySet()).contains("HTTP_PROXY", "HTTPS_PROXY");
-        Assertions.assertThat(env.get("NO_PROXY")).isEqualTo("*.npm.org,registry.npm.org");
+        assertThat(env.keySet()).contains("HTTP_PROXY", "HTTPS_PROXY");
+        assertThat(env.get("NO_PROXY")).isEqualTo("*.npm.org,registry.npm.org");
     }
 
 }

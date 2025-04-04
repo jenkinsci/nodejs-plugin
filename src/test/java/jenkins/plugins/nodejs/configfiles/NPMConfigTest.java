@@ -23,32 +23,31 @@
  */
 package jenkins.plugins.nodejs.configfiles;
 
-import static org.junit.Assert.assertNotNull;
-
-import org.assertj.core.api.Assertions;
 import org.jenkinsci.lib.configprovider.model.Config;
-import org.junit.Rule;
-import org.junit.Test;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
+import org.junit.jupiter.api.Test;
 import org.jvnet.hudson.test.JenkinsRule;
 
 import hudson.model.Descriptor;
 import jenkins.plugins.nodejs.configfiles.NPMConfig.NPMConfigProvider;
+import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 
-public class NPMConfigTest {
-
-    @Rule
-    public JenkinsRule j = new JenkinsRule();
+@WithJenkins
+class NPMConfigTest {
 
     @Test
-    public void test_load_template() {
+    void test_load_template(JenkinsRule j) {
         Descriptor<?> descriptor = j.jenkins.getDescriptor(NPMConfig.class);
-        assertNotNull("NPMConfig descriptor not registered", descriptor);
-        Assertions.assertThat(descriptor).isInstanceOf(NPMConfigProvider.class).describedAs("Unexpected descriptor class");
+        assertNotNull(descriptor, "NPMConfig descriptor not registered");
+        assertThat(descriptor).isInstanceOf(NPMConfigProvider.class).describedAs("Unexpected descriptor class");
 
         NPMConfigProvider provider = (NPMConfigProvider) descriptor;
         Config config = provider.newConfig("testId");
-        Assertions.assertThat(config).isInstanceOf(NPMConfig.class).describedAs("Unexpected config class");
-        Assertions.assertThat(config.content).isNotBlank().describedAs("Expected the default template, instead got empty");
+        assertThat(config).isInstanceOf(NPMConfig.class).describedAs("Unexpected config class");
+        assertThat(config.content).isNotBlank().describedAs("Expected the default template, instead got empty");
     }
 
 }

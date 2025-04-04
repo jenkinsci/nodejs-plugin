@@ -23,7 +23,8 @@
  */
 package jenkins.plugins.nodejs;
 
-import static org.junit.Assert.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.RETURNS_SELF;
 import static org.mockito.Mockito.doReturn;
@@ -33,15 +34,14 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.List;
 
-import org.assertj.core.api.Assertions;
 import org.jenkinsci.lib.configprovider.model.Config;
 import org.jenkinsci.plugins.configfiles.GlobalConfigFiles;
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.jvnet.hudson.test.Issue;
 import org.jvnet.hudson.test.JenkinsRule;
 
@@ -58,16 +58,22 @@ import jenkins.plugins.nodejs.configfiles.NPMConfig;
 import jenkins.plugins.nodejs.configfiles.NPMRegistry;
 import jenkins.plugins.nodejs.tools.NodeJSInstallation;
 import jenkins.plugins.nodejs.tools.Platform;
+import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 
-public class NodeJSBuildWrapperTest {
+@WithJenkins
+class NodeJSBuildWrapperTest {
 
-    @ClassRule
-    public static JenkinsRule j = new JenkinsRule();
-    @Rule
-    public TemporaryFolder fileRule = new TemporaryFolder();
+    private static JenkinsRule j;
+    @TempDir
+    private File fileRule;
+
+    @BeforeAll
+    static void setUp(JenkinsRule rule) {
+        j = rule;
+    }
 
     @Test
-    public void test_calls_sequence_of_installer() throws Exception {
+    void test_calls_sequence_of_installer() throws Exception {
         FreeStyleProject job = j.createFreeStyleProject("free");
 
         NodeJSInstallation installation = mockInstaller();
@@ -83,7 +89,7 @@ public class NodeJSBuildWrapperTest {
     }
 
     @Test
-    public void test_creation_of_config() throws Exception {
+    void test_creation_of_config() throws Exception {
         FreeStyleProject job = j.createFreeStyleProject("free2");
 
         final Config config = createSetting("my-config-id", "email=foo@acme.com", null);
@@ -99,7 +105,7 @@ public class NodeJSBuildWrapperTest {
     }
 
     @Test
-    public void test_inject_path_variable() throws Exception {
+    void test_inject_path_variable() throws Exception {
         FreeStyleProject job = j.createFreeStyleProject("free3");
 
         final Config config = createSetting("my-config-id", "", null);
@@ -120,7 +126,7 @@ public class NodeJSBuildWrapperTest {
 
     @Issue("JENKINS-45840")
     @Test
-    public void test_check_no_executable_in_installation_folder() throws Exception {
+    void test_check_no_executable_in_installation_folder() throws Exception {
         FreeStyleProject job = j.createFreeStyleProject("free4");
 
         NodeJSInstallation installation = mockInstaller();
@@ -133,10 +139,10 @@ public class NodeJSBuildWrapperTest {
     }
 
     @Test
-    public void test_set_of_cache_location() throws Exception {
+    void test_set_of_cache_location() throws Exception {
         FreeStyleProject job = j.createFreeStyleProject("cache");
 
-        final File cacheFolder = fileRule.newFolder();
+        final File cacheFolder = newFolder(fileRule, "junit");
 
         NodeJSBuildWrapper bw = mockWrapper(mockInstaller());
         bw.setCacheLocationStrategy(new TestCacheLocationLocator(cacheFolder));
@@ -199,11 +205,20 @@ public class NodeJSBuildWrapperTest {
         @Override
         public void verify(EnvVars env) {
             String expectedValue = installation.getHome();
-            assertEquals("Unexpected value for " + NodeJSConstants.ENVVAR_NODEJS_HOME, expectedValue, env.get(NodeJSConstants.ENVVAR_NODEJS_HOME));
-            Assertions.assertThat(env.get("PATH")).contains(expectedValue);
+            assertEquals(expectedValue, env.get(NodeJSConstants.ENVVAR_NODEJS_HOME), "Unexpected value for " + NodeJSConstants.ENVVAR_NODEJS_HOME);
+            assertThat(env.get("PATH")).contains(expectedValue);
             // check that PATH is not exact the NodeJS home otherwise means PATH was overridden
-            Assertions.assertThat(env.get("PATH")).isNotEqualTo(expectedValue); // JENKINS-41947
+            assertThat(env.get("PATH")).isNotEqualTo(expectedValue); // JENKINS-41947
         }
+    }
+
+    private static File newFolder(File root, String... subDirs) throws IOException {
+        String subFolder = String.join("/", subDirs);
+        File result = new File(root, subFolder);
+        if (!result.mkdirs()) {
+            throw new IOException("Couldn't create folders " + root);
+        }
+        return result;
     }
 
 }

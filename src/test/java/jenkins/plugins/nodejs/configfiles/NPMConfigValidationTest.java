@@ -24,18 +24,17 @@
 package jenkins.plugins.nodejs.configfiles;
 
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.Arrays;
+import java.util.List;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-public class NPMConfigValidationTest {
+class NPMConfigValidationTest {
 
     @Test
-    public void test_new_config() {
+    void test_new_config() {
         String id = "test_id";
         NPMConfig config = new NPMConfig(id, "", "", "", null);
         assertEquals(id, config.id);
@@ -46,31 +45,31 @@ public class NPMConfigValidationTest {
     }
 
     @Test
-    public void test_too_many_global_registries() throws Exception {
+    void test_too_many_global_registries() {
         NPMRegistry privateRegistry = new NPMRegistry("https://private.organization.com/", null, null);
-        NPMRegistry officalRegistry = new NPMRegistry("https://registry.npmjs.org/", null, null);
+        NPMRegistry officialRegistry = new NPMRegistry("https://registry.npmjs.org/", null, null);
 
-        NPMConfig config = new NPMConfig("too_many_registry", null, null, null, Arrays.asList(privateRegistry, officalRegistry));
+        NPMConfig config = new NPMConfig("too_many_registry", null, null, null, Arrays.asList(privateRegistry, officialRegistry));
 
         assertThatExceptionOfType(VerifyConfigProviderException.class) //
-            .isThrownBy(() -> config.doVerify());
+            .isThrownBy(config::doVerify);
     }
 
     @Test
-    public void test_empty_URL() throws Exception {
+    void test_empty_URL() {
         NPMRegistry registry = new NPMRegistry("", null, null);
 
-        NPMConfig config = new NPMConfig("empty_URL", null, null, null, Arrays.asList(registry));
+        NPMConfig config = new NPMConfig("empty_URL", null, null, null, List.of(registry));
 
         assertThatExceptionOfType(VerifyConfigProviderException.class) //
-            .isThrownBy(() -> config.doVerify());
+            .isThrownBy(config::doVerify);
     }
 
     @Test
-    public void test_no_exception_if_URL_has_variable() throws Exception {
+    void test_no_exception_if_URL_has_variable() throws Exception {
         NPMRegistry registry = new NPMRegistry("${URL}", null, null);
 
-        NPMConfig config = new NPMConfig("no_exception_if_URL_has_variable", null, null, null, Arrays.asList(registry));
+        NPMConfig config = new NPMConfig("no_exception_if_URL_has_variable", null, null, null, List.of(registry));
         config.doVerify();
     }
 

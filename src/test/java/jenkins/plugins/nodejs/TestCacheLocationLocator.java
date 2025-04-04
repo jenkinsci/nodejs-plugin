@@ -31,7 +31,7 @@ import jenkins.plugins.nodejs.cache.CacheLocationLocatorDescriptor;
 
 public class TestCacheLocationLocator extends CacheLocationLocator {
 
-    private File location;
+    private final File location;
 
     public TestCacheLocationLocator(File location) {
         this.location = location;

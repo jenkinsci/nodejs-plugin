@@ -34,7 +34,7 @@ import jenkins.plugins.nodejs.tools.NodeJSInstallation;
 
 /* package */ final class CIBuilderHelper {
 
-    public static interface Verifier {
+    public interface Verifier {
         void verify(AbstractBuild<?, ?> build, Launcher launcher, TaskListener listener) throws Exception;
     }
 
@@ -64,7 +64,7 @@ import jenkins.plugins.nodejs.tools.NodeJSInstallation;
         }
 
         @Override
-        protected boolean internalPerform(AbstractBuild<?, ?> build, Launcher launcher, TaskListener listener) throws InterruptedException {
+        protected boolean internalPerform(AbstractBuild<?, ?> build, Launcher launcher, TaskListener listener) {
             if (verifier != null) {
                 try {
                     verifier.verify(build, launcher, listener);

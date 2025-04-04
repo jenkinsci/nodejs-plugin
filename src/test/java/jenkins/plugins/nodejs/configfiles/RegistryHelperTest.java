@@ -23,18 +23,18 @@
  */
 package jenkins.plugins.nodejs.configfiles;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 import java.util.Arrays;
 import java.util.Map;
 
-import org.assertj.core.api.Assertions;
 import org.jenkinsci.plugins.plaincredentials.StringCredentials;
 import org.jenkinsci.plugins.plaincredentials.impl.StringCredentialsImpl;
-import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.jvnet.hudson.test.JenkinsRule;
 
 import com.cloudbees.plugins.credentials.CredentialsProvider;
@@ -47,17 +47,23 @@ import com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl;
 
 import hudson.model.FreeStyleBuild;
 import hudson.util.Secret;
+import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 
-public class RegistryHelperTest {
+@WithJenkins
+class RegistryHelperTest {
 
-    @ClassRule
-    public static JenkinsRule j = new JenkinsRule();
+    private static JenkinsRule j;
 
     private StandardUsernameCredentials user;
     private StringCredentials token;
 
-    @Before
-    public void setUp() throws Exception {
+    @BeforeAll
+    static void setUp(JenkinsRule rule) {
+        j = rule;
+    }
+
+    @BeforeEach
+    void setUp() throws Exception {
         user = new UsernamePasswordCredentialsImpl(CredentialsScope.GLOBAL, "privateId", "dummy desc", "myuser", "mypassword");
         token = new StringCredentialsImpl(CredentialsScope.GLOBAL, "privateToken", "dummy desc", Secret.fromString("mysecret"));
         CredentialsStore store = CredentialsProvider.lookupStores(j.getInstance()).iterator().next();
@@ -66,35 +72,37 @@ public class RegistryHelperTest {
     }
 
     @Test
-    public void test_registry_credentials_resolution() throws Exception {
+    void test_registry_credentials_resolution() throws Exception {
         NPMRegistry privateRegistry = new NPMRegistry("https://private.organization.com/", user.getId(), null);
-        NPMRegistry officalRegistry = new NPMRegistry("https://registry.npmjs.org/", null, "@user1 user2");
+        NPMRegistry officialRegistry = new NPMRegistry("https://registry.npmjs.org/", null, "@user1 user2");
 
         FreeStyleBuild build = j.createFreeStyleProject().createExecutable();
 
-        RegistryHelper helper = new RegistryHelper(Arrays.asList(privateRegistry, officalRegistry));
+        RegistryHelper helper = new RegistryHelper(Arrays.asList(privateRegistry, officialRegistry));
         Map<String, StandardCredentials> resolvedCredentials = helper.resolveCredentials(build);
         assertFalse(resolvedCredentials.isEmpty());
         assertEquals(1, resolvedCredentials.size());
 
-        Assertions.assertThat(resolvedCredentials.keySet().contains(privateRegistry.getUrl()));
-        Assertions.assertThat(resolvedCredentials.get(privateRegistry.getUrl())).isEqualTo(user);
+        assertThat(resolvedCredentials)
+                .containsKey(privateRegistry.getUrl())
+                .containsEntry(privateRegistry.getUrl(), user);
     }
 
     @Test
-    public void test_registry_auth_token_credentials_resolution() throws Exception {
+    void test_registry_auth_token_credentials_resolution() throws Exception {
         NPMRegistry privateRegistry = new NPMRegistry("https://private.organization.com/", token.getId(), null);
-        NPMRegistry officalRegistry = new NPMRegistry("https://registry.npmjs.org/", token.getId(), "@user1 user2");
+        NPMRegistry officialRegistry = new NPMRegistry("https://registry.npmjs.org/", token.getId(), "@user1 user2");
 
         FreeStyleBuild build = j.createFreeStyleProject().createExecutable();
 
-        RegistryHelper helper = new RegistryHelper(Arrays.asList(privateRegistry, officalRegistry));
+        RegistryHelper helper = new RegistryHelper(Arrays.asList(privateRegistry, officialRegistry));
         Map<String, StandardCredentials> resolvedCredentials = helper.resolveCredentials(build);
         assertFalse(resolvedCredentials.isEmpty());
         assertEquals(2, resolvedCredentials.size());
 
-        Assertions.assertThat(resolvedCredentials.keySet().contains(privateRegistry.getUrl()));
-        Assertions.assertThat(resolvedCredentials.get(privateRegistry.getUrl())).isEqualTo(token);
-        Assertions.assertThat(resolvedCredentials.get(officalRegistry.getUrl())).isEqualTo(token);
+        assertThat(resolvedCredentials)
+                .containsKey(privateRegistry.getUrl())
+                .containsEntry(privateRegistry.getUrl(), token);
+        assertThat(resolvedCredentials).containsEntry(officialRegistry.getUrl(), token);
     }
 }

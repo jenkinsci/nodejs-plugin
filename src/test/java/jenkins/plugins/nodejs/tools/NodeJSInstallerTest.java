@@ -23,6 +23,7 @@
  */
 package jenkins.plugins.nodejs.tools;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
@@ -45,10 +46,8 @@ import org.apache.tools.tar.TarEntry;
 import org.apache.tools.tar.TarInputStream;
 import org.apache.tools.tar.TarOutputStream;
 import org.assertj.core.api.AssertDelegateTarget;
-import org.assertj.core.api.Assertions;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.jvnet.hudson.test.Issue;
 import org.mockito.MockedStatic;
 
@@ -59,18 +58,18 @@ import hudson.tools.ToolInstallation;
 import hudson.tools.DownloadFromUrlInstaller.Installable;
 import hudson.util.StreamTaskListener;
 
-public class NodeJSInstallerTest {
+class NodeJSInstallerTest {
 
     private static class TarFileAssert implements AssertDelegateTarget {
 
-        private File file;
+        private final File file;
 
         public TarFileAssert(File file) {
             this.file = file;
         }
 
         void hasEntry(String path) throws IOException {
-            Assertions.assertThat(file).exists();
+            assertThat(file).exists();
             try (TarInputStream zf = new TarInputStream(new GZIPInputStream(new FileInputStream(file)))) {
                 TarEntry entry;
                 while ((entry = zf.getNextEntry()) != null) {
@@ -78,16 +77,16 @@ public class NodeJSInstallerTest {
                         break;
                     }
                 }
-                Assertions.assertThat(entry).as("Entry " + path + " not found.").isNotNull();
+                assertThat(entry).as("Entry " + path + " not found.").isNotNull();
             }
         }
     }
 
-    @Rule
-    public TemporaryFolder fileRule = new TemporaryFolder();
+    @TempDir
+    private File fileRule;
 
     @SuppressWarnings("deprecation")
-    private TaskListener taskListener = new StreamTaskListener(new NullPrintStream());
+    private final TaskListener taskListener = new StreamTaskListener(new NullPrintStream());
 
     /**
      * Verify that the installer skip install of global package also if
@@ -100,13 +99,13 @@ public class NodeJSInstallerTest {
      */
     @Issue("JENKINS-41876")
     @Test
-    public void test_skip_install_global_packages_when_empty() throws Exception {
-        File cache = new File(fileRule.getRoot(), "test.tar.gz");
+    void test_skip_install_global_packages_when_empty() throws Exception {
+        File cache = new File(fileRule, "test.tar.gz");
         IOUtils.copy(getClass().getResource("test.tar.gz"), cache);
         String expectedPackages = " ";
         int expectedRefreshHours = NodeJSInstaller.DEFAULT_NPM_PACKAGES_REFRESH_HOURS;
         Node currentNode = mock(Node.class);
-        when(currentNode.getRootPath()).thenReturn(new FilePath(fileRule.newFolder()));
+        when(currentNode.getRootPath()).thenReturn(new FilePath(newFolder(fileRule, "junit")));
 
         // create partial mock
         NodeJSInstaller installer = new NodeJSInstaller("test-id", expectedPackages, expectedRefreshHours);
@@ -115,7 +114,7 @@ public class NodeJSInstallerTest {
         // use Mockito to set up your expectation
         doReturn(cache).when(spy).getLocalCacheFile(any(), any());
         Installable installable = new Installable();
-        installable.url = fileRule.newFile().toURI().toString();
+        installable.url = File.createTempFile("junit", null, fileRule).toURI().toString();
         doReturn(installable).when(spy).getInstallable();
         when(spy.getNpmPackages()).thenReturn(expectedPackages);
 
@@ -132,13 +131,13 @@ public class NodeJSInstallerTest {
     }
 
     @Test
-    public void verify_cache_is_build() throws Exception {
-        File cache = new File(fileRule.getRoot(), "test.tar.gz");
+    void verify_cache_is_build() throws Exception {
+        File cache = new File(fileRule, "test.tar.gz");
         IOUtils.copy(getClass().getResource("test.tar.gz"), cache);
         String expectedPackages = " ";
         int expectedRefreshHours = NodeJSInstaller.DEFAULT_NPM_PACKAGES_REFRESH_HOURS;
         Node currentNode = mock(Node.class);
-        when(currentNode.getRootPath()).thenReturn(new FilePath(fileRule.newFolder()));
+        when(currentNode.getRootPath()).thenReturn(new FilePath(newFolder(fileRule, "junit")));
 
         // create partial mock
         NodeJSInstaller installer = new NodeJSInstaller("test-id", expectedPackages, expectedRefreshHours);
@@ -147,7 +146,7 @@ public class NodeJSInstallerTest {
         // use Mockito to set up your expectation
         doReturn(cache).when(spy).getLocalCacheFile(any(), any());
         Installable installable = new Installable();
-        File downloadURL = fileRule.newFile("nodejs.tar.gz");
+        File downloadURL = File.createTempFile("nodejs.tar.gz", null, fileRule);
         fillArchive(downloadURL, "nodejs/bin/npm.sh", "echo \"hello\"".getBytes());
         installable.url = downloadURL.toURI().toString();
         doReturn(installable).when(spy).getInstallable();
@@ -162,27 +161,27 @@ public class NodeJSInstallerTest {
 
             // execute test
             spy.performInstallation(toolInstallation, currentNode, taskListener);
-            Assertions.assertThat(new TarFileAssert(cache)).hasEntry("bin/npm.sh");
+            assertThat(new TarFileAssert(cache)).hasEntry("bin/npm.sh");
         }
     }
 
     @Test
-    public void test_cache_archive_is_used() throws Exception {
+    void test_cache_archive_is_used() throws Exception {
         String expectedPackages = " ";
         int expectedRefreshHours = NodeJSInstaller.DEFAULT_NPM_PACKAGES_REFRESH_HOURS;
         Node currentNode = mock(Node.class);
-        when(currentNode.getRootPath()).thenReturn(new FilePath(fileRule.newFolder()));
+        when(currentNode.getRootPath()).thenReturn(new FilePath(newFolder(fileRule, "junit")));
 
         // create partial mock
         NodeJSInstaller installer = new NodeJSInstaller("test-id", expectedPackages, expectedRefreshHours);
         NodeJSInstaller spy = spy(installer);
 
         // use Mockito to set up your expectation
-        File cache = fileRule.newFile();
+        File cache = File.createTempFile("junit", null, fileRule);
         fillArchive(cache, "nodejs.txt", "test".getBytes());
         doReturn(cache).when(spy).getLocalCacheFile(any(), any());
         Installable installable = new Installable();
-        installable.url = fileRule.newFile().toURI().toString();
+        installable.url = File.createTempFile("junit", null, fileRule).toURI().toString();
         doReturn(installable).when(spy).getInstallable();
         when(spy.getNpmPackages()).thenReturn(expectedPackages);
 
@@ -195,7 +194,7 @@ public class NodeJSInstallerTest {
 
             // execute test
             FilePath expected = spy.performInstallation(toolInstallation, currentNode, taskListener);
-            Assertions.assertThat(expected.list("nodejs.txt")).isNotEmpty();
+            assertThat(expected.list("nodejs.txt")).isNotEmpty();
         }
     }
 
@@ -211,23 +210,23 @@ public class NodeJSInstallerTest {
 
     @Issue("JENKINS-56895")
     @Test
-    public void verify_global_packages_are_refreshed_also_if_nodejs_installation_is_uptodate() throws Exception {
+    void verify_global_packages_are_refreshed_also_if_nodejs_installation_is_uptodate() throws Exception {
         String expectedPackages = "npm@6.7.0";
         int expectedRefreshHours = NodeJSInstaller.DEFAULT_NPM_PACKAGES_REFRESH_HOURS;
         Node currentNode = mock(Node.class);
-        when(currentNode.getRootPath()).thenReturn(new FilePath(fileRule.newFolder()));
+        when(currentNode.getRootPath()).thenReturn(new FilePath(newFolder(fileRule, "junit")));
 
         // create partial mock
         NodeJSInstaller installer = new NodeJSInstaller("test-id", expectedPackages, expectedRefreshHours) {
             @Override
             public Installable getInstallable() throws IOException {
                 Installable installable = new Installable();
-                installable.url = fileRule.newFile().toURI().toString();
+                installable.url = File.createTempFile("junit", null, fileRule).toURI().toString();
                 return installable;
             }
 
             @Override
-            protected boolean isUpToDate(FilePath expectedLocation, Installable i) throws IOException, InterruptedException {
+            protected boolean isUpToDate(FilePath expectedLocation, Installable i) {
                 return true;
             }
         };
@@ -243,6 +242,15 @@ public class NodeJSInstallerTest {
         spy.performInstallation(toolInstallation, currentNode, taskListener);
 
         verify(spy).refreshGlobalPackages(any(Node.class), any(TaskListener.class), any(FilePath.class));
+    }
+
+    private static File newFolder(File root, String... subDirs) throws IOException {
+        String subFolder = String.join("/", subDirs);
+        File result = new File(root, subFolder);
+        if (!result.mkdirs()) {
+            throw new IOException("Couldn't create folders " + root);
+        }
+        return result;
     }
 
 }

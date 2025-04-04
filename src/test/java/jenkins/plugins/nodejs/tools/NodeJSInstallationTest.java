@@ -36,31 +36,33 @@ import java.io.IOException;
 import java.lang.reflect.Method;
 import jenkins.model.Jenkins;
 import jenkins.plugins.nodejs.tools.NodeJSInstallation.DescriptorImpl;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.jvnet.hudson.test.Issue;
 import org.jvnet.hudson.test.JenkinsRule;
+import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 import org.jvnet.hudson.test.recipes.LocalData;
 import org.xml.sax.SAXException;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
-public class NodeJSInstallationTest {
+@WithJenkins
+class NodeJSInstallationTest {
 
-    @Rule
-    public JenkinsRule r = new JenkinsRule();
+    private JenkinsRule r;
+
+    @BeforeEach
+    void setUp(JenkinsRule rule) {
+        r = rule;
+    }
 
     /**
-     * Verify node executable is begin initialised correctly on a slave
+     * Verify node executable is being initialised correctly on a slave
      * node where {@link Computer#currentComputer()} is {@code null}.
      */
     @Issue("JENKINS-42232")
     @Test
-    public void test_executable_resolved_on_slave_node() throws Exception {
+    void test_executable_resolved_on_slave_node() throws Exception {
         assertNull(Computer.currentComputer());
         NodeJSInstallation installation = new NodeJSInstallation("test_executable_resolved_on_slave_node", "/home/nodejs", null);
         Method method = installation.getClass().getDeclaredMethod("getPlatform");
@@ -76,11 +78,11 @@ public class NodeJSInstallationTest {
     @LocalData
     @Test
     @Issue("JENKINS-41535")
-    public void test_load_at_startup() throws Exception {
+    void test_load_at_startup() throws Exception {
         File jenkinsHome = r.jenkins.getRootDir();
         File installationsFile = new File(jenkinsHome, NodeJSInstallation.class.getName() + ".xml");
 
-        assertTrue("NodeJS installations file has not been copied",  installationsFile.exists());
+        assertTrue(installationsFile.exists(),  "NodeJS installations file has not been copied");
         verify();
     }
 
@@ -90,11 +92,11 @@ public class NodeJSInstallationTest {
      */
     @Test
     @Issue("JENKINS-41535")
-    public void test_persist_of_nodejs_installation() throws Exception {
+    void test_persist_of_nodejs_installation() throws Exception {
         File jenkinsHome = r.jenkins.getRootDir();
         File installationsFile = new File(jenkinsHome, NodeJSInstallation.class.getName() + ".xml");
 
-        assertFalse("NodeJS installations file already exists", installationsFile.exists());
+        assertFalse(installationsFile.exists(), "NodeJS installations file already exists");
 
         HtmlPage p = getConfigurePage();
         HtmlForm f = p.getFormByName("config");
@@ -105,7 +107,7 @@ public class NodeJSInstallationTest {
         r.submit(f);
         verify();
 
-        assertTrue("NodeJS installations file has not been saved",  installationsFile.exists());
+        assertTrue(installationsFile.exists(),  "NodeJS installations file has not been saved");
 
         // another submission and verify it survives a roundtrip
         p = getConfigurePage();
