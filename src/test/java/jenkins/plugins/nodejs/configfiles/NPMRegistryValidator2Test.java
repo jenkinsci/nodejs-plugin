@@ -23,20 +23,19 @@
  */
 package jenkins.plugins.nodejs.configfiles;
 
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.assertj.core.api.Assertions;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.jvnet.hudson.test.JenkinsRule;
 
 import com.cloudbees.plugins.credentials.Credentials;
@@ -51,36 +50,41 @@ import hudson.security.Permission;
 import hudson.util.FormValidation;
 import hudson.util.FormValidation.Kind;
 import jenkins.plugins.nodejs.configfiles.NPMRegistry.DescriptorImpl;
+import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 
 /**
  * Test input form validation.
  *
  * @author Nikolas Falco
  */
-public class NPMRegistryValidator2Test {
+@WithJenkins
+class NPMRegistryValidator2Test {
 
+    private static JenkinsRule rule;
 
-    @ClassRule
-    public static JenkinsRule rule = new JenkinsRule();
+    @BeforeAll
+    static void setUp(JenkinsRule r) {
+        rule = r;
+    }
 
     @Test
-    public void test_credentials_ok() throws Exception {
+    void test_credentials_ok() throws Exception {
         String credentialsId = "secret";
         Credentials credentials = new UsernamePasswordCredentialsImpl(CredentialsScope.GLOBAL, credentialsId, "", "user", "password");
         Map<Domain, List<Credentials>> credentialsMap = new HashMap<>();
-        credentialsMap.put(Domain.global(), Arrays.asList(credentials));
+        credentialsMap.put(Domain.global(), List.of(credentials));
         SystemCredentialsProvider.getInstance().setDomainCredentialsMap(credentialsMap);
 
         FreeStyleProject prj = mock(FreeStyleProject.class);
         when(prj.hasPermission(isA(Permission.class))).thenReturn(true);
 
         DescriptorImpl descriptor = mock(DescriptorImpl.class);
-        when(descriptor.doCheckCredentialsId(any(Item.class), (String) any(), anyString())).thenCallRealMethod();
+        when(descriptor.doCheckCredentialsId(any(Item.class), any(), anyString())).thenCallRealMethod();
 
         String serverURL = "http://acme.com";
 
         FormValidation result = descriptor.doCheckCredentialsId(prj, credentialsId, serverURL);
-        Assertions.assertThat(result.kind).isEqualTo(Kind.OK);
+        assertThat(result.kind).isEqualTo(Kind.OK);
     }
 
 }
