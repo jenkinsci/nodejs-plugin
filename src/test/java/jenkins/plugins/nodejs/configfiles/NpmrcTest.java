@@ -23,8 +23,6 @@
  */
 package jenkins.plugins.nodejs.configfiles;
 
-import static org.junit.jupiter.api.Assertions.*;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -35,6 +33,8 @@ import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 class NpmrcTest {
 
@@ -57,16 +57,15 @@ class NpmrcTest {
     @Test
     void testLoad() throws Exception {
         Npmrc npmrc = Npmrc.load(file);
-        assertTrue(npmrc.contains("always-auth"));
-        assertEquals("true", npmrc.get("always-auth"));
-        assertEquals("\"/var/lib/jenkins/tools/jenkins.plugins.nodejs.tools.NodeJSInstallation/Node_6.x\"",
-                npmrc.get("prefix"));
+        assertThat(npmrc.contains("always-auth")).isTrue();
+        assertThat(npmrc.get("always-auth")).isEqualTo("true");
+        assertThat(npmrc.get("prefix")).isEqualTo("\"/var/lib/jenkins/tools/jenkins.plugins.nodejs.tools.NodeJSInstallation/Node_6.x\"");
     }
 
     @Test
     void testAvoidParseError() throws Exception {
         Npmrc npmrc = Npmrc.load(file);
-        assertFalse(npmrc.contains("browser"));
+        assertThat(npmrc.contains("browser")).isFalse();
     }
 
     @Test
@@ -80,8 +79,8 @@ class NpmrcTest {
 
         // reload content
         npmrc = Npmrc.load(file);
-        assertTrue(npmrc.contains(testKey));
-        assertEquals(testValue, npmrc.get(testKey));
+        assertThat(npmrc.contains(testKey)).isTrue();
+        assertThat(npmrc.get(testKey)).isEqualTo(testValue);
     }
 
     @Test
@@ -94,7 +93,7 @@ class NpmrcTest {
 
         try (InputStream is = new FileInputStream(file)) {
             List<String> lines = IOUtils.readLines(is, "UTF-8");
-            assertEquals(';' + comment, lines.get(lines.size() - 1));
+            assertThat(lines.get(lines.size() - 1)).isEqualTo(';' + comment);
         }
     }
 

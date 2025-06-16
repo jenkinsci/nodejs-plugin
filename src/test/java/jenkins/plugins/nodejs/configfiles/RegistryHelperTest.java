@@ -24,8 +24,6 @@
 package jenkins.plugins.nodejs.configfiles;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 
 import java.util.Arrays;
 import java.util.Map;
@@ -80,10 +78,10 @@ class RegistryHelperTest {
 
         RegistryHelper helper = new RegistryHelper(Arrays.asList(privateRegistry, officialRegistry));
         Map<String, StandardCredentials> resolvedCredentials = helper.resolveCredentials(build);
-        assertFalse(resolvedCredentials.isEmpty());
-        assertEquals(1, resolvedCredentials.size());
 
         assertThat(resolvedCredentials)
+                .isNotEmpty()
+                .hasSize(1)
                 .containsKey(privateRegistry.getUrl())
                 .containsEntry(privateRegistry.getUrl(), user);
     }
@@ -97,12 +95,13 @@ class RegistryHelperTest {
 
         RegistryHelper helper = new RegistryHelper(Arrays.asList(privateRegistry, officialRegistry));
         Map<String, StandardCredentials> resolvedCredentials = helper.resolveCredentials(build);
-        assertFalse(resolvedCredentials.isEmpty());
-        assertEquals(2, resolvedCredentials.size());
 
         assertThat(resolvedCredentials)
+                .isNotEmpty()
+                .hasSize(2)
                 .containsKey(privateRegistry.getUrl())
-                .containsEntry(privateRegistry.getUrl(), token);
-        assertThat(resolvedCredentials).containsEntry(officialRegistry.getUrl(), token);
+                .containsEntry(privateRegistry.getUrl(), token)
+                .containsKey(officialRegistry.getUrl())
+                .containsEntry(officialRegistry.getUrl(), token);
     }
 }

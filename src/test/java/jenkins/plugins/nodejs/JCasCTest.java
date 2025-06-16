@@ -31,8 +31,7 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasProperty;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.instanceOf;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.hamcrest.Matchers.is;
 
 import java.util.List;
 
@@ -69,18 +68,18 @@ class JCasCTest extends AbstractRoundTripTest {
         assertThat(config, instanceOf(NPMConfig.class));
 
         NPMConfig npmConfig = (NPMConfig) config;
-        assertEquals("myComment", npmConfig.comment);
-        assertEquals("myContent", npmConfig.content);
-        assertEquals("myConfig", npmConfig.name);
-        assertTrue(npmConfig.isNpm9Format());
+        assertThat(npmConfig.comment, equalTo("myComment"));
+        assertThat( npmConfig.content, equalTo("myContent"));
+        assertThat(npmConfig.name, equalTo("myConfig"));
+        assertThat(npmConfig.isNpm9Format(), is(true));
 
         List<NPMRegistry> registries = npmConfig.getRegistries();
-        assertEquals(1, registries.size());
+        assertThat(registries, hasSize(1));
 
         NPMRegistry registry = registries.get(0);
-        assertTrue(registry.isHasScopes());
-        assertEquals("myScope", registry.getScopes());
-        assertEquals("registryUrl", registry.getUrl());
+        assertThat(registry.isHasScopes(), is(true));
+        assertThat(registry.getScopes(), equalTo("myScope"));
+        assertThat(registry.getUrl(), equalTo("registryUrl"));
     }
 
     private void checkInstallations(Jenkins j) {
@@ -89,7 +88,7 @@ class JCasCTest extends AbstractRoundTripTest {
         assertThat(installations, arrayWithSize(2));
 
         ToolInstallation withInstaller = installations[0];
-        assertEquals("myNode", withInstaller.getName());
+        assertThat( withInstaller.getName(), equalTo("myNode"));
 
         final DescribableList<ToolProperty<?>, ToolPropertyDescriptor> properties = withInstaller.getProperties();
         assertThat(properties, hasSize(1));

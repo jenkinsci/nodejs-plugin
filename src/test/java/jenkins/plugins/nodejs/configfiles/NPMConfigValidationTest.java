@@ -23,8 +23,8 @@
  */
 package jenkins.plugins.nodejs.configfiles;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
-import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.Arrays;
 import java.util.List;
@@ -37,11 +37,11 @@ class NPMConfigValidationTest {
     void test_new_config() {
         String id = "test_id";
         NPMConfig config = new NPMConfig(id, "", "", "", null);
-        assertEquals(id, config.id);
-        assertNull(config.name);
-        assertNull(config.comment);
-        assertNull(config.content);
-        assertNotNull(config.getRegistries());
+        assertThat(config.id).isEqualTo(id);
+        assertThat(config.name).isNull();
+        assertThat(config.comment).isNull();
+        assertThat(config.content).isNull();
+        assertThat(config.getRegistries()).isNotNull();
     }
 
     @Test

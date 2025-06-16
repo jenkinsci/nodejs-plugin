@@ -24,7 +24,6 @@
 package jenkins.plugins.nodejs.tools;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -122,7 +121,9 @@ class InstallerPathResolversTest {
             urlConnection.setConnectTimeout(2000);
             urlConnection.connect();
             int code = urlConnection.getResponseCode();
-            assertTrue(code >= 200 && code < 300);
+            assertThat(code)
+                    .isGreaterThanOrEqualTo(200)
+                    .isLessThan(300);
         } finally {
             if (urlConnection != null) {
                 urlConnection.disconnect();

@@ -32,8 +32,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.mockito.MockedStatic;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
@@ -54,12 +53,12 @@ class CacheLocationLocatorTest {
 
     @Test
     void test_default() {
-        assertNull(new DefaultCacheLocationLocator().locate(workspace), "expect null location path");
+        assertThat(new DefaultCacheLocationLocator().locate(workspace)).as("expect null location path").isNull();
     }
 
     @Test
     void test_per_job() {
-        assertEquals(workspace.child(".npm"), new PerJobCacheLocationLocator().locate(workspace), "expect the same location path passes as input");
+        assertThat(new PerJobCacheLocationLocator().locate(workspace)).as("expect the same location path passes as input").isEqualTo(workspace.child(".npm"));
     }
 
     @Test
@@ -80,7 +79,7 @@ class CacheLocationLocatorTest {
             when(wc.toComputer()).thenReturn(computer);
 
             FilePath expectedLocation = rootPath.child("npm-cache").child(String.valueOf(executorNumber));
-            assertEquals(expectedLocation, new PerExecutorCacheLocationLocator().locate(wc), "expect null location path");
+            assertThat(new PerExecutorCacheLocationLocator().locate(wc)).as("expect null location path").isEqualTo(expectedLocation);
         }
     }
 

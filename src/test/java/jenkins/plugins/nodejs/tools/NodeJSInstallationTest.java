@@ -44,7 +44,7 @@ import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 import org.jvnet.hudson.test.recipes.LocalData;
 import org.xml.sax.SAXException;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @WithJenkins
 class NodeJSInstallationTest {
@@ -63,12 +63,12 @@ class NodeJSInstallationTest {
     @Issue("JENKINS-42232")
     @Test
     void test_executable_resolved_on_slave_node() throws Exception {
-        assertNull(Computer.currentComputer());
+        assertThat(Computer.currentComputer()).isNull();
         NodeJSInstallation installation = new NodeJSInstallation("test_executable_resolved_on_slave_node", "/home/nodejs", null);
         Method method = installation.getClass().getDeclaredMethod("getPlatform");
         method.setAccessible(true);
         Platform platform = (Platform) method.invoke(installation);
-        assertEquals(Platform.current(), platform);
+        assertThat(platform).isEqualTo(Platform.current());
     }
 
     /**
@@ -82,7 +82,7 @@ class NodeJSInstallationTest {
         File jenkinsHome = r.jenkins.getRootDir();
         File installationsFile = new File(jenkinsHome, NodeJSInstallation.class.getName() + ".xml");
 
-        assertTrue(installationsFile.exists(),  "NodeJS installations file has not been copied");
+        assertThat(installationsFile).as("NodeJS installations file has not been copied").exists();
         verify();
     }
 
@@ -96,7 +96,7 @@ class NodeJSInstallationTest {
         File jenkinsHome = r.jenkins.getRootDir();
         File installationsFile = new File(jenkinsHome, NodeJSInstallation.class.getName() + ".xml");
 
-        assertFalse(installationsFile.exists(), "NodeJS installations file already exists");
+        assertThat(installationsFile).as("NodeJS installations file already exists").doesNotExist();
 
         HtmlPage p = getConfigurePage();
         HtmlForm f = p.getFormByName("config");
@@ -107,7 +107,7 @@ class NodeJSInstallationTest {
         r.submit(f);
         verify();
 
-        assertTrue(installationsFile.exists(),  "NodeJS installations file has not been saved");
+        assertThat(installationsFile).as("NodeJS installations file has not been saved").exists();
 
         // another submission and verify it survives a roundtrip
         p = getConfigurePage();
@@ -124,15 +124,15 @@ class NodeJSInstallationTest {
 
     private void verify() throws Exception {
         NodeJSInstallation[] l = r.get(DescriptorImpl.class).getInstallations();
-        assertEquals(1, l.length);
+        assertThat(l).hasSize(1);
         r.assertEqualBeans(l[0], new NodeJSInstallation("myNode", "/tmp/foo", JenkinsRule.NO_PROPERTIES), "name,home");
 
         // by default we should get the auto installer
         DescribableList<ToolProperty<?>, ToolPropertyDescriptor> props = l[0].getProperties();
-        assertEquals(1, props.size());
+        assertThat(props).hasSize(1);
         InstallSourceProperty isp = props.get(InstallSourceProperty.class);
-        assertEquals(1, isp.installers.size());
-        assertNotNull(isp.installers.get(NodeJSInstaller.class));
+        assertThat(isp.installers).hasSize(1);
+        assertThat(isp.installers.get(NodeJSInstaller.class)).isNotNull();
     }
 
 }

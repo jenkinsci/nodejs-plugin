@@ -24,8 +24,7 @@
 package jenkins.plugins.nodejs.tools;
 
 import static jenkins.plugins.nodejs.NodeJSConstants.*;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.anyMap;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.never;
@@ -59,10 +58,11 @@ class NodeJSInstallationMockitoTest {
         verify(env, never()).override(anyString(), anyString());
         verify(env, never()).overrideAll(anyMap());
 
-        assertEquals(nodeJSHome, env.get(ENVVAR_NODEJS_HOME), "Unexpected value for " + ENVVAR_NODEJS_HOME);
-        assertEquals(nodeJSHome, env.get(ENVVAR_NODE_HOME), "Unexpected value for " + ENVVAR_NODE_HOME);
-        assertEquals(Functions.isWindows() ? nodeJSHome : bin, env.get(ENVVAR_NODEJS_PATH), "Unexpected value for " + ENVVAR_NODEJS_PATH);
-        assertNull(env.get("PATH"), "PATH variable should not appear in this environment");
+        assertThat(env)
+                .as("Unexpected value for " + ENVVAR_NODEJS_HOME).containsEntry(ENVVAR_NODEJS_HOME, nodeJSHome)
+                .as("Unexpected value for " + ENVVAR_NODE_HOME).containsEntry(ENVVAR_NODE_HOME, nodeJSHome)
+                .as("Unexpected value for " + ENVVAR_NODEJS_PATH).containsEntry(ENVVAR_NODEJS_PATH, Functions.isWindows() ? nodeJSHome : bin)
+                .as("PATH variable should not appear in this environment").doesNotContainKey("PATH");
     }
 
 }

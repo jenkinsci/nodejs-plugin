@@ -23,7 +23,6 @@
  */
 package jenkins.plugins.nodejs;
 
-import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -33,6 +32,8 @@ import hudson.Launcher;
 import hudson.model.AbstractBuild;
 import hudson.model.BuildListener;
 import hudson.tasks.Builder;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 abstract class VerifyEnvVariableBuilder extends Builder {
     @Override
@@ -50,9 +51,9 @@ abstract class VerifyEnvVariableBuilder extends Builder {
             String var = NodeJSConstants.NPM_USERCONFIG;
             String value = env.get(var);
 
-            assertTrue(env.containsKey(var), "variable " + var + " not set");
-            assertNotNull(value, "empty value for environment variable " + var);
-            assertTrue(new File(value).isFile(), "file of variable " + var + " does not exists or is not a file");
+            assertThat(env).as("variable " + var + " not set").containsKey(var);
+            assertThat(value).as("empty value for environment variable " + var).isNotNull();
+            assertThat(new File(value)).as("file of variable " + var + " does not exists or is not a file").isFile();
         }
     }
 
@@ -68,10 +69,7 @@ abstract class VerifyEnvVariableBuilder extends Builder {
 
         @Override
         public void verify(EnvVars env) {
-            String envValue = env.get(name);
-
-            assertTrue(env.containsKey(name), "variable " + name + " not set");
-            assertEquals(value, envValue);
+            assertThat(env).as("variable " + name + " not set").containsEntry(name, value);
         }
     }
 }

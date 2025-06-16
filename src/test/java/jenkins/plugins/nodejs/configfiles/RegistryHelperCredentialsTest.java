@@ -29,7 +29,6 @@ import static jenkins.plugins.nodejs.NodeJSConstants.NPM_SETTINGS_PASSWORD;
 import static jenkins.plugins.nodejs.NodeJSConstants.NPM_SETTINGS_REGISTRY;
 import static jenkins.plugins.nodejs.NodeJSConstants.NPM_SETTINGS_USER;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -98,7 +97,7 @@ class RegistryHelperCredentialsTest {
 
         RegistryHelper helper = new RegistryHelper(Arrays.asList(registries));
         String content = helper.fillRegistry("", resolvedCredentials, npm9Format);
-        assertNotNull(content);
+        assertThat(content).isNotNull();
 
         Npmrc npmrc = new Npmrc();
         npmrc.from(content);
@@ -122,12 +121,11 @@ class RegistryHelperCredentialsTest {
         String passwordKey = helper.compose(registryPrefix, NPM_SETTINGS_PASSWORD);
 
         for (String scope : registry.getScopesAsList()) {
-            assertFalse(npmrc.contains(helper.compose(registryPrefix, NPM_SETTINGS_AUTH)), "Unexpected value for " + NPM_SETTINGS_AUTH);
+            assertThat(npmrc.contains(helper.compose(registryPrefix, NPM_SETTINGS_AUTH))).as("Unexpected value for " + NPM_SETTINGS_AUTH).isFalse();
 
             if (registry.getCredentialsId() != null) {
                 // test require authentication, by default is false
-                assertThat(npmrc.contains(alwaysAuthKey)).isTrue() //
-                    .describedAs("key %s not found", NPM_SETTINGS_ALWAYS_AUTH);
+                assertThat(npmrc.contains(alwaysAuthKey)).as("key %s not found", NPM_SETTINGS_ALWAYS_AUTH).isTrue();
                 assertThat(npmrc.getAsBoolean(alwaysAuthKey)).isTrue();
 
                 // test credentials fields
@@ -135,14 +133,14 @@ class RegistryHelperCredentialsTest {
                 String password = npmrc.get(passwordKey);
                 assertThat(password).isNotNull();
                 password = new String(Base64.decodeBase64(password));
-                assertThat(password).isEqualTo("mypassword").describedAs("Invalid scoped password");
+                assertThat(password).as("Invalid scoped password").isEqualTo("mypassword");
             }
 
             scope = '@' + scope;
             String scopeKey = helper.compose(scope, NPM_SETTINGS_REGISTRY);
             // test registry URL entry
-            assertTrue(npmrc.contains(scopeKey), "Miss registry entry for scope " + scope);
-            assertEquals(registry.getUrl() + "/", npmrc.get(scopeKey), "Wrong registry URL for scope " + scope);
+            assertThat(npmrc.contains(scopeKey)).as("Miss registry entry for scope " + scope).isTrue();
+            assertThat(npmrc.get(scopeKey)).as("Wrong registry URL for scope " + scope).isEqualTo(registry.getUrl() + "/");
         }
     }
 
@@ -151,13 +149,13 @@ class RegistryHelperCredentialsTest {
         String alwaysAuthKey = npm9Format ? helper.compose(registryPrefix, NPM_SETTINGS_ALWAYS_AUTH) : NPM_SETTINGS_ALWAYS_AUTH;
         String authKey = npm9Format ? helper.compose(registryPrefix, NPM_SETTINGS_AUTH) : NPM_SETTINGS_AUTH;
 
-        assertThat(npmrc.contains(alwaysAuthKey)).isEqualTo(registry.getCredentialsId() != null) //
-            .describedAs("Unexpected value for %s", alwaysAuthKey);
+        assertThat(npmrc.contains(alwaysAuthKey)).as("Unexpected value for %s", alwaysAuthKey).isEqualTo(registry.getCredentialsId() != null) //
+            ;
 
         if (registry.getCredentialsId() != null) {
             // test _auth
             String auth = npmrc.get(authKey);
-            assertNotNull(npmrc, "Unexpected value for " + NPM_SETTINGS_AUTH);
+            assertThat(npmrc).as("Unexpected value for " + NPM_SETTINGS_AUTH).isNotNull();
             auth = new String(Base64.decodeBase64(auth));
             assertThat(auth).startsWith(user.getUsername()).endsWith("mypassword");
         }

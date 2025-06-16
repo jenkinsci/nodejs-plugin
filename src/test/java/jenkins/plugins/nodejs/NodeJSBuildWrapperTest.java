@@ -24,7 +24,6 @@
 package jenkins.plugins.nodejs;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.RETURNS_SELF;
 import static org.mockito.Mockito.doReturn;
@@ -205,10 +204,12 @@ class NodeJSBuildWrapperTest {
         @Override
         public void verify(EnvVars env) {
             String expectedValue = installation.getHome();
-            assertEquals(expectedValue, env.get(NodeJSConstants.ENVVAR_NODEJS_HOME), "Unexpected value for " + NodeJSConstants.ENVVAR_NODEJS_HOME);
-            assertThat(env.get("PATH")).contains(expectedValue);
-            // check that PATH is not exact the NodeJS home otherwise means PATH was overridden
-            assertThat(env.get("PATH")).isNotEqualTo(expectedValue); // JENKINS-41947
+            assertThat(env)
+                    .as("Unexpected value for " + NodeJSConstants.ENVVAR_NODEJS_HOME).containsEntry(NodeJSConstants.ENVVAR_NODEJS_HOME, expectedValue);
+            assertThat(env.get("PATH"))
+                    .contains(expectedValue)
+            // JENKINS-41947 check that PATH is not exact the NodeJS home otherwise means PATH was overridden
+                    .isNotEqualTo(expectedValue);
         }
     }
 

@@ -93,10 +93,10 @@ class NodeJSInstallerProxyTest {
         method.setAccessible(true);
         method.invoke(installer, env, log);
 
-        assertThat(env.keySet()).contains("HTTP_PROXY", "HTTPS_PROXY");
-        assertThat(env.get("HTTP_PROXY")).isEqualTo(expectedURL);
-        assertThat(env.get("HTTPS_PROXY")).isEqualTo(expectedURL);
-        assertThat(env.keySet()).doesNotContain("NO_PROXY");
+        assertThat(env)
+                .containsEntry("HTTP_PROXY", expectedURL)
+                .containsEntry("HTTPS_PROXY", expectedURL)
+                .doesNotContainKey("NO_PROXY");
     }
 
     @ParameterizedTest(name = "proxy url = {0}")
@@ -112,8 +112,8 @@ class NodeJSInstallerProxyTest {
         method.setAccessible(true);
         method.invoke(installer, env, log);
 
-        assertThat(env.keySet()).contains("HTTP_PROXY", "HTTPS_PROXY");
-        assertThat(env.get("NO_PROXY")).isEqualTo("*.npm.org,registry.npm.org");
+        assertThat(env).containsKeys("HTTP_PROXY", "HTTPS_PROXY")
+                .containsEntry("NO_PROXY", "*.npm.org,registry.npm.org");
     }
 
 }

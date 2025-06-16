@@ -23,8 +23,8 @@
  */
 package jenkins.plugins.nodejs.tools;
 
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
@@ -67,8 +67,7 @@ class ToolsUtilsTest {
     void nodejs_doesn_t_supports_32bit_on_armv64() throws Exception {
         Node currentNode = mock(Node.class);
         when(CPU.of(currentNode)).thenReturn(CPU.arm64);
-        assertThrows(DetectionFailedException.class, () ->
-            ToolsUtils.getCPU(currentNode, true));
+        assertThatThrownBy(() -> ToolsUtils.getCPU(currentNode, true)).isInstanceOf(DetectionFailedException.class);
     }
 
     @Test

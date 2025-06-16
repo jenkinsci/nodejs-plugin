@@ -23,9 +23,6 @@
  */
 package jenkins.plugins.nodejs;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -51,6 +48,8 @@ import jenkins.plugins.nodejs.configfiles.NPMRegistry;
 import jenkins.plugins.nodejs.configfiles.Npmrc;
 import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 @WithJenkins
 class NpmrcFileSupplyTest {
 
@@ -72,12 +71,12 @@ class NpmrcFileSupplyTest {
         FreeStyleBuild build = j.buildAndAssertSuccess(j.createFreeStyleProject());
 
         FilePath npmrcFile = ConfigFileManager.provisionConfigFile(new ConfigFile(config.id, null, true), null, build, build.getWorkspace(), j.createTaskListener(), new ArrayList<>(1));
-        assertTrue(npmrcFile.exists());
-        assertTrue(npmrcFile.length() > 0);
+        assertThat(npmrcFile.exists()).isTrue();
+        assertThat(npmrcFile.length()).isGreaterThan(0);
 
         Npmrc npmrc = Npmrc.load(new File(npmrcFile.getRemote()));
-        assertTrue(npmrc.contains("email"), "Missing setting email");
-        assertEquals("guest@example.com", npmrc.get("email"), "Unexpected value from settings email");
+        assertThat(npmrc.contains("email")).as("Missing setting email").isTrue();
+        assertThat(npmrc.get("email")).as("Unexpected value from settings email").isEqualTo("guest@example.com");
     }
 
     private StandardUsernameCredentials createUser(String id, String username, String password) throws FormException {

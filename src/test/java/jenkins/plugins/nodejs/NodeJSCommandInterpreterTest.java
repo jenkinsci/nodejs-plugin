@@ -24,7 +24,6 @@
 package jenkins.plugins.nodejs;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.RETURNS_SELF;
 import static org.mockito.Mockito.doCallRealMethod;
@@ -76,13 +75,13 @@ class NodeJSCommandInterpreterTest {
     void test_inject_path_variable() throws Exception {
         NodeJSInstallation installation = mockInstaller();
         NodeJSCommandInterpreter builder = CIBuilderHelper.createMock("test_executable_value", installation, null, (build, launcher, listener) -> {
-            assertFalse(build.getEnvironments().isEmpty(), "No Environments");
+            assertThat(build.getEnvironments()).as("No Environments").isNotEmpty();
 
             EnvVars env = build.getEnvironment(listener);
-            assertThat(env).containsKeys(NodeJSConstants.ENVVAR_NODEJS_PATH, NodeJSConstants.ENVVAR_NODEJS_HOME);
-            assertEquals(getTestHome(), env.get(NodeJSConstants.ENVVAR_NODEJS_HOME));
-            assertEquals(getTestHome(), env.get(NodeJSConstants.ENVVAR_NODE_HOME));
-            assertEquals(getTestBin(), env.get(NodeJSConstants.ENVVAR_NODEJS_PATH));
+            assertThat(env)
+                    .containsEntry(NodeJSConstants.ENVVAR_NODEJS_HOME, getTestHome())
+                    .containsEntry(NodeJSConstants.ENVVAR_NODE_HOME, getTestHome())
+                    .containsEntry(NodeJSConstants.ENVVAR_NODEJS_PATH, getTestBin());
         });
 
         FreeStyleProject job = j.createFreeStyleProject();
@@ -100,7 +99,7 @@ class NodeJSCommandInterpreterTest {
         j.assertBuildStatusSuccess(job.scheduleBuild2(0));
 
         String[] buildCommandLine = builder.buildCommandLine(new FilePath(File.createTempFile("junit", null, folder)));
-        assertEquals(buildCommandLine[0], getTestExecutable());
+        assertThat(buildCommandLine[0]).isEqualTo(getTestExecutable());
     }
 
     @Test
@@ -114,9 +113,9 @@ class NodeJSCommandInterpreterTest {
             String var = NodeJSConstants.NPM_USERCONFIG;
             String value = env.get(var);
 
-            assertTrue(env.containsKey(var), "variable " + var + " not set");
-            assertNotNull(value, "empty value for environment variable " + var);
-            assertTrue(new File(value).isFile(), "file of variable " + var + " does not exists or is not a file");
+            assertThat(env.containsKey(var)).as("variable " + var + " not set").isTrue();
+            assertThat(value).as("empty value for environment variable " + var).isNotNull();
+            assertThat(new File(value).isFile()).as("file of variable " + var + " does not exists or is not a file").isTrue();
         });
 
         FreeStyleProject job = j.createFreeStyleProject();

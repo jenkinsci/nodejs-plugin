@@ -37,11 +37,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertInstanceOf;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @WithJenkins
 class SimpleNodeJSCommandInterpreterTest {
@@ -64,38 +60,39 @@ class SimpleNodeJSCommandInterpreterTest {
 
     @Test
     void testGetContentsShouldGiveExpectedValue() {
-        assertEquals(COMMAND, interpreter.getCommand());
+        assertThat(interpreter.getCommand()).isEqualTo(COMMAND);
     }
 
     @Test
     void testGetContentWithEmptyCommandShouldGiveExpectedValue() {
-        assertEquals("", new NodeJSCommandInterpreter("", installation.getName(), null).getCommand());
+        assertThat(new NodeJSCommandInterpreter("", installation.getName(), null).getCommand()).isEmpty();
     }
 
     @Test
     void testGetContentWithNullCommandShouldGiveExpectedValue() {
-        assertNull(new NodeJSCommandInterpreter(null, installation.getName(), null).getCommand());
+        assertThat(new NodeJSCommandInterpreter(null, installation.getName(), null).getCommand()).isNull();
     }
 
     @Test
     void testGetFileExtensionShouldGiveExpectedValue() throws IOException, InterruptedException {
-        assertTrue(interpreter.createScriptFile(new FilePath(newFolder(tempFolder, "junit"))).getName().endsWith(".js"));
+        assertThat(interpreter.createScriptFile(new FilePath(newFolder(tempFolder, "junit"))).getName()).endsWith(".js");
     }
 
     @Test
     void testGetDescriptorShouldGiveExpectedValue() {
-        assertNotNull(descriptor);
-        assertInstanceOf(Descriptor.class, descriptor);
+        assertThat(descriptor)
+                .isNotNull()
+                .isInstanceOf(Descriptor.class);
     }
 
     @Test
     void testDescriptorGetDisplayNameShouldGiveExpectedValue() {
-        assertEquals(Messages.NodeJSCommandInterpreter_displayName(), descriptor.getDisplayName());
+        assertThat(descriptor.getDisplayName()).isEqualTo(Messages.NodeJSCommandInterpreter_displayName());
     }
 
     @Test
     void testDescriptorGetHelpFileShouldGiveExpectedValue() {
-        assertEquals("/plugin/nodejs/help.html", descriptor.getHelpFile());
+        assertThat(descriptor.getHelpFile()).isEqualTo("/plugin/nodejs/help.html");
     }
 
     private static File newFolder(File root, String... subDirs) throws IOException {
