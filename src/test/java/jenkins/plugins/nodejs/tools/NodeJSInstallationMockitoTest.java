@@ -24,8 +24,7 @@
 package jenkins.plugins.nodejs.tools;
 
 import static jenkins.plugins.nodejs.NodeJSConstants.*;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.anyMap;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.never;
@@ -34,21 +33,21 @@ import static org.mockito.Mockito.verify;
 
 import hudson.EnvVars;
 import hudson.Functions;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.jvnet.hudson.test.Issue;
 
-public class NodeJSInstallationMockitoTest {
+class NodeJSInstallationMockitoTest {
 
     /**
      * Ensure the use of {@link EnvVars#put(String, String)} instead
      * {@code EnvVars#override(String, String)} to respect the
-     * {@link ToolInstallation#buildEnvVars(EnvVars)) API documentation.
+     * {@link hudson.tools.ToolInstallation#buildEnvVars(EnvVars)) API documentation.
      * <p>
      * A lot stuff rely on that logic.
      */
     @Issue("JENKINS-41947")
     @Test
-    public void test_installer_environment() throws Exception {
+    void test_installer_environment() {
         String nodeJSHome = "/home/nodejs";
         String bin = nodeJSHome + "/bin";
 
@@ -59,10 +58,11 @@ public class NodeJSInstallationMockitoTest {
         verify(env, never()).override(anyString(), anyString());
         verify(env, never()).overrideAll(anyMap());
 
-        assertEquals("Unexpected value for " + ENVVAR_NODEJS_HOME, nodeJSHome, env.get(ENVVAR_NODEJS_HOME));
-        assertEquals("Unexpected value for " + ENVVAR_NODE_HOME, nodeJSHome, env.get(ENVVAR_NODE_HOME));
-        assertEquals("Unexpected value for " + ENVVAR_NODEJS_PATH, Functions.isWindows() ? nodeJSHome : bin, env.get(ENVVAR_NODEJS_PATH));
-        assertNull("PATH variable should not appear in this environment", env.get("PATH"));
+        assertThat(env)
+                .as("Unexpected value for " + ENVVAR_NODEJS_HOME).containsEntry(ENVVAR_NODEJS_HOME, nodeJSHome)
+                .as("Unexpected value for " + ENVVAR_NODE_HOME).containsEntry(ENVVAR_NODE_HOME, nodeJSHome)
+                .as("Unexpected value for " + ENVVAR_NODEJS_PATH).containsEntry(ENVVAR_NODEJS_PATH, Functions.isWindows() ? nodeJSHome : bin)
+                .as("PATH variable should not appear in this environment").doesNotContainKey("PATH");
     }
 
 }

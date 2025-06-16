@@ -5,7 +5,7 @@
     <parent>
         <groupId>org.jenkins-ci.plugins</groupId>
         <artifactId>plugin</artifactId>
-        <version>5.4</version>
+        <version>5.9</version>
         <relativePath />
     </parent>
 
@@ -50,7 +50,7 @@
         <gitHubRepo>jenkinsci/${project.artifactId}-plugin</gitHubRepo>
         <!-- https://www.jenkins.io/doc/developer/plugin-development/choosing-jenkins-baseline/ -->
         <jenkins.baseline>2.479</jenkins.baseline>
-        <jenkins.version>${jenkins.baseline}.1</jenkins.version>
+        <jenkins.version>${jenkins.baseline}.3</jenkins.version>
         <checkstyle.version>10.3.3</checkstyle.version>
         <assertj.version>3.27.3</assertj.version>
     </properties>
@@ -60,7 +60,7 @@
             <dependency>
                 <groupId>io.jenkins.tools.bom</groupId>
                 <artifactId>bom-${jenkins.baseline}.x</artifactId>
-                <version>3944.v1a_e4f8b_452db_</version>
+                <version>4545.v56392b_7ca_7b_a_</version>
                 <scope>import</scope>
                 <type>pom</type>
             </dependency>

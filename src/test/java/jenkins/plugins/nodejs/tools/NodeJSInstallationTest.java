@@ -36,37 +36,39 @@ import java.io.IOException;
 import java.lang.reflect.Method;
 import jenkins.model.Jenkins;
 import jenkins.plugins.nodejs.tools.NodeJSInstallation.DescriptorImpl;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.jvnet.hudson.test.Issue;
 import org.jvnet.hudson.test.JenkinsRule;
+import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 import org.jvnet.hudson.test.recipes.LocalData;
 import org.xml.sax.SAXException;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 
-public class NodeJSInstallationTest {
+@WithJenkins
+class NodeJSInstallationTest {
 
-    @Rule
-    public JenkinsRule r = new JenkinsRule();
+    private JenkinsRule r;
+
+    @BeforeEach
+    void setUp(JenkinsRule rule) {
+        r = rule;
+    }
 
     /**
-     * Verify node executable is begin initialised correctly on a slave
+     * Verify node executable is being initialised correctly on a slave
      * node where {@link Computer#currentComputer()} is {@code null}.
      */
     @Issue("JENKINS-42232")
     @Test
-    public void test_executable_resolved_on_slave_node() throws Exception {
-        assertNull(Computer.currentComputer());
+    void test_executable_resolved_on_slave_node() throws Exception {
+        assertThat(Computer.currentComputer()).isNull();
         NodeJSInstallation installation = new NodeJSInstallation("test_executable_resolved_on_slave_node", "/home/nodejs", null);
         Method method = installation.getClass().getDeclaredMethod("getPlatform");
         method.setAccessible(true);
         Platform platform = (Platform) method.invoke(installation);
-        assertEquals(Platform.current(), platform);
+        assertThat(platform).isEqualTo(Platform.current());
     }
 
     /**
@@ -76,11 +78,11 @@ public class NodeJSInstallationTest {
     @LocalData
     @Test
     @Issue("JENKINS-41535")
-    public void test_load_at_startup() throws Exception {
+    void test_load_at_startup() throws Exception {
         File jenkinsHome = r.jenkins.getRootDir();
         File installationsFile = new File(jenkinsHome, NodeJSInstallation.class.getName() + ".xml");
 
-        assertTrue("NodeJS installations file has not been copied",  installationsFile.exists());
+        assertThat(installationsFile).as("NodeJS installations file has not been copied").exists();
         verify();
     }
 
@@ -90,11 +92,11 @@ public class NodeJSInstallationTest {
      */
     @Test
     @Issue("JENKINS-41535")
-    public void test_persist_of_nodejs_installation() throws Exception {
+    void test_persist_of_nodejs_installation() throws Exception {
         File jenkinsHome = r.jenkins.getRootDir();
         File installationsFile = new File(jenkinsHome, NodeJSInstallation.class.getName() + ".xml");
 
-        assertFalse("NodeJS installations file already exists", installationsFile.exists());
+        assertThat(installationsFile).as("NodeJS installations file already exists").doesNotExist();
 
         HtmlPage p = getConfigurePage();
         HtmlForm f = p.getFormByName("config");
@@ -105,7 +107,7 @@ public class NodeJSInstallationTest {
         r.submit(f);
         verify();
 
-        assertTrue("NodeJS installations file has not been saved",  installationsFile.exists());
+        assertThat(installationsFile).as("NodeJS installations file has not been saved").exists();
 
         // another submission and verify it survives a roundtrip
         p = getConfigurePage();
@@ -122,15 +124,15 @@ public class NodeJSInstallationTest {
 
     private void verify() throws Exception {
         NodeJSInstallation[] l = r.get(DescriptorImpl.class).getInstallations();
-        assertEquals(1, l.length);
+        assertThat(l).hasSize(1);
         r.assertEqualBeans(l[0], new NodeJSInstallation("myNode", "/tmp/foo", JenkinsRule.NO_PROPERTIES), "name,home");
 
         // by default we should get the auto installer
         DescribableList<ToolProperty<?>, ToolPropertyDescriptor> props = l[0].getProperties();
-        assertEquals(1, props.size());
+        assertThat(props).hasSize(1);
         InstallSourceProperty isp = props.get(InstallSourceProperty.class);
-        assertEquals(1, isp.installers.size());
-        assertNotNull(isp.installers.get(NodeJSInstaller.class));
+        assertThat(isp.installers).hasSize(1);
+        assertThat(isp.installers.get(NodeJSInstaller.class)).isNotNull();
     }
 
 }

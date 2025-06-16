@@ -23,10 +23,6 @@
  */
 package jenkins.plugins.nodejs.configfiles;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -34,23 +30,24 @@ import java.io.InputStream;
 import java.util.List;
 
 import org.apache.commons.io.IOUtils;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
-public class NpmrcTest {
+import static org.assertj.core.api.Assertions.assertThat;
 
-    @Rule
-    public TemporaryFolder folder = new TemporaryFolder();
+class NpmrcTest {
+
+    @TempDir
+    private File folder;
     private File file;
 
-    @Before
-    public void setUp() throws IOException {
+    @BeforeEach
+    void setUp() throws IOException {
         InputStream is = null;
         try {
             is = getClass().getResourceAsStream("npmrc.config");
-            file = folder.newFile(".npmrc");
+            file = File.createTempFile(".npmrc", null, folder);
             hudson.util.IOUtils.copy(is, file);
         } finally {
             IOUtils.closeQuietly(is);
@@ -58,22 +55,21 @@ public class NpmrcTest {
     }
 
     @Test
-    public void testLoad() throws Exception {
+    void testLoad() throws Exception {
         Npmrc npmrc = Npmrc.load(file);
-        assertTrue(npmrc.contains("always-auth"));
-        assertEquals("true", npmrc.get("always-auth"));
-        assertEquals("\"/var/lib/jenkins/tools/jenkins.plugins.nodejs.tools.NodeJSInstallation/Node_6.x\"",
-                npmrc.get("prefix"));
+        assertThat(npmrc.contains("always-auth")).isTrue();
+        assertThat(npmrc.get("always-auth")).isEqualTo("true");
+        assertThat(npmrc.get("prefix")).isEqualTo("\"/var/lib/jenkins/tools/jenkins.plugins.nodejs.tools.NodeJSInstallation/Node_6.x\"");
     }
 
     @Test
-    public void testAvoidParseError() throws Exception {
+    void testAvoidParseError() throws Exception {
         Npmrc npmrc = Npmrc.load(file);
-        assertFalse(npmrc.contains("browser"));
+        assertThat(npmrc.contains("browser")).isFalse();
     }
 
     @Test
-    public void testSave() throws Exception {
+    void testSave() throws Exception {
         String testKey = "test";
         String testValue = "value";
 
@@ -83,12 +79,12 @@ public class NpmrcTest {
 
         // reload content
         npmrc = Npmrc.load(file);
-        assertTrue(npmrc.contains(testKey));
-        assertEquals(testValue, npmrc.get(testKey));
+        assertThat(npmrc.contains(testKey)).isTrue();
+        assertThat(npmrc.get(testKey)).isEqualTo(testValue);
     }
 
     @Test
-    public void testCommandAtLast() throws Exception {
+    void testCommandAtLast() throws Exception {
         String comment = "test comment";
 
         Npmrc npmrc = Npmrc.load(file);
@@ -97,7 +93,7 @@ public class NpmrcTest {
 
         try (InputStream is = new FileInputStream(file)) {
             List<String> lines = IOUtils.readLines(is, "UTF-8");
-            assertEquals(';' + comment, lines.get(lines.size() - 1));
+            assertThat(lines.get(lines.size() - 1)).isEqualTo(';' + comment);
         }
     }
 

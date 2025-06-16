@@ -23,10 +23,7 @@
  */
 package jenkins.plugins.nodejs;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.RETURNS_SELF;
 import static org.mockito.Mockito.doCallRealMethod;
@@ -38,54 +35,53 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
-import org.assertj.core.api.Assertions;
 import org.jenkinsci.lib.configprovider.model.Config;
 import org.jenkinsci.plugins.configfiles.GlobalConfigFiles;
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.jvnet.hudson.test.Issue;
 import org.jvnet.hudson.test.JenkinsRule;
 
 import hudson.EnvVars;
 import hudson.FilePath;
 import hudson.Launcher;
-import hudson.model.AbstractBuild;
 import hudson.model.FreeStyleProject;
 import hudson.model.Node;
 import hudson.model.Result;
 import hudson.model.TaskListener;
-import jenkins.plugins.nodejs.CIBuilderHelper.Verifier;
 import jenkins.plugins.nodejs.VerifyEnvVariableBuilder.EnvVarVerifier;
 import jenkins.plugins.nodejs.configfiles.NPMConfig;
 import jenkins.plugins.nodejs.configfiles.NPMRegistry;
 import jenkins.plugins.nodejs.tools.DetectionFailedException;
 import jenkins.plugins.nodejs.tools.NodeJSInstallation;
 import jenkins.plugins.nodejs.tools.Platform;
+import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 
-public class NodeJSCommandInterpreterTest {
+@WithJenkins
+class NodeJSCommandInterpreterTest {
 
-    @ClassRule
-    public static JenkinsRule j = new JenkinsRule();
-    @Rule
-    public TemporaryFolder folder = new TemporaryFolder();
+    private static JenkinsRule j;
+    @TempDir
+    private File folder;
+
+    @BeforeAll
+    static void setUp(JenkinsRule rule) {
+        j = rule;
+    }
 
     @Issue("JENKINS-41947")
     @Test
-    public void test_inject_path_variable() throws Exception {
+    void test_inject_path_variable() throws Exception {
         NodeJSInstallation installation = mockInstaller();
-        NodeJSCommandInterpreter builder = CIBuilderHelper.createMock("test_executable_value", installation, null, new CIBuilderHelper.Verifier() {
-            @Override
-            public void verify(AbstractBuild<?, ?> build, Launcher launcher, TaskListener listener) throws Exception {
-                assertFalse("No Environments", build.getEnvironments().isEmpty());
+        NodeJSCommandInterpreter builder = CIBuilderHelper.createMock("test_executable_value", installation, null, (build, launcher, listener) -> {
+            assertThat(build.getEnvironments()).as("No Environments").isNotEmpty();
 
-                EnvVars env = build.getEnvironment(listener);
-                Assertions.assertThat(env.keySet()).contains(NodeJSConstants.ENVVAR_NODEJS_PATH, NodeJSConstants.ENVVAR_NODEJS_HOME);
-                assertEquals(getTestHome(), env.get(NodeJSConstants.ENVVAR_NODEJS_HOME));
-                assertEquals(getTestHome(), env.get(NodeJSConstants.ENVVAR_NODE_HOME));
-                assertEquals(getTestBin(), env.get(NodeJSConstants.ENVVAR_NODEJS_PATH));
-            }
+            EnvVars env = build.getEnvironment(listener);
+            assertThat(env)
+                    .containsEntry(NodeJSConstants.ENVVAR_NODEJS_HOME, getTestHome())
+                    .containsEntry(NodeJSConstants.ENVVAR_NODE_HOME, getTestHome())
+                    .containsEntry(NodeJSConstants.ENVVAR_NODEJS_PATH, getTestBin());
         });
 
         FreeStyleProject job = j.createFreeStyleProject();
@@ -94,7 +90,7 @@ public class NodeJSCommandInterpreterTest {
     }
 
     @Test
-    public void test_executable_value() throws Exception {
+    void test_executable_value() throws Exception {
         NodeJSInstallation installation = mockInstaller();
         NodeJSCommandInterpreter builder = CIBuilderHelper.createMock("test_executable_value", installation, null);
 
@@ -102,27 +98,24 @@ public class NodeJSCommandInterpreterTest {
         job.getBuildersList().add(builder);
         j.assertBuildStatusSuccess(job.scheduleBuild2(0));
 
-        String[] buildCommandLine = builder.buildCommandLine(new FilePath(folder.newFile()));
-        assertEquals(buildCommandLine[0], getTestExecutable());
+        String[] buildCommandLine = builder.buildCommandLine(new FilePath(File.createTempFile("junit", null, folder)));
+        assertThat(buildCommandLine[0]).isEqualTo(getTestExecutable());
     }
 
     @Test
-    public void test_creation_of_config() throws Exception {
+    void test_creation_of_config() throws Exception {
         Config config = createSetting("my-config-id", "email=foo@acme.com", null);
 
         NodeJSInstallation installation = mockInstaller();
-        NodeJSCommandInterpreter builder = CIBuilderHelper.createMock("test_creation_of_config", installation, config.id, new Verifier() {
-            @Override
-            public void verify(AbstractBuild<?, ?> build, Launcher launcher, TaskListener listener) throws Exception {
-                EnvVars env = build.getEnvironment(listener);
+        NodeJSCommandInterpreter builder = CIBuilderHelper.createMock("test_creation_of_config", installation, config.id, (build, launcher, listener) -> {
+            EnvVars env = build.getEnvironment(listener);
 
-                String var = NodeJSConstants.NPM_USERCONFIG;
-                String value = env.get(var);
+            String var = NodeJSConstants.NPM_USERCONFIG;
+            String value = env.get(var);
 
-                assertTrue("variable " + var + " not set", env.containsKey(var));
-                assertNotNull("empty value for environment variable " + var, value);
-                assertTrue("file of variable " + var + " does not exists or is not a file", new File(value).isFile());
-            }
+            assertThat(env.containsKey(var)).as("variable " + var + " not set").isTrue();
+            assertThat(value).as("empty value for environment variable " + var).isNotNull();
+            assertThat(new File(value).isFile()).as("file of variable " + var + " does not exists or is not a file").isTrue();
         });
 
         FreeStyleProject job = j.createFreeStyleProject();
@@ -131,7 +124,7 @@ public class NodeJSCommandInterpreterTest {
     }
 
     @Test
-    public void test_calls_sequence_of_installer() throws Exception {
+    void test_calls_sequence_of_installer() throws Exception {
         NodeJSInstallation installation = mockInstaller();
         NodeJSCommandInterpreter builder = CIBuilderHelper.createMock("test_creation_of_config", installation, null);
 
@@ -146,7 +139,7 @@ public class NodeJSCommandInterpreterTest {
 
     @Issue("JENKINS-45840")
     @Test
-    public void test_check_no_executable_in_installation_folder() throws Exception {
+    void test_check_no_executable_in_installation_folder() throws Exception {
         NodeJSInstallation installation = mockInstaller();
         when(installation.getExecutable(any(Launcher.class))).thenReturn(null);
 
@@ -158,8 +151,8 @@ public class NodeJSCommandInterpreterTest {
     }
 
     @Test
-    public void test_set_of_cache_location() throws Exception {
-        final File cacheFolder = folder.newFolder();
+    void test_set_of_cache_location() throws Exception {
+        final File cacheFolder = newFolder(folder, "junit");
 
         NodeJSInstallation installation = mockInstaller();
         NodeJSCommandInterpreter builder = CIBuilderHelper.createMock("test_creation_of_config", installation);
@@ -201,5 +194,14 @@ public class NodeJSCommandInterpreterTest {
 
     private String getTestHome() {
         return new File("/home", "nodejs").getAbsolutePath();
+    }
+
+    private static File newFolder(File root, String... subDirs) throws IOException {
+        String subFolder = String.join("/", subDirs);
+        File result = new File(root, subFolder);
+        if (!result.mkdirs()) {
+            throw new IOException("Couldn't create folders " + root);
+        }
+        return result;
     }
 }

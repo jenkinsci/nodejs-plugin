@@ -23,9 +23,6 @@
  */
 package jenkins.plugins.nodejs;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -35,8 +32,8 @@ import org.jenkinsci.lib.configprovider.model.Config;
 import org.jenkinsci.lib.configprovider.model.ConfigFile;
 import org.jenkinsci.lib.configprovider.model.ConfigFileManager;
 import org.jenkinsci.plugins.configfiles.GlobalConfigFiles;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.jvnet.hudson.test.JenkinsRule;
 
 import com.cloudbees.plugins.credentials.CredentialsScope;
@@ -49,14 +46,22 @@ import hudson.model.Descriptor.FormException;
 import jenkins.plugins.nodejs.configfiles.NPMConfig;
 import jenkins.plugins.nodejs.configfiles.NPMRegistry;
 import jenkins.plugins.nodejs.configfiles.Npmrc;
+import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 
-public class NpmrcFileSupplyTest {
+import static org.assertj.core.api.Assertions.assertThat;
 
-    @Rule
-    public JenkinsRule j = new JenkinsRule();
+@WithJenkins
+class NpmrcFileSupplyTest {
+
+    private JenkinsRule j;
+
+    @BeforeEach
+    void setUp(JenkinsRule rule) {
+        j = rule;
+    }
 
     @Test
-    public void test_supply_npmrc_with_registry() throws Exception {
+    void test_supply_npmrc_with_registry() throws Exception {
         StandardUsernameCredentials user = createUser("test-user-id", "myuser", "mypassword");
         NPMRegistry privateRegistry = new NPMRegistry("https://private.organization.com/", user.getId(), null);
         NPMRegistry officalRegistry = new NPMRegistry("https://registry.npmjs.org/", null, "@user1 user2");
@@ -65,13 +70,13 @@ public class NpmrcFileSupplyTest {
 
         FreeStyleBuild build = j.buildAndAssertSuccess(j.createFreeStyleProject());
 
-        FilePath npmrcFile = ConfigFileManager.provisionConfigFile(new ConfigFile(config.id, null, true), null, build, build.getWorkspace(), j.createTaskListener(), new ArrayList<String>(1));
-        assertTrue(npmrcFile.exists());
-        assertTrue(npmrcFile.length() > 0);
+        FilePath npmrcFile = ConfigFileManager.provisionConfigFile(new ConfigFile(config.id, null, true), null, build, build.getWorkspace(), j.createTaskListener(), new ArrayList<>(1));
+        assertThat(npmrcFile.exists()).isTrue();
+        assertThat(npmrcFile.length()).isGreaterThan(0);
 
         Npmrc npmrc = Npmrc.load(new File(npmrcFile.getRemote()));
-        assertTrue("Missing setting email", npmrc.contains("email"));
-        assertEquals("Unexpected value from settings email", "guest@example.com", npmrc.get("email"));
+        assertThat(npmrc.contains("email")).as("Missing setting email").isTrue();
+        assertThat(npmrc.get("email")).as("Unexpected value from settings email").isEqualTo("guest@example.com");
     }
 
     private StandardUsernameCredentials createUser(String id, String username, String password) throws FormException {

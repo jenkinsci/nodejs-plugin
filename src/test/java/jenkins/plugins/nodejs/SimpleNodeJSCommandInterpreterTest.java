@@ -25,22 +25,22 @@ package jenkins.plugins.nodejs;
 
 import hudson.FilePath;
 import hudson.model.Descriptor;
-import jenkins.plugins.nodejs.Messages;
 import jenkins.plugins.nodejs.tools.NodeJSInstallation;
 import hudson.tasks.Builder;
-import hudson.tools.ToolProperty;
 
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
 
-import static org.junit.Assert.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
-public class SimpleNodeJSCommandInterpreterTest {
+@WithJenkins
+class SimpleNodeJSCommandInterpreterTest {
 
     private static final String COMMAND = "var sys = require('sys'); sys.puts('build number: ' + process.env['BUILD_NUMBER']);";
 
@@ -48,49 +48,59 @@ public class SimpleNodeJSCommandInterpreterTest {
     private Descriptor<Builder> descriptor;
     private NodeJSInstallation installation;
 
-    @Rule
-    public TemporaryFolder tempFolder = new TemporaryFolder();
+    @TempDir
+    private File tempFolder;
 
-    @Before
-    public void setUp() {
-        installation = new NodeJSInstallation("11.0.0", "", Collections.<ToolProperty<?>>emptyList());
+    @BeforeEach
+    void setUp() {
+        installation = new NodeJSInstallation("11.0.0", "", Collections.emptyList());
         interpreter = new NodeJSCommandInterpreter(COMMAND, installation.getName(), null);
         descriptor = new NodeJSCommandInterpreter.NodeJsDescriptor();
     }
 
     @Test
-    public void testGetContentsShouldGiveExpectedValue() {
-        assertEquals(COMMAND, interpreter.getCommand());
+    void testGetContentsShouldGiveExpectedValue() {
+        assertThat(interpreter.getCommand()).isEqualTo(COMMAND);
     }
 
     @Test
-    public void testGetContentWithEmptyCommandShouldGiveExpectedValue() {
-        assertEquals("", new NodeJSCommandInterpreter("", installation.getName(), null).getCommand());
+    void testGetContentWithEmptyCommandShouldGiveExpectedValue() {
+        assertThat(new NodeJSCommandInterpreter("", installation.getName(), null).getCommand()).isEmpty();
     }
 
     @Test
-    public void testGetContentWithNullCommandShouldGiveExpectedValue() {
-        assertNull(new NodeJSCommandInterpreter(null, installation.getName(), null).getCommand());
+    void testGetContentWithNullCommandShouldGiveExpectedValue() {
+        assertThat(new NodeJSCommandInterpreter(null, installation.getName(), null).getCommand()).isNull();
     }
 
     @Test
-    public void testGetFileExtensionShouldGiveExpectedValue() throws IOException, InterruptedException {
-        assertEquals(true, interpreter.createScriptFile(new FilePath(tempFolder.newFolder())).getName().endsWith(".js"));
+    void testGetFileExtensionShouldGiveExpectedValue() throws IOException, InterruptedException {
+        assertThat(interpreter.createScriptFile(new FilePath(newFolder(tempFolder, "junit"))).getName()).endsWith(".js");
     }
 
     @Test
-    public void testGetDescriptorShouldGiveExpectedValue() {
-        assertNotNull(descriptor);
-        assertTrue(descriptor instanceof Descriptor<?>);
+    void testGetDescriptorShouldGiveExpectedValue() {
+        assertThat(descriptor)
+                .isNotNull()
+                .isInstanceOf(Descriptor.class);
     }
 
     @Test
-    public void testDescriptorGetDisplayNameShouldGiveExpectedValue() {
-        assertEquals(Messages.NodeJSCommandInterpreter_displayName(), descriptor.getDisplayName());
+    void testDescriptorGetDisplayNameShouldGiveExpectedValue() {
+        assertThat(descriptor.getDisplayName()).isEqualTo(Messages.NodeJSCommandInterpreter_displayName());
     }
 
     @Test
-    public void testDescriptorGetHelpFileShouldGiveExpectedValue() {
-        assertEquals("/plugin/nodejs/help.html", descriptor.getHelpFile());
+    void testDescriptorGetHelpFileShouldGiveExpectedValue() {
+        assertThat(descriptor.getHelpFile()).isEqualTo("/plugin/nodejs/help.html");
+    }
+
+    private static File newFolder(File root, String... subDirs) throws IOException {
+        String subFolder = String.join("/", subDirs);
+        File result = new File(root, subFolder);
+        if (!result.mkdirs()) {
+            throw new IOException("Couldn't create folders " + root);
+        }
+        return result;
     }
 }

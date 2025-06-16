@@ -23,7 +23,7 @@
  */
 package jenkins.plugins.nodejs.tools;
 
-import static org.junit.Assert.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -35,10 +35,8 @@ import java.util.Collection;
 import java.util.TreeSet;
 
 import org.apache.commons.io.IOUtils;
-import org.assertj.core.api.Assertions;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
@@ -47,25 +45,14 @@ import hudson.tools.DownloadFromUrlInstaller;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 
-@RunWith(Parameterized.class)
-public class InstallerPathResolversTest {
+class InstallerPathResolversTest {
     private static Collection<String> expectedURLs;
 
-    private DownloadFromUrlInstaller.Installable installable;
-    private final Platform platform;
-    private final CPU cpu;
     private final boolean testDownload = false;
     private final boolean showDownloadURL = false;
 
-    public InstallerPathResolversTest(DownloadFromUrlInstaller.Installable installable, Platform platform, CPU cpu, String testName) {
-        this.installable = installable;
-        this.platform = platform;
-        this.cpu = cpu;
-    }
-
-    @Parameterized.Parameters(name = "{index}: {3}")
-    public static Collection<Object[]> data() throws Exception {
-        Collection<Object[]> testPossibleParams = new ArrayList<Object[]>();
+    static Collection<Object[]> data() throws Exception {
+        Collection<Object[]> testPossibleParams = new ArrayList<>();
 
         try (InputStream is = InstallerPathResolversTest.class.getResourceAsStream("expectedURLs.txt")) {
             expectedURLs = new TreeSet<>(IOUtils.readLines(is, StandardCharsets.UTF_8));
@@ -105,17 +92,18 @@ public class InstallerPathResolversTest {
         return testPossibleParams;
     }
 
-    @Test
-    public void shouldNodeJSInstallerResolvedPathExist() throws IOException {
-        InstallerPathResolver installerPathResolver = InstallerPathResolver.Factory.findResolverFor(this.installable.id);
+    @ParameterizedTest(name = "{index}: {3}")
+    @MethodSource("data")
+    void shouldNodeJSInstallerResolvedPathExist(DownloadFromUrlInstaller.Installable installable, Platform platform, CPU cpu, String testName) throws Exception {
+        InstallerPathResolver installerPathResolver = InstallerPathResolver.Factory.findResolverFor(installable.id);
         try {
-            String path = installerPathResolver.resolvePathFor(installable.id, this.platform, this.cpu);
+            String path = installerPathResolver.resolvePathFor(installable.id, platform, cpu);
             URL url = new URL(installable.url + path);
 
             if (testDownload) {
                 assertDownload(url);
             } else {
-                Assertions.assertThat(expectedURLs).contains(url.toString());
+                assertThat(expectedURLs).contains(url.toString());
             }
 
             if (showDownloadURL) {
@@ -133,7 +121,9 @@ public class InstallerPathResolversTest {
             urlConnection.setConnectTimeout(2000);
             urlConnection.connect();
             int code = urlConnection.getResponseCode();
-            assertTrue(code >= 200 && code < 300);
+            assertThat(code)
+                    .isGreaterThanOrEqualTo(200)
+                    .isLessThan(300);
         } finally {
             if (urlConnection != null) {
                 urlConnection.disconnect();
