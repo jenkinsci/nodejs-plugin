@@ -29,12 +29,13 @@ import edu.umd.cs.findbugs.annotations.Nullable;
 
 import org.jenkinsci.lib.configprovider.model.Config;
 import org.jenkinsci.plugins.configfiles.ConfigFiles;
-
+import hudson.model.Item;
 import hudson.model.ItemGroup;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import jenkins.plugins.nodejs.configfiles.NPMConfig;
 import jenkins.plugins.nodejs.configfiles.NPMConfig.NPMConfigProvider;
+import jenkins.plugins.nodejs.tools.NodeJSInstallation;
 import jenkins.plugins.nodejs.configfiles.VerifyConfigProviderException;
 
 /*package*/ final class NodeJSDescriptorUtils {
@@ -61,7 +62,7 @@ import jenkins.plugins.nodejs.configfiles.VerifyConfigProviderException;
 
     /**
      * Verify that the given configId exists in the given context.
-     * 
+     *
      * @param context where lookup
      * @param configId the identifier of an npmrc file
      * @return an validation form for the given npmrc file identifier, otherwise
@@ -80,6 +81,20 @@ import jenkins.plugins.nodejs.configfiles.VerifyConfigProviderException;
             }
         }
         return FormValidation.ok();
+    }
+
+    public static ListBoxModel getNodeJSInstallations(@Nullable Item item, boolean allowDefault) {
+        ListBoxModel items = new ListBoxModel();
+        if (item == null || !item.hasPermission(Item.CONFIGURE)) {
+            return items;
+        }
+        if (allowDefault) {
+            items.add(Messages.NodeJSInstallation_default(), "");
+        }
+        for (NodeJSInstallation tool : NodeJSUtils.getInstallations()) {
+            items.add(tool.getName(), tool.getName());
+        }
+        return items;
     }
 
 }
