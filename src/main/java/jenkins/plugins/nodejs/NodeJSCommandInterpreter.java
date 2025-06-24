@@ -23,21 +23,8 @@
  */
 package jenkins.plugins.nodejs;
 
-import java.io.IOException;
-import java.util.ArrayList;
-
 import edu.umd.cs.findbugs.annotations.CheckForNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
-
-import org.jenkinsci.Symbol;
-import org.jenkinsci.lib.configprovider.model.ConfigFile;
-import org.jenkinsci.lib.configprovider.model.ConfigFileManager;
-import org.jenkinsci.plugins.configfiles.common.CleanTempFilesAction;
-import org.kohsuke.stapler.AncestorInPath;
-import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.DataBoundSetter;
-import org.kohsuke.stapler.QueryParameter;
-
 import hudson.AbortException;
 import hudson.EnvVars;
 import hudson.Extension;
@@ -47,6 +34,7 @@ import hudson.Util;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.Environment;
+import hudson.model.Item;
 import hudson.model.ItemGroup;
 import hudson.model.Node;
 import hudson.model.TaskListener;
@@ -56,10 +44,21 @@ import hudson.tasks.CommandInterpreter;
 import hudson.util.ArgumentListBuilder;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
+import java.io.IOException;
+import java.util.ArrayList;
 import jenkins.plugins.nodejs.cache.CacheLocationLocator;
 import jenkins.plugins.nodejs.cache.DefaultCacheLocationLocator;
 import jenkins.plugins.nodejs.tools.NodeJSInstallation;
 import jenkins.plugins.nodejs.tools.Platform;
+import org.jenkinsci.Symbol;
+import org.jenkinsci.lib.configprovider.model.ConfigFile;
+import org.jenkinsci.lib.configprovider.model.ConfigFileManager;
+import org.jenkinsci.plugins.configfiles.common.CleanTempFilesAction;
+import org.kohsuke.stapler.AncestorInPath;
+import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
+import org.kohsuke.stapler.QueryParameter;
+import org.kohsuke.stapler.verb.POST;
 
 /**
  * This class executes a JavaScript file using node. The file should contain
@@ -276,25 +275,23 @@ public class NodeJSCommandInterpreter extends CommandInterpreter {
         }
 
         /**
-         * Return the help file.
+         * Returns all tools defined in the tool page.
          *
-         * @return the help file URL path
+         * @param item context against check permission
+         * @return a collection of tools name.
          */
-        @Override
-        public String getHelpFile() {
-            return "/plugin/nodejs/help.html";
-        }
-
-        public NodeJSInstallation[] getInstallations() {
-            return NodeJSUtils.getInstallations();
+        @POST
+        public ListBoxModel doFillNodeJSInstallationNameItems(@Nullable @AncestorInPath Item item) {
+            return NodeJSDescriptorUtils.getNodeJSInstallations(item, true);
         }
 
         /**
          * Gather all defined npmrc config files.
          *
-         * @param context where loopup
+         * @param context where lookup
          * @return a collection of user npmrc files.
          */
+        @POST
         public ListBoxModel doFillConfigIdItems(@AncestorInPath ItemGroup<?> context) {
             return NodeJSDescriptorUtils.getConfigs(context);
         }
@@ -306,6 +303,7 @@ public class NodeJSCommandInterpreter extends CommandInterpreter {
          * @param configId the identifier of an npmrc file
          * @return an validation form for the given npmrc file identifier.
          */
+        @POST
         public FormValidation doCheckConfigId(@Nullable @AncestorInPath ItemGroup<?> context, @CheckForNull @QueryParameter final String configId) {
             return NodeJSDescriptorUtils.checkConfig(context, configId);
         }

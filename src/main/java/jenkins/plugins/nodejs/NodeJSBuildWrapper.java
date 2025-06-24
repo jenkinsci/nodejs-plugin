@@ -23,6 +23,9 @@
  */
 package jenkins.plugins.nodejs;
 
+import edu.umd.cs.findbugs.annotations.CheckForNull;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import hudson.AbortException;
 import hudson.EnvVars;
 import hudson.Extension;
@@ -32,6 +35,7 @@ import hudson.Util;
 import hudson.console.ConsoleLogFilter;
 import hudson.model.AbstractProject;
 import hudson.model.Computer;
+import hudson.model.Item;
 import hudson.model.ItemGroup;
 import hudson.model.Node;
 import hudson.model.Run;
@@ -51,9 +55,6 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
-import edu.umd.cs.findbugs.annotations.CheckForNull;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import jenkins.plugins.nodejs.cache.CacheLocationLocator;
 import jenkins.plugins.nodejs.cache.DefaultCacheLocationLocator;
 import jenkins.plugins.nodejs.tools.NodeJSInstallation;
@@ -68,6 +69,7 @@ import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
+import org.kohsuke.stapler.verb.POST;
 
 /**
  * A simple build wrapper that contribute the NodeJS bin path to the PATH
@@ -254,8 +256,15 @@ public class NodeJSBuildWrapper extends SimpleBuildWrapper {
             return Messages.NodeJSBuildWrapper_displayName();
         }
 
-        public NodeJSInstallation[] getInstallations() {
-            return NodeJSUtils.getInstallations();
+        /**
+         * Returns all tools defined in the tool page.
+         *
+         * @param item context against check permission
+         * @return a collection of tools name.
+         */
+        @POST
+        public ListBoxModel doFillNodeJSInstallationNameItems(@Nullable @AncestorInPath Item item) {
+            return NodeJSDescriptorUtils.getNodeJSInstallations(item, false);
         }
 
         /**
@@ -264,6 +273,7 @@ public class NodeJSBuildWrapper extends SimpleBuildWrapper {
          * @param context where lookup
          * @return a collection of user npmrc files.
          */
+        @POST
         public ListBoxModel doFillConfigIdItems(@AncestorInPath ItemGroup<?> context) {
             return NodeJSDescriptorUtils.getConfigs(context);
         }
@@ -275,7 +285,8 @@ public class NodeJSBuildWrapper extends SimpleBuildWrapper {
          * @param configId the identifier of an npmrc file
          * @return an validation form for the given npmrc file identifier.
          */
-        public FormValidation doCheckConfigId(@Nullable @AncestorInPath ItemGroup<?> context, @CheckForNull @QueryParameter final String configId) {
+        public FormValidation doCheckConfigId(@Nullable @AncestorInPath ItemGroup<?> context,
+                                              @CheckForNull @QueryParameter final String configId) {
             return NodeJSDescriptorUtils.checkConfig(context, configId);
         }
 
@@ -294,7 +305,7 @@ public class NodeJSBuildWrapper extends SimpleBuildWrapper {
         }
 
         @Override
-        public OutputStream decorateLogger(Run build, OutputStream logger) {
+        public OutputStream decorateLogger(@SuppressWarnings("rawtypes") Run build, OutputStream logger) {
             return new SecretPatterns.MaskingOutputStream(logger, () -> Pattern.compile(pattern.getPlainText()), charset);
         }
 
