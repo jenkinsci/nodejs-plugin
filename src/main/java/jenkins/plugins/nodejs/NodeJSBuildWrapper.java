@@ -69,6 +69,7 @@ import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
+import org.kohsuke.stapler.interceptor.RequirePOST;
 import org.kohsuke.stapler.verb.POST;
 
 /**
@@ -262,7 +263,7 @@ public class NodeJSBuildWrapper extends SimpleBuildWrapper {
          * @param item context against check permission
          * @return a collection of tools name.
          */
-        @POST
+        @RequirePOST
         public ListBoxModel doFillNodeJSInstallationNameItems(@Nullable @AncestorInPath Item item) {
             return NodeJSDescriptorUtils.getNodeJSInstallations(item, false);
         }
@@ -273,7 +274,7 @@ public class NodeJSBuildWrapper extends SimpleBuildWrapper {
          * @param context where lookup
          * @return a collection of user npmrc files.
          */
-        @POST
+        @RequirePOST
         public ListBoxModel doFillConfigIdItems(@AncestorInPath ItemGroup<?> context) {
             return NodeJSDescriptorUtils.getConfigs(context);
         }

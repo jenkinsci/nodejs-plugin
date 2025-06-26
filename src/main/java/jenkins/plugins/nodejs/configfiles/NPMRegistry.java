@@ -38,6 +38,7 @@ import org.jenkinsci.plugins.plaincredentials.StringCredentials;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
+import org.kohsuke.stapler.interceptor.RequirePOST;
 import org.kohsuke.stapler.verb.POST;
 
 import com.cloudbees.plugins.credentials.CredentialsMatcher;
@@ -247,7 +248,7 @@ public class NPMRegistry extends AbstractDescribableImpl<NPMRegistry> implements
             return FormValidation.ok();
         }
 
-        @POST
+        @RequirePOST
         public FormValidation doCheckCredentialsId(@CheckForNull @AncestorInPath Item projectOrFolder,
                                                    @QueryParameter String credentialsId,
                                                    @QueryParameter String serverUrl) {
@@ -269,7 +270,7 @@ public class NPMRegistry extends AbstractDescribableImpl<NPMRegistry> implements
             return FormValidation.ok();
         }
 
-        @POST
+        @RequirePOST
         public ListBoxModel doFillCredentialsIdItems(final @CheckForNull @AncestorInPath ItemGroup<?> context,
                                                      final @CheckForNull @AncestorInPath Item projectOrFolder,
                                                      @QueryParameter String credentialsId,

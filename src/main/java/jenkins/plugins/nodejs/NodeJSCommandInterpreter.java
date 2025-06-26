@@ -58,6 +58,7 @@ import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
+import org.kohsuke.stapler.interceptor.RequirePOST;
 import org.kohsuke.stapler.verb.POST;
 
 /**
@@ -280,7 +281,7 @@ public class NodeJSCommandInterpreter extends CommandInterpreter {
          * @param item context against check permission
          * @return a collection of tools name.
          */
-        @POST
+        @RequirePOST
         public ListBoxModel doFillNodeJSInstallationNameItems(@Nullable @AncestorInPath Item item) {
             return NodeJSDescriptorUtils.getNodeJSInstallations(item, true);
         }
@@ -291,7 +292,7 @@ public class NodeJSCommandInterpreter extends CommandInterpreter {
          * @param context where lookup
          * @return a collection of user npmrc files.
          */
-        @POST
+        @RequirePOST
         public ListBoxModel doFillConfigIdItems(@AncestorInPath ItemGroup<?> context) {
             return NodeJSDescriptorUtils.getConfigs(context);
         }
@@ -303,7 +304,7 @@ public class NodeJSCommandInterpreter extends CommandInterpreter {
          * @param configId the identifier of an npmrc file
          * @return an validation form for the given npmrc file identifier.
          */
-        @POST
+        @RequirePOST
         public FormValidation doCheckConfigId(@Nullable @AncestorInPath ItemGroup<?> context, @CheckForNull @QueryParameter final String configId) {
             return NodeJSDescriptorUtils.checkConfig(context, configId);
         }
