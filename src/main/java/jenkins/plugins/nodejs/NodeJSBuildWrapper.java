@@ -70,7 +70,6 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.interceptor.RequirePOST;
-import org.kohsuke.stapler.verb.POST;
 
 /**
  * A simple build wrapper that contribute the NodeJS bin path to the PATH
