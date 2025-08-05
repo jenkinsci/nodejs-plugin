@@ -33,7 +33,7 @@ import java.util.StringTokenizer;
 import java.util.regex.Pattern;
 
 import org.acegisecurity.Authentication;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.jenkinsci.plugins.plaincredentials.StringCredentials;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
