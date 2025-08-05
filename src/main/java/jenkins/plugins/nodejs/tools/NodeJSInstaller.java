@@ -43,7 +43,7 @@ import java.util.zip.GZIPOutputStream;
 import edu.umd.cs.findbugs.annotations.NonNull;
 
 import org.apache.commons.io.input.CountingInputStream;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 
