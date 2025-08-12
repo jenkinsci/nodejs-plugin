@@ -51,7 +51,7 @@
         <!-- https://www.jenkins.io/doc/developer/plugin-development/choosing-jenkins-baseline/ -->
         <jenkins.baseline>2.479</jenkins.baseline>
         <jenkins.version>${jenkins.baseline}.3</jenkins.version>
-        <checkstyle.version>10.3.3</checkstyle.version>
+        <checkstyle.version>11.0.0</checkstyle.version>
         <assertj.version>3.27.3</assertj.version>
     </properties>
 
