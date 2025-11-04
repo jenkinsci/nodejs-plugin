@@ -52,7 +52,7 @@
         <jenkins.baseline>2.479</jenkins.baseline>
         <jenkins.version>${jenkins.baseline}.3</jenkins.version>
         <checkstyle.version>12.0.1</checkstyle.version>
-        <assertj.version>3.27.3</assertj.version>
+        <assertj.version>3.27.6</assertj.version>
 		<ban-junit4-imports.skip>false</ban-junit4-imports.skip>
     </properties>
 
