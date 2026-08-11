@@ -23,7 +23,6 @@
  */
 package jenkins.plugins.nodejs.configfiles;
 
-import static jenkins.plugins.nodejs.NodeJSConstants.NPM_SETTINGS_ALWAYS_AUTH;
 import static jenkins.plugins.nodejs.NodeJSConstants.NPM_SETTINGS_AUTH;
 import static jenkins.plugins.nodejs.NodeJSConstants.NPM_SETTINGS_PASSWORD;
 import static jenkins.plugins.nodejs.NodeJSConstants.NPM_SETTINGS_REGISTRY;
@@ -116,7 +115,6 @@ class RegistryHelperCredentialsTest {
         String registryPrefix = helper.calculatePrefix(registry.getUrl());
 
         // scoped registry not depends on npm format, has always the registry prefix
-        String alwaysAuthKey = helper.compose(registryPrefix, NPM_SETTINGS_ALWAYS_AUTH);
         String usernameKey = helper.compose(registryPrefix, NPM_SETTINGS_USER);
         String passwordKey = helper.compose(registryPrefix, NPM_SETTINGS_PASSWORD);
 
@@ -124,10 +122,6 @@ class RegistryHelperCredentialsTest {
             assertThat(npmrc.contains(helper.compose(registryPrefix, NPM_SETTINGS_AUTH))).as("Unexpected value for " + NPM_SETTINGS_AUTH).isFalse();
 
             if (registry.getCredentialsId() != null) {
-                // test require authentication, by default is false
-                assertThat(npmrc.contains(alwaysAuthKey)).as("key %s not found", NPM_SETTINGS_ALWAYS_AUTH).isTrue();
-                assertThat(npmrc.getAsBoolean(alwaysAuthKey)).isTrue();
-
                 // test credentials fields
                 assertThat(npmrc.get(usernameKey)).isEqualTo(user.getUsername());
                 String password = npmrc.get(passwordKey);
@@ -146,11 +140,7 @@ class RegistryHelperCredentialsTest {
 
     private void verifyGlobalRegistry(RegistryHelper helper, NPMRegistry registry, Npmrc npmrc, boolean npm9Format) {
         String registryPrefix = helper.calculatePrefix(registry.getUrl());
-        String alwaysAuthKey = npm9Format ? helper.compose(registryPrefix, NPM_SETTINGS_ALWAYS_AUTH) : NPM_SETTINGS_ALWAYS_AUTH;
         String authKey = npm9Format ? helper.compose(registryPrefix, NPM_SETTINGS_AUTH) : NPM_SETTINGS_AUTH;
-
-        assertThat(npmrc.contains(alwaysAuthKey)).as("Unexpected value for %s", alwaysAuthKey).isEqualTo(registry.getCredentialsId() != null) //
-            ;
 
         if (registry.getCredentialsId() != null) {
             // test _auth

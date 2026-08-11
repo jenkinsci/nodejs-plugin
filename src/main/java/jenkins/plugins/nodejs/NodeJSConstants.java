@@ -66,15 +66,6 @@ public final class NodeJSConstants {
     public static final String NPM_USERCONFIG = "npm_config_userconfig";
 
     /**
-     * Force npm to always require authentication when accessing the registry,
-     * even for GET requests.
-     * <p>
-     * Default: false<br>
-     * Type: Boolean
-     * </p>
-     */
-    public static final String NPM_SETTINGS_ALWAYS_AUTH = "always-auth";
-    /**
      * The base URL of the npm package registry.
      * <p>
      * Default: https://registry.npmjs.org/<br>

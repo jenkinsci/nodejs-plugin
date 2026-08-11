@@ -23,7 +23,6 @@
  */
 package jenkins.plugins.nodejs.configfiles;
 
-import static jenkins.plugins.nodejs.NodeJSConstants.NPM_SETTINGS_ALWAYS_AUTH;
 import static jenkins.plugins.nodejs.NodeJSConstants.NPM_SETTINGS_AUTH;
 import static jenkins.plugins.nodejs.NodeJSConstants.NPM_SETTINGS_AUTHTOKEN;
 import static jenkins.plugins.nodejs.NodeJSConstants.NPM_SETTINGS_PASSWORD;
@@ -143,8 +142,6 @@ public final class RegistryHelper {
                     // add scoped values to the user config file
                     npmrc.set(compose('@' + scope, NPM_SETTINGS_REGISTRY), registryURL);
                     if (credentials != null) { // NOSONAR
-                        npmrc.set(compose(registryPrefix, NPM_SETTINGS_ALWAYS_AUTH), credentials != null);
-
                         // the _auth directive seems not be considered for scoped registry
                         // only authToken or username/password works
                         if (credentials instanceof UsernamePasswordCredentials) {
@@ -165,7 +162,6 @@ public final class RegistryHelper {
                 // add values to the user config file
                 npmrc.set(NPM_SETTINGS_REGISTRY, registry.getUrl());
                 if (credentials != null) {
-                    npmrc.set(compose(registryPrefix, NPM_SETTINGS_ALWAYS_AUTH), credentials != null);
                     if (credentials instanceof UsernamePasswordCredentials) {
                         UsernamePasswordCredentials usernamePassowrd = (UsernamePasswordCredentials) credentials;
                         String authValue = usernamePassowrd.getUsername() + ':' + Secret.toString(usernamePassowrd.getPassword());
