@@ -165,6 +165,47 @@ class NodeJSInstallerTest {
         }
     }
 
+    /**
+     * The cache lives on the controller and is shared by all agents, so
+     * concurrent builds installing the same version must not share the
+     * temporary file used to build it.
+     */
+    @Test
+    void verify_cache_is_build_when_another_build_is_writing_it() throws Exception {
+        File cache = new File(fileRule, "test.tar.gz");
+        // simulate a concurrent build that owns a fixed temporary file name
+        newFolder(fileRule, "test.tar.gz.tmp");
+        String expectedPackages = " ";
+        int expectedRefreshHours = NodeJSInstaller.DEFAULT_NPM_PACKAGES_REFRESH_HOURS;
+        Node currentNode = mock(Node.class);
+        when(currentNode.getRootPath()).thenReturn(new FilePath(newFolder(fileRule, "junit")));
+
+        // create partial mock
+        NodeJSInstaller installer = new NodeJSInstaller("test-id", expectedPackages, expectedRefreshHours);
+        NodeJSInstaller spy = spy(installer);
+
+        // use Mockito to set up your expectation
+        doReturn(cache).when(spy).getLocalCacheFile(any(), any());
+        Installable installable = new Installable();
+        File downloadURL = File.createTempFile("nodejs.tar.gz", null, fileRule);
+        fillArchive(downloadURL, "nodejs/bin/npm.sh", "echo \"hello\"".getBytes());
+        installable.url = downloadURL.toURI().toString();
+        doReturn(installable).when(spy).getInstallable();
+        when(spy.getNpmPackages()).thenReturn(expectedPackages);
+
+        try (MockedStatic<ToolsUtils> staticToolsUtils = mockStatic(ToolsUtils.class)) {
+            staticToolsUtils.when(() -> ToolsUtils.getCPU(currentNode)).thenReturn(CPU.amd64);
+            staticToolsUtils.when(() -> ToolsUtils.getPlatform(currentNode)).thenReturn(Platform.LINUX);
+
+            ToolInstallation toolInstallation = mock(ToolInstallation.class);
+            when(toolInstallation.getHome()).thenReturn("nodejs");
+
+            // execute test
+            spy.performInstallation(toolInstallation, currentNode, taskListener);
+            assertThat(new TarFileAssert(cache)).hasEntry("bin/npm.sh");
+        }
+    }
+
     @Test
     void test_cache_archive_is_used() throws Exception {
         String expectedPackages = " ";

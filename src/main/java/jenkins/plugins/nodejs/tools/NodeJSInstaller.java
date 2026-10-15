@@ -178,12 +178,9 @@ public class NodeJSInstaller extends DownloadFromUrlInstaller {
     private void buildCache(FilePath expected, File cache) throws IOException, InterruptedException {
         // update the local cache on master
         // download to a temporary file and rename it in to handle concurrency and failure correctly,
-        Path tmp = new File(cache.getPath() + ".tmp").toPath();
+        Path cacheDir = Files.createDirectories(cache.getAbsoluteFile().toPath().getParent());
+        Path tmp = Files.createTempFile(cacheDir, cache.getName(), ".tmp");
         try {
-            Path tmpParent = tmp.getParent();
-            if (tmpParent != null) {
-                Files.createDirectories(tmpParent);
-            }
             try (OutputStream out = new GZIPOutputStream(Files.newOutputStream(tmp))) {
                 // workaround to not store current folder as root folder in the archive
                 // this prevent issue when tool name is renamed 
